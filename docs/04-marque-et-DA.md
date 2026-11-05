@@ -18,7 +18,17 @@
 | **Astreinte** | Le vocabulaire exact des équipes IT | Connotation de contrainte |
 | **Veilleur** | Celui qui veille la nuit | Plus poétique, moins business |
 
-**À faire avant tout** : recherche d'antériorité sur **[data.inpi.fr](https://data.inpi.fr)** (classes 9, 38 et 42) et disponibilité des domaines. « Relève » est un mot courant : il faudra probablement un dépôt semi-figuratif (nom et logo) ou une variante (« Relève IA », « Relevo »). Je ne l'ai pas vérifié.
+**Nom retenu par le fondateur le 5 novembre 2026.**
+
+**Domaines** (vérifiés le 5 novembre 2026) :
+
+| Pris | Libres |
+|---|---|
+| releve.fr, releve.ai, releve.io, releve.app, releve.eu, getreleve.com | **releve-ia.fr**, **releveia.fr**, releve-ia.com, releveia.com, releve.tech, relevesupport.fr, releve-support.fr |
+
+Recommandation : réserver **releve-ia.fr** et **releveia.com** (environ 10 € par an chacun), puis utiliser « Relève IA » comme nom commercial complet.
+
+**Marque INPI : à vérifier par vous.** Le site data.inpi.fr bloque les recherches automatiques. Chercher « RELEVE » et « RELEVE IA » dans les classes **9** (logiciels), **38** (télécommunications) et **42** (SaaS, services informatiques). « Relève » étant un mot courant, des marques proches existent probablement : un dépôt semi-figuratif (nom et logo) de « Relève IA » est le plus sûr. Coût d'un dépôt INPI : à partir de 190 € pour une classe, plus 40 € par classe supplémentaire (à confirmer sur [inpi.fr](https://www.inpi.fr)).
 
 ## 2. Plateforme de marque
 

@@ -13,6 +13,7 @@ La relève IA du support informatique : un agent de niveau 1 qui prend la garde 
 | [05 · Architecture technique et MVP](docs/05-architecture-technique-mvp.md) | Pile à moindre coût, feuille de route, règles de sécurité |
 | [06 · Synergies avec EchoBridge](docs/06-synergies-echobridge.md) | Ce qui se mutualise, l'offre commune, la question du temps du fondateur |
 | [Sources](docs/sources.md) | Toutes les sources, classées par fiabilité |
+| [Prompt de démarrage](docs/PROMPT-DEMARRAGE.md) | Le prompt à coller pour lancer le développement |
 
 ## Skills Claude
 
