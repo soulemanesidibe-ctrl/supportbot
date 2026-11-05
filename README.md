@@ -15,6 +15,7 @@ La relève IA du support informatique : un agent de niveau 1 qui prend la garde 
 | [07 · Intégrations](docs/07-integrations.md) | Ticketing, Microsoft 365, RMM, prise en main à distance, supervision |
 | [08 · Expérience premium](docs/08-experience-ux-premium.md) | Chat, console technicien, qualité perçue |
 | [09 · Sécurité](docs/09-securite.md) | Modèle de menace, défenses par couche, skills de sécurité, calendrier |
+| [10 · Rôles et tableaux de bord](docs/10-roles-administration-cockpits.md) | Super administrateur, ESN multi-clients, accès délégués, tableau de bord de chaque rôle |
 | [Sources](docs/sources.md) | Toutes les sources, classées par fiabilité |
 | [Prompt de démarrage](docs/PROMPT-DEMARRAGE.md) | Le prompt à coller pour lancer le développement |
 
