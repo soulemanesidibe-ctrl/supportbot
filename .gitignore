@@ -1,0 +1,54 @@
+# Secrets et configuration locale : ne jamais versionner
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+secrets/
+.secrets/
+
+# Supabase (état local)
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Cloudflare
+.wrangler/
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+.npm/
+.pnpm-store/
+
+# Python (outils de sécurité locaux)
+.venv/
+__pycache__/
+*.pyc
+
+# Rapports d'outils de sécurité (les rapports utiles vont dans docs/)
+gitleaks-report*.json
+gitleaks-report*.sarif
+semgrep-results*.sarif
+sbom/*.json
+*.sarif
+
+# Claude Code local
+.claude/settings.local.json
+
+# Système et éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log

@@ -1,0 +1,82 @@
+title = "Relève IA : détection de secrets"
+
+# Règles par défaut de gitleaks + règles propres au projet.
+# Testé par scripts/test-gitleaks-config.sh (lancé aussi en CI).
+
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Règles propres au projet
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id = "supabase-secret-key"
+description = "Clé secrète Supabase (nouveau format sb_secret_...) : contourne la RLS"
+regex = '''\bsb_secret_[A-Za-z0-9_\-]{20,}'''
+keywords = ["sb_secret_"]
+tags = ["supabase", "secret"]
+
+[[rules]]
+id = "supabase-service-role-jwt"
+description = "JWT Supabase de rôle service_role (ancien format) : contourne la RLS"
+# Charge utile JWT contenant "role":"service_role", encodée en base64 (3 alignements possibles).
+regex = '''eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]*(?:InJvbGUiOiJzZXJ2aWNlX3JvbGUi|b2xlIjoic2VydmljZV9yb2xl|cm9sZSI6InNlcnZpY2Vfcm9sZS)[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]{20,}'''
+keywords = ["eyj"]
+tags = ["supabase", "jwt", "secret"]
+
+[[rules]]
+id = "postgres-connection-string-with-password"
+description = "Chaîne de connexion Postgres avec mot de passe en clair"
+regex = '''postgres(?:ql)?://[A-Za-z0-9_.\-]+:([^@\s'"<>$\{\}\[\]]{6,})@[A-Za-z0-9_.\-]+'''
+secretGroup = 1
+keywords = ["postgres://", "postgresql://"]
+tags = ["database", "credentials"]
+
+[[rules.allowlists]]
+description = "Mots de passe d'exemple et identifiants locaux par défaut (Supabase en local)"
+regexTarget = "secret"
+regexes = ['''^(postgres|password|changeme|your-password|example|secret)$''']
+
+[[rules]]
+id = "mistral-api-key"
+description = "Clé d'API Mistral La Plateforme"
+regex = '''(?i)mistral[A-Za-z0-9_\-]{0,20}(?:key|token|secret)["'\s:=]{1,6}["']?([A-Za-z0-9]{32})\b'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["mistral"]
+tags = ["llm", "api-key"]
+
+[[rules]]
+id = "connector-credential-assignment"
+description = "Identifiant de connecteur (GLPI, Jira, iTop, Zabbix, Centreon, Graph) affecté en clair"
+regex = '''(?i)(?:glpi|jira|itop|zabbix|centreon|graph|entra|azure)[A-Za-z0-9_\-]{0,20}(?:secret|token|password|apikey|api_key)["']?\s*[:=]\s*["']([^"'\s]{12,})["']'''
+secretGroup = 1
+entropy = 3.0
+keywords = ["glpi", "jira", "itop", "zabbix", "centreon", "graph", "entra", "azure"]
+tags = ["connector", "credentials"]
+
+# ---------------------------------------------------------------------------
+# Liste d'autorisation, volontairement étroite
+# ---------------------------------------------------------------------------
+
+# Les clés « publishable » de Supabase sont publiques par conception (elles
+# vivent dans le navigateur) : elles ne sont pas des secrets.
+[[allowlists]]
+description = "Clé publishable Supabase (publique par conception)"
+regexes = ['''sb_publishable_[A-Za-z0-9_\-]+''']
+
+# Les skills Claude importés (.claude/skills, .agents/skills) sont du contenu
+# tiers pédagogique : ils contiennent des exemples « curl -H Authorization:
+# Bearer ... », « Sec-WebSocket-Key », des JWT de démonstration. L'historique
+# existant en comptait 37 faux positifs de ces seuls types.
+# On n'autorise PAS le répertoire en entier : seules ces quatre règles
+# génériques sont ignorées là. Une clé AWS, un jeton GitHub, une clé privée ou
+# une clé Supabase y restent détectés.
+[[allowlists]]
+description = "Exemples génériques des skills tiers importés (règles génériques seulement)"
+targetRules = ["curl-auth-header", "curl-auth-user", "generic-api-key", "jwt"]
+paths = [
+  '''^\.claude/skills/''',
+  '''^\.agents/skills/''',
+]
