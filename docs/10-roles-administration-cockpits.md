@@ -156,6 +156,10 @@ Journal d'audit filtrable (personne, action, client, période), actions privilé
 
 Ses demandes et leur statut, les incidents en cours qui le concernent (« Panne Outlook en cours, rétablissement estimé… »), le bouton « Parler à un technicien ».
 
+### Maquettes
+
+Les sept écrans sont maquettés en direction B sur la planche [Relève IA · Identité visuelle](https://claude.ai/artifact/R9f1Z9Bnw4mZ4p2HymWNmT) (deuxième et troisième rangées), sources dans `docs/identite-visuelle/cockpits/`. Données fictives.
+
 ## 6. Définition des indicateurs
 
 Le sigle MTTR désigne selon les sources le délai de **réponse** ou de **résolution**. Pour éviter l'ambiguïté, Relève n'utilise pas de sigle à l'écran :

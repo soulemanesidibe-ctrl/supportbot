@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève · Technicien · file unifiée</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E0F11}
+a{color:#3DDC97}a:hover{color:#8EF0C3}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E0F11; color: #EDEEF0; font-family: Geist, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 16px 32px; border-bottom: 1px solid #26282D">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#F4F5F6"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#0E0F11" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="#3DDC97"></circle></svg>
+      <span style="font-weight: 600; font-size: 20px; letter-spacing: -0.03em">relève<span style="color: #3DDC97">.</span></span>
+    </div>
+    <label style="flex: 1 1 320px; display: flex; align-items: center; gap: 10px; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #33363C; background: #17181B">
+      <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher</span>
+      <input placeholder="Un utilisateur, un poste, un ticket, un client, une action" style="flex-grow: 1; min-width: 0; border: none; background: transparent; color: #EDEEF0; font-family: 'Geist Mono', monospace; font-size: 14px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 2px 6px; border-radius: 4px; border: 1px solid #33363C; color: #B4B8BF">Ctrl K</span>
+    </label>
+    <span style="padding: 6px 12px; border-radius: 999px; background: #2A2312; color: #F2B33D; font-size: 13px; font-weight: 600">Vous êtes d'astreinte jusqu'à 08:00</span>
+    <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid #33363C; font-size: 12px; color: #9A9EA6">Données fictives</span>
+  </header>
+
+  <main style="display: flex; flex-wrap: wrap; gap: 24px; padding: 28px 32px; box-sizing: border-box">
+    <section aria-labelledby="file" style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <h1 id="file" style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">À traiter maintenant</h1>
+        <span style="color: #9A9EA6; font-size: 14px">3 clients · 11 éléments</span>
+      </div>
+
+      <article style="padding: 16px; border-radius: 12px; background: #1E1214; border: 1px solid #4A2326; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><span style="padding: 3px 8px; border-radius: 6px; background: #4A2326; color: #FFD9D7; font-size: 12px; font-weight: 600">Incident majeur</span><span style="font-size: 13px; color: #B4B8BF">Clinique des Tilleuls</span><span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 13px; color: #F0605A">depuis 07:41</span></div>
+        <div style="font-weight: 600; font-size: 15px">VPN siège indisponible · 14 demandes regroupées</div>
+        <div style="font-size: 14px; color: #B4B8BF">Alerte Zabbix sur le pare-feu. Réponse automatique envoyée aux salariés.</div>
+      </article>
+
+      <article style="padding: 16px; border-radius: 12px; background: #17181B; border: 1px solid #26282D; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><span style="padding: 3px 8px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">SLA dans 25 min</span><span style="font-size: 13px; color: #B4B8BF">Transports Morel</span><span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">GLPI #48213</span></div>
+        <div style="font-weight: 600; font-size: 15px">Imprimante quai B : bourrage récurrent</div>
+        <div style="font-size: 14px; color: #B4B8BF">Diagnostic de Relève : 4e signalement en 10 jours, problème récurrent proposé.</div>
+      </article>
+
+      <article style="padding: 16px; border-radius: 12px; background: #17181B; border: 1px solid #26282D; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><span style="padding: 3px 8px; border-radius: 6px; background: #1F2125; border: 1px solid #33363C; font-size: 12px; font-weight: 600">Escaladé par l'IA</span><span style="font-size: 13px; color: #B4B8BF">Fonderie Bastide</span><span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">JSM SUP-311</span></div>
+        <div style="font-weight: 600; font-size: 15px">Logiciel de paie : erreur de licence au lancement</div>
+        <div style="font-size: 14px; color: #B4B8BF">Hors base de connaissance. Capture d'écran et version du poste jointes.</div>
+      </article>
+
+      <article style="padding: 16px; border-radius: 12px; background: #17181B; border: 1px solid #26282D; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><span style="padding: 3px 8px; border-radius: 6px; background: #1F2125; border: 1px solid #33363C; font-size: 12px; font-weight: 600">Prévention</span><span style="font-size: 13px; color: #B4B8BF">Clinique des Tilleuls</span></div>
+        <div style="font-weight: 600; font-size: 15px">Certificat du portail patients : expire dans 12 jours</div>
+      </article>
+    </section>
+
+    <aside style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <section aria-labelledby="valider" style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <h2 id="valider" style="margin: 0; font-size: 17px; font-weight: 600">À valider · 3</h2>
+        <div style="padding: 14px; border-radius: 10px; background: #1F2125; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-weight: 600; font-size: 14px">Réinitialiser le MFA de lucie.perrin</div>
+          <div style="font-size: 13px; color: #9A9EA6; line-height: 1.5">Transports Morel · nouveau téléphone · identité confirmée par son manager · connexion habituelle</div>
+          <div style="font-size: 12px; color: #9A9EA6">Vous validez en tant que suppléant de Thomas Girard</div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end"><button style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Refuser</button><button style="height: 40px; padding: 0 14px; border-radius: 10px; border: none; background: #3DDC97; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Valider</button></div>
+        </div>
+        <div style="padding: 14px; border-radius: 10px; background: #1F2125; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-weight: 600; font-size: 14px">Nettoyage disque · PC-COMPTA-04</div>
+          <div style="font-size: 13px; color: #9A9EA6">Clinique des Tilleuls · disque à 96 % · script de la liste blanche</div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end"><button style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Ouvrir</button></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="chrono" style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <h2 id="chrono" style="margin: 0; font-size: 17px; font-weight: 600">Incident VPN · chronologie</h2>
+        <div style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px 12px; font-size: 13px">
+          <span style="font-family: 'Geist Mono', monospace; color: #9A9EA6">07:41</span><span>Alerte Zabbix : pare-feu siège injoignable</span>
+          <span style="font-family: 'Geist Mono', monospace; color: #9A9EA6">07:44</span><span>3 demandes « VPN ne marche pas », incident créé</span>
+          <span style="font-family: 'Geist Mono', monospace; color: #9A9EA6">07:45</span><span>Message envoyé aux salariés, astreinte prévenue</span>
+          <span style="font-family: 'Geist Mono', monospace; color: #9A9EA6">08:02</span><span>14 demandes rattachées au ticket parent</span>
+        </div>
+      </section>
+
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+        <h2 style="grid-column: 1 / -1; margin: 0; font-size: 17px; font-weight: 600">Cette nuit</h2>
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 26px; color: #3DDC97">23</div><div style="font-size: 13px; color: #9A9EA6">résolues</div></div>
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 26px">4</div><div style="font-size: 13px; color: #9A9EA6">à valider</div></div>
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 26px">2</div><div style="font-size: 13px; color: #9A9EA6">escaladées</div></div>
+      </section>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

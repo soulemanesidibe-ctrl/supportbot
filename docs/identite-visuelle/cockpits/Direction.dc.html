@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève · Direction</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F6}
+a{color:#138A5A}a:hover{color:#0E6B45}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F4F5F6; color: #0E0F11; font-family: Geist, system-ui, sans-serif">
+  <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 18px 32px; background: #FFFFFF; border-bottom: 1px solid #DCDFE3">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#0E0F11"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#F4F5F6" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="#3DDC97"></circle></svg>
+      <span style="font-weight: 600; font-size: 20px; letter-spacing: -0.03em">relève<span style="color: #138A5A">.</span></span>
+      <span style="margin-left: 8px; font-size: 14px; color: #4A4F57">Transports Morel</span>
+    </div>
+    <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid #DCDFE3; font-size: 12px; color: #4A4F57">Données fictives</span>
+  </header>
+
+  <main style="max-width: 1080px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px; display: flex; flex-direction: column; gap: 28px">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end">
+      <div style="display: flex; flex-direction: column; gap: 8px; max-width: 640px">
+        <h1 style="margin: 0; font-weight: 700; font-size: 36px; letter-spacing: -0.02em">Octobre en bref</h1>
+        <p style="margin: 0; font-size: 17px; line-height: 1.55; color: #4A4F57">Le support a tenu, y compris pendant les deux semaines de congés de l'équipe. Un seul incident majeur, réglé en moins de deux heures.</p>
+      </div>
+      <button style="height: 48px; padding: 0 20px; border-radius: 10px; border: none; background: #0E0F11; color: #FFFFFF; font-family: Geist, sans-serif; font-weight: 600; font-size: 15px">Télécharger le rapport PDF</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px">
+      <div style="padding: 22px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-family: 'Geist Mono', monospace; font-size: 40px; letter-spacing: -0.02em">142</div><div style="font-size: 15px; color: #4A4F57; margin-top: 6px">demandes traitées</div></div>
+      <div style="padding: 22px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-family: 'Geist Mono', monospace; font-size: 40px; letter-spacing: -0.02em; color: #138A5A">41 %</div><div style="font-size: 15px; color: #4A4F57; margin-top: 6px">réglées sans attendre un technicien</div></div>
+      <div style="padding: 22px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-family: 'Geist Mono', monospace; font-size: 40px; letter-spacing: -0.02em">2 h 45</div><div style="font-size: 15px; color: #4A4F57; margin-top: 6px">délai moyen de résolution</div></div>
+      <div style="padding: 22px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-family: 'Geist Mono', monospace; font-size: 40px; letter-spacing: -0.02em">4,5 / 5</div><div style="font-size: 15px; color: #4A4F57; margin-top: 6px">satisfaction des salariés</div></div>
+      <div style="padding: 22px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-family: 'Geist Mono', monospace; font-size: 40px; letter-spacing: -0.02em">1</div><div style="font-size: 15px; color: #4A4F57; margin-top: 6px">incident majeur</div></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px">
+      <section style="border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Incident majeur du mois</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55">14 octobre : messagerie indisponible pendant 1 h 50, panne côté Microsoft. 23 salariés prévenus automatiquement, aucun ticket inutile ouvert.</p>
+      </section>
+      <section style="border-radius: 14px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Temps rendu à l'équipe <span style="font-size: 13px; font-weight: 500; color: #4A4F57">(estimation)</span></h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55">Environ 19 heures. Calcul : 58 demandes réglées par Relève × 20 minutes, durée moyenne d'une demande simple chez vous l'an dernier.</p>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
