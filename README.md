@@ -1,1 +1,23 @@
-# supportbot
+# SupportBot (nom de travail, proposition de marque : **Relève**)
+
+La relève IA du support informatique : un agent de niveau 1 qui prend la garde quand les techniciens d'une ESN ou d'une DSI sont absents (congés, nuits, arrêts, postes vacants), traite les demandes simples, prépare les tickets complexes et **rend la main avec un rapport de passation**. Il ne remplace pas l'humain : il garantit la continuité du service.
+
+## Dossier stratégique
+
+| Document | Contenu |
+|---|---|
+| [01 · Marché, concurrence et verdict](docs/01-marche-concurrence-verdict.md) | Est-ce cohérent ? Le marché est-il saturé ? Les risques |
+| [02 · Différenciation et modèle économique](docs/02-differenciation-et-modele.md) | Les 7 différences, la grille de prix, l'économie unitaire |
+| [03 · Go-to-market](docs/03-go-to-market.md) | Les cibles par priorité, le plan en 3 temps, les financements |
+| [04 · Marque et DA](docs/04-marque-et-DA.md) | Nom, plateforme de marque, palette, typographie |
+| [05 · Architecture technique et MVP](docs/05-architecture-technique-mvp.md) | Pile à moindre coût, feuille de route, règles de sécurité |
+| [06 · Synergies avec EchoBridge](docs/06-synergies-echobridge.md) | Ce qui se mutualise, l'offre commune, la question du temps du fondateur |
+| [Sources](docs/sources.md) | Toutes les sources, classées par fiabilité |
+
+## Skills Claude
+
+Le dépôt embarque les skills repris d'EchoBridge (hors skills propres à EchoBridge) :
+
+- `.claude/skills/` : sécurité (dont la sécurité des LLM et des agents), juridique et RGPD, GEO/SEO, UX et design ; `ui-ux-pro-max` et `plan-task` sont adaptés à ce projet ;
+- `.claude/agents/` : les 5 agents GEO ;
+- `.agents/skills/impeccable` : audit et finition d'interface.
