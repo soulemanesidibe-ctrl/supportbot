@@ -30,7 +30,7 @@ Plateforme Relève (vous)
 
 | Rôle | Peut | Ne peut pas |
 |---|---|---|
-| **Administrateur ESN** | Gérer les techniciens de l'ESN, demander une relation avec un client, créer un client (si votre offre partenaire l'autorise), assigner les techniciens aux clients, configurer marque blanche, connecteurs, règles d'automatisation, plannings de relève | Accéder à un client qui n'a pas approuvé la relation, dépasser les rôles approuvés par le client |
+| **Administrateur ESN** | Gérer les techniciens de l'ESN, demander une relation avec un client, **créer ses clients** (décision du fondateur, § 4), assigner les techniciens aux clients, configurer marque blanche, connecteurs, règles d'automatisation, plannings de relève | Accéder à un client qui n'a pas approuvé la relation, dépasser les rôles approuvés par le client |
 | **Responsable de compte** (chef de service, manager) | Voir tous les clients de l'ESN en lecture, rapports, SLA, charge des techniciens | Exécuter des actions sur le SI d'un client |
 | **Technicien ESN** | Traiter les demandes et valider les actions **des seuls clients qui lui sont assignés**, selon les rôles et la durée de l'assignation | Voir les autres clients de l'ESN |
 
@@ -91,10 +91,13 @@ Chaque trimestre, l'administrateur client et l'administrateur ESN reçoivent la 
 |---|---|
 | **Nouvelle ESN** | Vous créez l'ESN, choisissez l'offre partenaire, invitez son administrateur → il active son compte avec MFA → il invite ses techniciens |
 | **Nouveau client via une ESN** | L'ESN crée le client (ou l'invite s'il existe) et demande la relation → l'administrateur client active son compte et approuve les rôles → l'ESN assigne ses techniciens → connecteurs et salariés |
+| **Client créé par l'ESN** (autorisé, décision du 5 novembre 2026) | L'ESN crée le client : la relation ESN-client est créée en même temps, déjà active pour que l'ESN puisse configurer → l'ESN invite l'administrateur du client → à l'activation de son compte, il **voit la relation, la confirme ou la réduit, et garde le droit de la révoquer seul** → vous êtes notifié de chaque création ; le client est rattaché à l'offre partenaire de l'ESN pour la facturation |
 | **Nouveau client direct** | Vous créez le client et invitez son administrateur → il configure lui-même |
 | **Import des salariés** | Synchronisation depuis Microsoft Entra ID (lecture des utilisateurs et groupes) ou import CSV ; SCIM plus tard |
 | **Départ d'un technicien ESN** | L'administrateur ESN le retire : toutes ses assignations, délégations et sessions sont révoquées d'un coup |
 | **Fin de contrat ESN** | Le client révoque la relation : accès coupés immédiatement, historique conservé, export possible |
+
+Garde-fous de la création de clients par une ESN : réauthentification MFA, notification au super administrateur, plafond de clients selon l'offre partenaire, et aucun client créé ne peut être rattaché à une autre ESN sans l'accord de son administrateur.
 
 ## 5. Le meilleur tableau de bord pour chaque rôle
 
