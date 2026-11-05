@@ -23,6 +23,8 @@ avant toute chose.
   mode suppléance des valideurs)
 - docs/08-experience-ux-premium.md (expérience attendue)
 - docs/09-securite.md (modèle de menace, défenses par couche)
+- docs/10-roles-administration-cockpits.md (rôles, relations ESN-client, accès
+  d'assistance, tableau de bord de chaque rôle)
 - docs/04-marque-et-DA.md, section « Direction retenue : B · Signal » (tokens)
 - docs/identite-visuelle/Signal.dc.html (planche de référence de la direction B)
 
@@ -80,8 +82,11 @@ J0. FONDATIONS SÉCURISÉES
 
 J1. CADRAGE
     Skills : plan-task, write-spec.
-    docs/spec-mvp.md : parcours (salarié, technicien, valideur suppléant, admin
-    ESN), arborescence, contrat TypeScript des capacités (docs/07 §1), schéma de
+    docs/spec-mvp.md : parcours de chaque rôle de docs/10 (super administrateur,
+    administrateur et responsable de compte ESN, technicien, administrateur client,
+    direction, auditeur, salarié, valideur suppléant) et parcours d'administration
+    (nouvelle ESN, nouveau client via ESN, client direct, départ d'un technicien,
+    fin de contrat), arborescence, contrat TypeScript des capacités (docs/07 §1), schéma de
     données, moteur d'automatisations (règles déclaratives : déclencheur, condition,
     action, niveau d'autonomie), découpage en commits.
     ATTENDS MON ACCORD.
@@ -89,17 +94,23 @@ J1. CADRAGE
 J2. BASE DE DONNÉES
     Skills : supabase, implementing-gdpr-data-protection-controls,
     testing-for-broken-access-control, implementing-aes-encryption-for-data-at-rest.
-    Migrations : organizations (parent_org_id pour les ESN), memberships,
+    Migrations : organizations (type platform/partner/client, étiquettes),
+    memberships, partner_relationships, partner_assignments, support_access_grants,
+    invitations, access_reviews,
     conversations, messages, tickets, connectors (secrets dans Vault), kb_documents,
     kb_chunks (pgvector + HNSW), relief_schedules, handover_reports, alerts,
     incidents, automation_rules, automation_runs, action_requests,
     approval_policies, approval_delegations, audit_logs (INSERT uniquement).
-    RLS via is_member_of(), has_role(), org_has_feature(). Une délégation ne se crée
+    RLS via is_member_of(), has_role(), partner_can_access() (relation ET
+    assignation actives), org_has_feature(). Le super administrateur ne lit
+    aucune donnée client sans accès d'assistance approuvé et limité dans le temps. Une délégation ne se crée
     qu'avec une session réauthentifiée MFA récente, expire au plus tard à 30 jours,
     et notifie l'admin. match_kb_chunks filtrée par org_id. Purge planifiée des
     conversations. Script SQL de test d'isolation (2 clients d'une même ESN ne se
-    voient pas, l'ESN voit les deux, un suppléant n'obtient que le périmètre
-    délégué). Données de démo : 1 ESN, 2 clients, 20 fiches de connaissance
+    voient pas, l'ESN voit les deux, un technicien non assigné ou à l'assignation
+    expirée ne voit rien, une relation révoquée coupe tout, un suppléant n'obtient
+    que le périmètre délégué, le super administrateur ne voit rien sans accès
+    d'assistance). Données de démo : 1 ESN, 2 clients, 20 fiches de connaissance
     (mot de passe, MFA, VPN, imprimante, Outlook, Teams, OneDrive, poste lent,
     arrivée, départ). Signale-moi chaque migration à appliquer.
 
@@ -148,7 +159,17 @@ J5. INTERFACE PREMIUM, DIRECTION B
       « Pendant votre absence », densité réglable, temps réel.
     - Écran suppléance : chaînes de valideurs par catégorie, délégations en cours,
       création avec réauthentification MFA, révocation en un geste.
-    - Back-office ESN : clients, connecteurs, plannings de relève, règles
+    - Un tableau de bord d'accueil par rôle, exactement comme docs/10 §5 :
+      super administrateur (plateforme), ESN (tableau de tous les clients avec
+      zoom par client, rapport mensuel par client), technicien (file unifiée),
+      administrateur client (support et « qui a accès à quoi »), direction
+      (5 chiffres + PDF), auditeur (journal), salarié (mes demandes). Indicateurs
+      définis comme docs/10 §6, sans sigle à l'écran (skill dataviz pour les
+      graphiques).
+    - Administration : création d'ESN et de clients, invitations, relations
+      ESN-client (demande, approbation, révocation), assignations, accès
+      d'assistance, revues trimestrielles des accès.
+    - Back-office ESN : connecteurs, plannings de relève, règles
       d'automatisation, marque blanche.
     - PWA installable pour l'astreinte (validation depuis le téléphone).
     Le widget s'intègre chez les clients : CSP stricte, CORS limité aux domaines
@@ -167,7 +188,9 @@ J6. ÉVALUATION ET SÉCURITÉ
     20 tentatives d'injection (message, ticket, fiche, alerte, nom de fichier) qui
     doivent toutes échouer ; scénarios d'ingénierie sociale sur les réinitialisations ;
     abus de la suppléance (se déléguer soi-même, délégation expirée, périmètre
-    dépassé, valideur sans droits) ; test de fuite entre organisations. promptfoo
+    dépassé, valideur sans droits) ; abus des rôles (technicien qui change
+    d'organisation dans la requête, ESN sans relation, accès d'assistance
+    expiré, élévation de rôle par une invitation) ; test de fuite entre organisations. promptfoo
     dans la CI à chaque modification du prompt ou de l'orchestrateur ; scan ZAP de
     la version déployée. Rapport dans docs/evaluation.md.
 
@@ -191,7 +214,8 @@ J8. MISE EN LIGNE
     Cloudflare Pages, application Entra dans mon tenant, bot Teams de test.
     README de démo avec un scénario de 10 minutes à jouer devant un prospect
     (incident Exchange regroupé, réinitialisation MFA validée par un suppléant,
-    rapport « Pendant votre absence »).
+    rapport « Pendant votre absence », vue ESN multi-clients).
+    Création de mon compte super administrateur dédié, protégé par passkey.
 
 RÈGLES
 - Commits conventionnels sur ta branche de travail ; jamais de push sur main.

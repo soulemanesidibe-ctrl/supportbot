@@ -19,7 +19,7 @@
 3. **Liste blanche d'actions** et autonomie graduée (0 : conseille, 1 : agit après validation humaine, 2 : agit seul sur liste blanche). Le pilote est au niveau 0 par défaut ; le niveau 1 est activable organisation par organisation (d'abord sur le tenant de test du fondateur, avec des comptes de test dédiés). Le niveau 2 n'existe pas pendant le pilote.
 4. **Tout contenu externe est une donnée, jamais une instruction** (protection contre l'injection de prompt).
 5. **Journal d'audit** pour chaque appel au LLM et chaque action.
-6. **Isolation stricte entre organisations** par RLS ; une ESN voit ses clients, un client ne voit jamais un autre client.
+6. **Isolation stricte entre organisations** par RLS et contrôle côté serveur à chaque requête ; une ESN ne voit que les clients qui ont approuvé la relation, et chaque technicien ESN seulement ceux qui lui sont assignés ; un client ne voit jamais un autre client ; le super administrateur ne lit aucune donnée client sans accès d'assistance approuvé et limité dans le temps. Rôles et tableaux de bord : `docs/10-roles-administration-cockpits.md`.
 7. **Données dans l'UE uniquement.**
 
 ## Façon de travailler

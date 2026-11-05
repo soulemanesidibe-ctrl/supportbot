@@ -17,8 +17,10 @@ ls supabase/migrations/   # source de vérité sur les migrations déjà écrite
 
 | Table | Rôle | Point d'attention |
 |---|---|---|
-| `organizations` | Client final (PME, DSI) **ou** ESN partenaire | `parent_org_id` pour rattacher un client à son ESN (marque blanche) ; `plan`, `autonomy_level` (0, 1 ou 2), `branding` (jsonb) |
-| `memberships` | Lien utilisateur, organisation et rôle | Rôles : `end_user`, `technician`, `org_admin`, `partner_admin` |
+| `organizations` | Plateforme, ESN partenaire ou client | `type` (`platform`, `partner`, `client`), `plan`, `autonomy_level`, `branding` (jsonb), étiquettes |
+| `memberships` | Personne × organisation × rôle | Rôles dans `docs/10` : `super_admin`, `platform_support`, `partner_admin`, `partner_manager`, `partner_technician`, `org_admin`, `org_technician`, `org_viewer`, `auditor`, `end_user` |
+| `partner_relationships` / `partner_assignments` | Relation ESN × client approuvée par le client ; assignation d'un technicien ESN à un client | Toujours une date d'expiration ; révocable par le client seul |
+| `support_access_grants` | Accès d'assistance de la plateforme à un client | Lecture seule, approuvé par le client, 4 h par défaut, tracé |
 | `conversations` / `messages` | Fil de discussion avec l'agent | `messages.role` (`user`, `assistant`, `technician`, `system`) ; **jamais de secret en clair** (masquage avant insertion) |
 | `tickets` | Miroir local des tickets créés ou suivis dans l'ITSM | `external_id` + `connector_id` ; on ne remplace pas l'ITSM du client |
 | `connectors` | Configuration des connecteurs (GLPI, Jira SM…) | Les identifiants vont dans **Supabase Vault**, jamais en clair dans une colonne |
@@ -32,7 +34,7 @@ ls supabase/migrations/   # source de vérité sur les migrations déjà écrite
 
 1. **RLS activée sur toute nouvelle table**, sans exception.
 2. **Isolation par organisation** : toute policy passe par une fonction `is_member_of(org_id)` (ou `has_role(org_id, role)`), `SECURITY DEFINER` avec `search_path` fixé, jamais par une sous-requête récursive sur `memberships` dans la policy elle-même.
-3. **Une ESN partenaire voit ses clients**, via `parent_org_id`, mais **un client ne voit jamais un autre client**.
+3. **Une ESN partenaire ne voit un client que via `partner_can_access()`** (relation approuvée et active **et** assignation active du technicien), **un client ne voit jamais un autre client**, et `super_admin` n'a **aucune** policy de lecture sur les données clients hors `support_access_grants` actif.
 4. **Le contrôle de plan passe par une fonction `org_has_feature(org_id, feature)`**, jamais par un test de plan en dur dans le SQL.
 5. Les recherches vectorielles (`match_kb_chunks`) filtrent **toujours** par `org_id` à l'intérieur de la fonction, pas seulement côté client.
 
