@@ -1,0 +1,73 @@
+# M01, M07 : le prompt système est une constante statique ; tout contenu externe
+# (message, ticket, fiche, alerte, nom de fichier, nom d'organisation) est une donnée
+# placée dans un message `user` encadré par wrapExternal().
+rules:
+  - id: releve-dynamic-system-prompt
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Le message système ne doit jamais être construit avec des valeurs
+      dynamiques (interpolation, concaténation, appel avec arguments). Utilisez
+      une constante statique (SYSTEM_PROMPT) et transmettez toute donnée dans un
+      message `user` encadré par wrapExternal().
+    metadata:
+      threat: [M01, M07]
+      cwe: ["CWE-77", "CWE-1427"]
+      owasp: "LLM01:2025 Prompt Injection"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              { ..., role: "system", ..., content: $C, ... }
+          - pattern: |
+              { ..., content: $C, ..., role: "system", ... }
+      - metavariable-pattern:
+          metavariable: $C
+          pattern-either:
+            - pattern: "`...${$X}...`"
+            - pattern: $A + $B
+            - pattern: $F($ARG, ...)
+            - pattern: "[..., $X, ...]"
+
+  - id: releve-system-prompt-not-constant
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Le contenu d'un message système doit être un littéral ou une constante
+      importée en MAJUSCULES (SYSTEM_PROMPT). Une variable ordinaire peut avoir
+      été construite avec du contenu externe.
+    metadata:
+      threat: [M01, M07]
+      cwe: ["CWE-77", "CWE-1427"]
+      owasp: "LLM01:2025 Prompt Injection"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              { ..., role: "system", ..., content: $V, ... }
+          - pattern: |
+              { ..., content: $V, ..., role: "system", ... }
+      - metavariable-regex:
+          metavariable: $V
+          regex: ^(?!(?:[\w$]+\.)*[A-Z][A-Z0-9_]*$)[A-Za-z_$][\w$]*(?:\.[\w$]+)*$
+
+  - id: releve-system-prompt-variable-mutated
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Une variable nommée « system prompt » est construite ou modifiée à
+      l'exécution (interpolation, concaténation, +=). Le prompt système est une
+      constante statique ; les données vont dans un message `user`.
+    metadata:
+      threat: [M01, M07]
+      cwe: ["CWE-77", "CWE-1427"]
+      owasp: "LLM01:2025 Prompt Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $P = `...${$X}...`
+          - pattern: $P = $A + $B
+          - pattern: $P += $X
+          - pattern: $P = $A.concat(...)
+          - pattern: $P = $A.replace(...)
+          - pattern: $P = $A.replaceAll(...)
+      - metavariable-regex:
+          metavariable: $P
+          regex: (?i)^(system_?prompt|system_?message|system_?instructions?)$

@@ -1,0 +1,49 @@
+# M01, M12, M13 : les deux portes d'appel vérifient avant d'agir.
+rules:
+  - id: releve-execute-without-approved-action-request
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      L'exécuteur doit vérifier, dans la même fonction et avant l'appel, qu'une
+      action_request approuvée existe pour cette empreinte exacte
+      (assertApprovedActionRequest), puis n'exécuter que ce qui a été approuvé.
+    metadata:
+      threat: [M01, M12, M13]
+      cwe: ["CWE-285", "CWE-367"]
+      owasp: "LLM06:2025 Excessive Agency"
+    patterns:
+      - pattern: $CONNECTOR.invokeCapability(...)
+      - pattern-inside: |
+          async function executeApprovedAction(...) {
+            ...
+          }
+      - pattern-not-inside: |
+          await assertApprovedActionRequest(...);
+          ...
+      - pattern-not-inside: |
+          $REQ = await assertApprovedActionRequest(...);
+          ...
+
+  - id: releve-call-capability-without-class-filter
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      callCapability() doit appliquer le filtre déterministe de classe d'action
+      (assertCapabilityAllowed : autonome, approbation obligatoire ou interdite)
+      avant tout appel, et refuser par défaut.
+    metadata:
+      threat: [M01, M05]
+      cwe: ["CWE-285"]
+      owasp: "LLM06:2025 Excessive Agency"
+    patterns:
+      - pattern: $CONNECTOR.invokeCapability(...)
+      - pattern-inside: |
+          async function callCapability(...) {
+            ...
+          }
+      - pattern-not-inside: |
+          assertCapabilityAllowed(...);
+          ...
+      - pattern-not-inside: |
+          $OK = assertCapabilityAllowed(...);
+          ...

@@ -1,0 +1,22 @@
+# Ce fichier remplace la liste d'exclusions par défaut de Semgrep.
+.git/
+node_modules/
+dist/
+build/
+coverage/
+
+# Contenu tiers importé (skills Claude) : jamais déployé.
+.claude/
+.agents/
+
+# Les fixtures de test des règles contiennent volontairement des violations.
+security/semgrep/
+
+# Documentation et planches de marque.
+docs/
+
+# Les tests unitaires peuvent manipuler des clés factices et des clients de test.
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/__tests__/

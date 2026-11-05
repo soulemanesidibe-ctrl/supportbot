@@ -1,0 +1,108 @@
+# M03, M23, M27 : la clé service_role contourne la RLS. Un seul point d'entrée : serviceClient(auth).
+# Voir docs/securite-code-et-ci.md. Testé par service-role.ts.
+rules:
+  - id: releve-service-role-key-direct-use
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      La clé service_role contourne la RLS. Ne la lisez jamais directement :
+      obtenez un client via serviceClient(auth) (supabase/functions/_shared/db.ts),
+      qui exige un contexte d'authentification déjà vérifié.
+    metadata:
+      threat: [M03, M23]
+      cwe: ["CWE-269", "CWE-862"]
+      owasp: "A01:2021 Broken Access Control"
+    patterns:
+      - pattern-either:
+          - pattern: Deno.env.get($K)
+          - pattern: process.env[$K]
+      - metavariable-regex:
+          metavariable: $K
+          regex: (?i).*(service_?role|secret_?key).*
+
+  - id: releve-service-role-env-property
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      La clé service_role contourne la RLS. Ne la lisez jamais directement :
+      obtenez un client via serviceClient(auth) (supabase/functions/_shared/db.ts).
+    metadata:
+      threat: [M03, M23]
+      cwe: ["CWE-269", "CWE-862"]
+      owasp: "A01:2021 Broken Access Control"
+    patterns:
+      - pattern: process.env.$NAME
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(service_?role|secret_?key).*
+
+  - id: releve-env-dynamic-key
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Le nom de la variable d'environnement doit être un littéral : une clé
+      calculée empêche de vérifier qu'on ne lit pas la clé service_role.
+    metadata:
+      threat: [M03, M23]
+      cwe: ["CWE-269"]
+    patterns:
+      - pattern-either:
+          - pattern: Deno.env.get($K)
+          - pattern: process.env[$K]
+      # Le texte de l'argument doit commencer par un guillemet : on regarde le code écrit,
+      # pas la valeur que Semgrep déduit par propagation de constantes.
+      - metavariable-regex:
+          metavariable: $K
+          regex: ^(?!["']).*
+
+  - id: releve-env-bulk-read
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Lire tout l'environnement (toObject, déstructuration, copie, itération)
+      expose la clé service_role à du code qui n'en a pas besoin. Lisez les
+      variables une par une, par leur nom littéral.
+    metadata:
+      threat: [M03, M04]
+      cwe: ["CWE-200"]
+    pattern-either:
+      - pattern: Deno.env.toObject()
+      - pattern: const {...} = process.env
+      - pattern: const {...} = Deno.env.toObject()
+      - pattern: "{ ...process.env }"
+      - pattern: Object.$F(process.env)
+
+  - id: releve-service-client-without-auth
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      serviceClient() contourne la RLS : il ne peut être appelé qu'après une
+      vérification d'authentification dans la même fonction (requireUser,
+      requireOrgMember, verifyWebhookSignature, requireCronSecret), ou dans une
+      fonction qui reçoit déjà un contexte `AuthContext` en paramètre.
+    metadata:
+      threat: [M23, M27]
+      cwe: ["CWE-306", "CWE-639"]
+      owasp: "A01:2021 Broken Access Control"
+    patterns:
+      - pattern: serviceClient(...)
+      - pattern-not-inside:
+          patterns:
+            - pattern: |
+                $AUTH = await $GUARD(...);
+                ...
+            - metavariable-regex:
+                metavariable: $GUARD
+                regex: ^(requireUser|requireOrgMember|verifyWebhookSignature|requireCronSecret)$
+      - pattern-not-inside: |
+          function $F(..., $A: AuthContext, ...) {
+            ...
+          }
+      - pattern-not-inside: |
+          async function $F(..., $A: AuthContext, ...) {
+            ...
+          }
+      - pattern-not-inside: |
+          ($A: AuthContext, ...) => { ... }
+      - pattern-not-inside: |
+          async ($A: AuthContext, ...) => { ... }

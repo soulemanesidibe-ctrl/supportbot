@@ -23,3 +23,20 @@ repos:
       - id: no-commit-to-branch
         name: interdit de commiter sur main
         args: ["--branch", "main"]
+
+  - repo: local
+    hooks:
+      - id: check-nosemgrep
+        name: exceptions Semgrep limitées aux fichiers prévus
+        entry: scripts/check-nosemgrep.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+
+      - id: semgrep-releve
+        name: semgrep (règles de sécurité du projet)
+        entry: semgrep --config security/semgrep --strict --error --metrics=off --quiet
+        language: python
+        additional_dependencies: ["semgrep==1.184.0"]
+        types_or: [ts, tsx, javascript, jsx]
+        stages: [pre-push]
