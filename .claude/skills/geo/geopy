@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Résout l'interpréteur Python du skill GEO.
+# Préfère le venv isolé créé par setup.sh ; retombe sur le python3 système.
+# Le venv Windows expose Scripts/python.exe — d'où les trois candidats.
+set -euo pipefail
+
+GEO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+for candidate in \
+    "$GEO_DIR/.venv/bin/python3" \
+    "$GEO_DIR/.venv/bin/python" \
+    "$GEO_DIR/.venv/Scripts/python.exe"
+do
+    [ -x "$candidate" ] && exec "$candidate" "$@"
+done
+
+if command -v python3 >/dev/null 2>&1; then
+    exec python3 "$@"
+fi
+exec python "$@"
