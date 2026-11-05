@@ -25,6 +25,8 @@
 ## Façon de travailler
 
 - Utiliser le skill `plan-task` avant une tâche non triviale, `supabase` pour la base, `ui-ux-pro-max` et `impeccable` pour l'interface, et les skills de sécurité LLM (`defending-llms-with-guardrails`, `securing-agentic-ai-tool-invocation`, `testing-prompt-injection-in-rag-pipelines`) pour l'orchestrateur.
+- **Design premium 2026** : pour toute l'interface, utiliser `/impeccable` et `/ui-ux-pro-max` ; pour tout graphique, indicateur ou tableau de bord, utiliser `/dataviz`. Aucun écran n'est livré sans être passé par ces skills.
+- **Un outil de production, pas un « projet IA »** (consigne du fondateur) : chaque écran sert une tâche précise d'un rôle (salarié, technicien, valideur suppléant, admin ESN) et dit clairement ce que ce rôle voit, peut faire et ne peut pas faire. Pas de vocabulaire magique, pas de décor « IA » ; la valeur se mesure en production (délai de première réponse, tickets réellement évités, qualité des passations, actions validées). Chaque fonctionnalité est conçue dans le détail pour le périmètre ESN/DSI, pas ajoutée parce qu'elle est possible.
 - Textes d'interface en français d'abord, anglais ensuite.
 - Commits conventionnels (`feat:`, `fix:`, `chore:`…). Ne jamais pousser sur `main` sans confirmation explicite.
 - Les migrations Supabase sont appliquées par l'utilisateur : le préciser à chaque nouvelle migration.
