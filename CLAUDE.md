@@ -7,7 +7,9 @@
 - **Front** : React + Vite + TypeScript dans `app/` (widget de chat, console technicien, back-office).
 - **Back-end** : Supabase en région UE (Postgres, Auth, RLS, Edge Functions en Deno, pgvector). Voir le skill `supabase`.
 - **LLM** : Mistral (API La Plateforme, UE) derrière une couche d'abstraction `supabase/functions/_shared/llm/` pour pouvoir changer de fournisseur.
-- **Connecteur n°1** : GLPI (API REST). Les connecteurs vivent dans `supabase/functions/_shared/connectors/`.
+- **Connecteurs** : par capacité (ticketing, identité et messagerie Microsoft 365, RMM, prise en main à distance, supervision), décrits dans `docs/07-integrations.md`. Ils vivent dans `supabase/functions/_shared/connectors/`. Premiers : GLPI, Jira Service Management, Microsoft Graph en lecture, webhook de supervision.
+- **Interface** : Tailwind v4, shadcn/ui personnalisé, Motion, cmdk, icônes Phosphor. Exigences dans `docs/08-experience-ux-premium.md`.
+- **Actions privilégiées** : jamais avec des droits détenus par l'IA ; exécution avec l'identité du technicien qui valide (flux délégué), vérification d'identité de l'utilisateur avant toute action sur son compte.
 
 ## Règles non négociables
 

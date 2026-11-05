@@ -12,6 +12,9 @@ La relève IA du support informatique : un agent de niveau 1 qui prend la garde 
 | [04 · Marque et DA](docs/04-marque-et-DA.md) | Nom, plateforme de marque, palette, typographie |
 | [05 · Architecture technique et MVP](docs/05-architecture-technique-mvp.md) | Pile à moindre coût, feuille de route, règles de sécurité |
 | [06 · Synergies avec EchoBridge](docs/06-synergies-echobridge.md) | Ce qui se mutualise, l'offre commune, la question du temps du fondateur |
+| [07 · Intégrations](docs/07-integrations.md) | Ticketing, Microsoft 365, RMM, prise en main à distance, supervision |
+| [08 · Expérience premium](docs/08-experience-ux-premium.md) | Chat, console technicien, qualité perçue |
+| [09 · Sécurité](docs/09-securite.md) | Modèle de menace, défenses par couche, skills de sécurité, calendrier |
 | [Sources](docs/sources.md) | Toutes les sources, classées par fiabilité |
 | [Prompt de démarrage](docs/PROMPT-DEMARRAGE.md) | Le prompt à coller pour lancer le développement |
 

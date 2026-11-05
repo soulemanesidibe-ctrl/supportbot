@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève IA · Direction B · Signal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3DDC97}a:hover{color:#8EF0C3}
+</style>
+</helmet>
+<div style="width: 1200px; height: 1560px; box-sizing: border-box; padding: 64px; background: #0E0F11; color: #EDEEF0; font-family: Geist, system-ui, sans-serif; display: flex; flex-direction: column; gap: 44px">
+
+  <div style="display: flex; flex-direction: column; gap: 12px; max-width: 760px">
+    <div style="font-family: 'Geist Mono', monospace; font-size: 14px; letter-spacing: 0.08em; color: #9A9EA6">DIRECTION B</div>
+    <h1 style="margin: 0; font-weight: 700; font-size: 64px; line-height: 1; letter-spacing: -0.03em; color: #F4F5F6">Signal</h1>
+    <p style="margin: 0; font-size: 19px; line-height: 1.5; color: #B4B8BF">Un outil d'ingénieur, précis et rapide, dans l'esprit des meilleurs outils pour développeurs. Monochrome profond et un seul vert signal : le statut « tout va bien ». Parle aux techniciens et aux ESN qui jugent un outil à sa vitesse.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <div style="height: 220px; border-radius: 16px; background: #17181B; border: 1px solid #26282D; display: flex; align-items: center; justify-content: center; gap: 18px">
+      <svg width="72" height="72" viewBox="0 0 56 56" role="img" aria-label="Symbole Relève : une ligne de signal qui se stabilise"><rect width="56" height="56" rx="12" fill="#F4F5F6"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#0E0F11" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="{{accent}}"></circle></svg>
+      <span style="font-weight: 600; font-size: 54px; letter-spacing: -0.04em; color: #F4F5F6">relève<span style="color: {{accent}}">.</span></span>
+    </div>
+    <div style="height: 220px; border-radius: 16px; background: #F4F5F6; display: flex; align-items: center; justify-content: center; gap: 18px">
+      <svg width="72" height="72" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#0E0F11"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#F4F5F6" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="{{accent}}"></circle></svg>
+      <span style="font-weight: 600; font-size: 54px; letter-spacing: -0.04em; color: #0E0F11">relève<span style="color: #138A5A">.</span></span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #0E0F11; border: 1px solid #26282D; box-sizing: border-box"></div><div style="font-weight: 600; font-size: 15px">Carbone</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#0E0F11 fond</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #17181B; border: 1px solid #26282D; box-sizing: border-box"></div><div style="font-weight: 600; font-size: 15px">Graphite</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#17181B surfaces</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #3DDC97"></div><div style="font-weight: 600; font-size: 15px">Signal</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#3DDC97 accent</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #F2B33D"></div><div style="font-weight: 600; font-size: 15px">Relève active</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#F2B33D état</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #F0605A"></div><div style="font-weight: 600; font-size: 15px">Incident</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#F0605A critique</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 12px; background: #F4F5F6"></div><div style="font-weight: 600; font-size: 15px">Papier</div><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">#F4F5F6 mode clair</div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 28px; border-radius: 16px; background: #17181B; border: 1px solid #26282D">
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">TITRES / GEIST 700</div><div style="font-weight: 700; font-size: 36px; line-height: 1.1; letter-spacing: -0.03em; color: #F4F5F6">Le support ne dort jamais.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">TEXTE / GEIST 400</div><div style="font-size: 17px; line-height: 1.55; color: #D2D5DA">Chaque demande est qualifiée, chaque action est tracée, chaque ticket arrive prêt à traiter.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9A9EA6">TECHNIQUE / GEIST MONO</div><div style="font-family: 'Geist Mono', monospace; font-size: 15px; line-height: 1.7; color: {{accent}}">$ relève status<br><span style="color: #D2D5DA">23 résolues, 4 en attente</span></div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 24px; flex-grow: 1">
+    <div style="border-radius: 16px; background: #17181B; border: 1px solid #26282D; overflow: hidden; display: flex; flex-direction: column">
+      <div style="padding: 16px 18px; border-bottom: 1px solid #26282D; display: flex; align-items: center; justify-content: space-between; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#F4F5F6"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#0E0F11" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span style="font-weight: 600; font-size: 17px">Relève</span>
+          <span style="padding: 3px 8px; border-radius: 6px; border: 1px solid #33363C; color: #B4B8BF; font-size: 12px; font-weight: 500">Assistant IA</span>
+        </div>
+        <span style="padding: 4px 10px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">Relève active</span>
+      </div>
+      <div style="padding: 18px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1">
+        <div style="align-self: flex-end; max-width: 300px; padding: 10px 14px; border-radius: 12px; background: #F4F5F6; color: #0E0F11; font-size: 14px; line-height: 1.45">L'imprimante du 2e étage affiche une erreur 50.4.</div>
+        <div style="align-self: flex-start; max-width: 330px; padding: 10px 14px; border-radius: 12px; background: #1F2125; font-size: 14px; line-height: 1.45; color: #D2D5DA">L'erreur 50.4 vient en général de l'alimentation. Éteignez l'imprimante 30 secondes puis rallumez-la, branchée directement au mur.</div>
+        <div style="align-self: flex-start; width: 330px; box-sizing: border-box; padding: 14px; border-radius: 12px; border: 1px solid #33363C; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-weight: 600; font-size: 14px">Est-ce que ça a fonctionné ?</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <button style="height: 44px; border-radius: 10px; border: none; background: {{accent}}; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Oui, merci</button>
+            <button style="height: 44px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Non, toujours</button>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 12px; border-top: 1px solid #26282D; display: flex; gap: 8px; align-items: center">
+        <label style="flex-grow: 1; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Votre message</span><input placeholder="Écrivez votre message" style="flex-grow: 1; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #33363C; background: #0E0F11; color: #EDEEF0; font-family: Geist, sans-serif; font-size: 14px"></label>
+        <button style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #F4F5F6; background: transparent; color: #F4F5F6; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Parler à un technicien</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="border-radius: 16px; background: #17181B; border: 1px solid #26282D; padding: 10px; display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #0E0F11; border: 1px solid #33363C">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 14px; color: #9A9EA6">Rechercher un utilisateur, un poste, un ticket</span>
+          <span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; padding: 2px 6px; border-radius: 4px; border: 1px solid #33363C; color: #B4B8BF">Ctrl K</span>
+        </div>
+        <div style="padding: 12px; border-radius: 10px; background: #1F2125; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+          <div><div style="font-weight: 600; font-size: 14px">Réinitialiser le MFA de théo.lefèvre</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">Nouveau téléphone, identité vérifiée par son manager</div></div>
+          <button style="height: 40px; padding: 0 14px; border-radius: 10px; border: none; background: {{accent}}; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Valider</button>
+        </div>
+        <div style="padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+          <div><div style="font-weight: 600; font-size: 14px">Accès boîte partagée compta@</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">Demandé par sarah.benali, validation du responsable reçue</div></div>
+          <button style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Ouvrir</button>
+        </div>
+      </div>
+      <div style="border-radius: 16px; background: #1E1214; border: 1px solid #4A2326; padding: 20px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-weight: 600; font-size: 15px; color: #F0605A">Incident probable : VPN siège</div>
+        <div style="font-size: 14px; line-height: 1.5; color: #D2D5DA">Alerte Zabbix sur le pare-feu à 07:41. 5 demandes regroupées, réponse automatique envoyée aux utilisateurs.</div>
+      </div>
+      <div style="border-radius: 16px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; color: {{accent}}">23</div><div style="font-size: 13px; color: #9A9EA6">résolues cette nuit</div></div>
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; color: #F4F5F6">4</div><div style="font-size: 13px; color: #9A9EA6">à valider</div></div>
+        <div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; color: #F4F5F6">2</div><div style="font-size: 13px; color: #9A9EA6">escaladées</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#3DDC97","options":["#3DDC97","#5AA9FF","#F2B33D"]},"$preview":{"width":1200,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#3DDC97' };
+  }
+}
+</script>
+</body>
+</html>

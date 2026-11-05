@@ -42,7 +42,24 @@ Recommandation : réserver **releve-ia.fr** et **releveia.com** (environ 10 € 
 
 ## 3. Identité visuelle
 
-### Concept
+### Trois directions à choisir
+
+Planche visuelle en ligne : **[Relève IA · Identité visuelle](https://claude.ai/artifact/R9f1Z9Bnw4mZ4p2HymWNmT)** (logos clair et sombre, palette, typographie, widget de chat et console pour chaque direction).
+
+| | A · Garde de nuit | B · Signal | C · Atelier |
+|---|---|---|---|
+| **Idée** | Le veilleur qui prend la garde de nuit | L'outil d'ingénieur, précis et rapide | Le collègue de terrain, le passage de témoin |
+| **Symbole** | Deux chevrons qui se passent le relais | Une ligne de signal qui se stabilise | Deux témoins qui se chevauchent |
+| **Couleurs** | Bleu nuit `#12233F` et ambre `#F2A93B` | Carbone `#0E0F11` et vert signal `#3DDC97` | Bleu de travail `#1F45D1` et jaune signalétique `#FFC83D` |
+| **Polices** | Manrope, Inter, JetBrains Mono | Geist, Geist Mono | Bricolage Grotesque, Instrument Sans, IBM Plex Mono |
+| **Parle d'abord à** | DSI, secteur public, ETI | Techniciens, ESN exigeantes | PME, ESN de proximité |
+| **Risque** | Classique, peut sembler sage | Plus froid pour un utilisateur non technicien | Moins « grand compte » |
+
+Toutes les polices sont gratuites (Google Fonts). Chaque direction garde ses obligations : badge « Assistant IA », badge « Relève active », bouton « Parler à un technicien ».
+
+Le détail ci-dessous correspond à la direction A, proposée au départ.
+
+### Concept (direction A)
 
 **Le passage de témoin** : deux formes qui se transmettent un relais, ou un symbole de veille (lampe de garde). Pas de robot, pas de casque de téléopérateur, pas de cerveau électronique : ces images sont vues partout et contredisent le message « on ne remplace pas l'humain ».
 

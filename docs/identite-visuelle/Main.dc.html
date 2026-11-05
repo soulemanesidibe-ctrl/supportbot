@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève IA · Direction A · Garde de nuit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#24406B}a:hover{color:#12233F}
+</style>
+</helmet>
+<div style="width: 1200px; height: 1560px; box-sizing: border-box; padding: 64px; background: #F6F7F9; color: #1A1F2B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 44px">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 720px">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.08em; color: #4A5468">DIRECTION A</div>
+      <h1 style="margin: 0; font-family: Manrope, sans-serif; font-weight: 800; font-size: 64px; line-height: 1; color: #12233F">Garde de nuit</h1>
+      <p style="margin: 0; font-size: 19px; line-height: 1.5; color: #4A5468">Le veilleur qui prend la garde quand l'équipe dort. Bleu nuit pour la confiance, ambre de lampe de garde pour signaler que la relève est active. Sobre, rassurant, institutionnel : rassure les DSI et le secteur public.</p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 300px">
+      <span style="padding: 6px 12px; border-radius: 999px; background: #E3E8F1; color: #12233F; font-size: 14px; font-weight: 500">Calme</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #E3E8F1; color: #12233F; font-size: 14px; font-weight: 500">Fiable</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #E3E8F1; color: #12233F; font-size: 14px; font-weight: 500">Veilleur</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <div style="height: 220px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E1E5EC; display: flex; align-items: center; justify-content: center; gap: 18px">
+      <svg width="72" height="72" viewBox="0 0 56 56" role="img" aria-label="Symbole Relève : deux chevrons qui se passent le relais"><rect width="56" height="56" rx="14" fill="#12233F"></rect><path d="M15 18 L26 28 L15 38" stroke="#6F8DC2" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M28 18 L39 28 L28 38" stroke="{{accent}}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 52px; color: #12233F; letter-spacing: -0.02em">Relève</span>
+        <span style="padding: 4px 10px; border-radius: 8px; background: {{accent}}; color: #12233F; font-family: Manrope, sans-serif; font-weight: 800; font-size: 20px">IA</span>
+      </div>
+    </div>
+    <div style="height: 220px; border-radius: 20px; background: #12233F; display: flex; align-items: center; justify-content: center; gap: 18px">
+      <svg width="72" height="72" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="14" fill="#24406B"></rect><path d="M15 18 L26 28 L15 38" stroke="#9DB3DA" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M28 18 L39 28 L28 38" stroke="{{accent}}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 52px; color: #FFFFFF; letter-spacing: -0.02em">Relève</span>
+        <span style="padding: 4px 10px; border-radius: 8px; background: {{accent}}; color: #12233F; font-family: Manrope, sans-serif; font-weight: 800; font-size: 20px">IA</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #12233F"></div><div style="font-weight: 600; font-size: 15px">Nuit</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#12233F · primaire</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #24406B"></div><div style="font-weight: 600; font-size: 15px">Nuit 2</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#24406B · aplats</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #F2A93B"></div><div style="font-weight: 600; font-size: 15px">Veille</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#F2A93B · accent</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #1E9E6A"></div><div style="font-weight: 600; font-size: 15px">Résolu</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#1E9E6A · succès</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #D64545"></div><div style="font-weight: 600; font-size: 15px">Alerte</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#D64545 · critique</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 96px; border-radius: 14px; background: #F6F7F9; border: 1px solid #D5DAE3; box-sizing: border-box"></div><div style="font-weight: 600; font-size: 15px">Fond</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">#F6F7F9 · page</div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 28px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E1E5EC">
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">TITRES · MANROPE 800</div><div style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 36px; line-height: 1.1; color: #12233F">La relève est assurée.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">TEXTE · INTER 400</div><div style="font-size: 17px; line-height: 1.55">Vos utilisateurs sont débloqués pendant les absences. Vos techniciens retrouvent un dossier propre à leur retour.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">TECHNIQUE · JETBRAINS MONO</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.7">TCK-2026-0412<br>statut : résolu<br>durée : 3 min 12 s</div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 24px; flex-grow: 1">
+    <div style="border-radius: 20px; background: #FFFFFF; border: 1px solid #E1E5EC; overflow: hidden; display: flex; flex-direction: column">
+      <div style="background: #12233F; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="14" fill="#24406B"></rect><path d="M15 18 L26 28 L15 38" stroke="#9DB3DA" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M28 18 L39 28 L28 38" stroke="{{accent}}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span style="font-family: Manrope, sans-serif; font-weight: 800; color: #FFFFFF; font-size: 18px">Relève</span>
+          <span style="padding: 3px 8px; border-radius: 6px; background: #24406B; color: #E3E8F1; font-size: 12px; font-weight: 600">Assistant IA</span>
+        </div>
+        <div style="align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: {{accent}}; color: #12233F; font-size: 12px; font-weight: 600">Relève active · équipe de retour à 8 h 30</div>
+      </div>
+      <div style="padding: 18px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; background: #F6F7F9">
+        <div style="align-self: flex-end; max-width: 300px; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: #12233F; color: #FFFFFF; font-size: 14px; line-height: 1.45">Outlook me redemande mon mot de passe et refuse de se connecter.</div>
+        <div style="align-self: flex-start; max-width: 320px; padding: 10px 14px; border-radius: 14px 14px 14px 4px; background: #FFFFFF; border: 1px solid #E1E5EC; font-size: 14px; line-height: 1.45">Votre compte est verrouillé après 5 tentatives. Je peux demander son déblocage au technicien d'astreinte.</div>
+        <div style="align-self: flex-start; width: 320px; box-sizing: border-box; padding: 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #D5DAE3; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-weight: 600; font-size: 14px">Déblocage de votre compte</div>
+          <div style="font-size: 13px; color: #4A5468">Validation par un technicien · environ 5 min</div>
+          <button style="height: 44px; border-radius: 10px; border: none; background: {{accent}}; color: #12233F; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Envoyer la demande</button>
+        </div>
+      </div>
+      <div style="padding: 12px; border-top: 1px solid #E1E5EC; display: flex; gap: 8px; align-items: center">
+        <label style="flex-grow: 1; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Votre message</span><input placeholder="Écrivez votre message" style="flex-grow: 1; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #D5DAE3; font-family: Inter, sans-serif; font-size: 14px"></label>
+        <button style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #12233F; background: #FFFFFF; color: #12233F; font-family: Inter, sans-serif; font-weight: 600; font-size: 13px">Parler à un technicien</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="border-radius: 20px; background: #FFFFFF; border: 1px solid #E1E5EC; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 20px; color: #12233F">À valider</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A5468">Ctrl K · rechercher</span></div>
+        <div style="padding: 16px; border-radius: 14px; background: #F6F7F9; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-weight: 600; font-size: 15px">Déblocage de compte · julie.martin@client.fr</div>
+          <div style="font-size: 14px; color: #4A5468; line-height: 1.5">Diagnostic : 5 échecs de connexion depuis 07:52, IP habituelle, aucun signe de compromission.</div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end"><button style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid #D5DAE3; background: #FFFFFF; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px; color: #1A1F2B">Refuser</button><button style="height: 40px; padding: 0 16px; border-radius: 10px; border: none; background: #12233F; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Valider</button></div>
+        </div>
+      </div>
+      <div style="border-radius: 20px; background: #12233F; color: #FFFFFF; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 10px"><span style="width: 10px; height: 10px; border-radius: 999px; background: {{accent}}"></span><span style="font-weight: 600; font-size: 15px">Incident probable · Exchange Online</span></div>
+        <div style="font-size: 14px; line-height: 1.5; color: #C9D4E8">Alerte Centreon à 08:02, 7 demandes utilisateurs regroupées dans le ticket parent TCK-2026-0418.</div>
+      </div>
+      <div style="border-radius: 20px; background: #FFFFFF; border: 1px solid #E1E5EC; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 20px; color: #12233F">Pendant votre absence</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <div><div style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 32px; color: #1E9E6A">23</div><div style="font-size: 13px; color: #4A5468">résolues</div></div>
+          <div><div style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 32px; color: #12233F">4</div><div style="font-size: 13px; color: #4A5468">en attente</div></div>
+          <div><div style="font-family: Manrope, sans-serif; font-weight: 800; font-size: 32px; color: #12233F">2</div><div style="font-size: 13px; color: #4A5468">escaladées</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#F2A93B","options":["#F2A93B","#F5C451","#E8893A"]},"$preview":{"width":1200,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#F2A93B' };
+  }
+}
+</script>
+</body>
+</html>
