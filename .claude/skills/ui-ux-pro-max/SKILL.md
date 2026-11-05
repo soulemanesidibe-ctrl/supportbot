@@ -13,9 +13,21 @@ Ce skill capture les contraintes de design **propres à SupportBot**. Pour l'ex�
 2. Réutiliser les composants et tokens existants du design system : ne jamais réinventer un bouton, une carte ou un champ déjà présent.
 3. Si l'écran est visible côté client final (widget intégré chez une ESN ou une DSI), prévoir le marquage blanc : couleurs et logo du client passent par des variables CSS, jamais par des valeurs en dur.
 
-## Charte graphique
+## Charte graphique : direction B « Signal »
 
-Les tokens de couleur et de typographie sont définis dans `docs/04-marque-et-DA.md`. Aucun hex brut hors de ces tokens dans un composant : passer par des variables CSS (`var(--c-*)`).
+Source de vérité : `docs/04-marque-et-DA.md`, section « Direction retenue ». Aucun hex brut hors de ces tokens dans un composant : passer par des variables CSS (`var(--c-*)`).
+
+```
+Sombre (console par défaut) : bg #0E0F11 · surface #17181B · surface-2 #1F2125 · border #26282D
+                              text #EDEEF0 · text-soft #9A9EA6 · signal #3DDC97 · relief #F2B33D · danger #F0605A
+Clair (widget par défaut)   : bg #F4F5F6 · surface #FFFFFF · surface-2 #ECEEF0 · border #DCDFE3
+                              text #0E0F11 · text-soft #4A4F57 · signal #138A5A · relief #F2B33D · danger #C93B36
+```
+
+Polices : **Geist** (titres 600 à 700, texte 400 à 500), **Geist Mono** (identifiants de tickets, journaux, chiffres des tableaux). Rayons : 12px pour les cartes, 10px pour les boutons et champs. Icônes : Phosphor, épaisseur unique.
+
+- Vert signal en thème clair : aplat avec texte foncé uniquement, jamais en texte sur fond blanc.
+- La console s'ouvre en sombre, le widget salarié en clair ; les deux thèmes existent partout.
 
 ## Contraintes non négociables
 

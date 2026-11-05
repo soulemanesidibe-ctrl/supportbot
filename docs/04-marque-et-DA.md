@@ -57,7 +57,31 @@ Planche visuelle en ligne : **[Relève IA · Identité visuelle](https://claude.
 
 Toutes les polices sont gratuites (Google Fonts). Chaque direction garde ses obligations : badge « Assistant IA », badge « Relève active », bouton « Parler à un technicien ».
 
-Le détail ci-dessous correspond à la direction A, proposée au départ.
+### Direction retenue : **B · Signal** (décision du 5 novembre 2026)
+
+- **Console technicien et back-office ESN** : thème sombre par défaut (outil d'ingénieur), thème clair disponible.
+- **Widget des salariés** : thème clair par défaut (public non technicien), thème sombre disponible.
+- **Symbole** : ligne de signal qui se stabilise, point vert en bout de ligne. **Logotype** : « relève. » en minuscules, Geist 600, point final vert.
+- **Polices** : Geist (titres et texte), Geist Mono (identifiants, journaux, chiffres).
+
+#### Tokens
+
+| Token | Sombre | Clair | Usage |
+|---|---|---|---|
+| `--c-bg` | `#0E0F11` | `#F4F5F6` | Fond de page |
+| `--c-surface` | `#17181B` | `#FFFFFF` | Cartes, panneaux |
+| `--c-surface-2` | `#1F2125` | `#ECEEF0` | Survols, bulles de l'IA |
+| `--c-border` | `#26282D` | `#DCDFE3` | Bordures |
+| `--c-text` | `#EDEEF0` | `#0E0F11` | Texte principal |
+| `--c-text-soft` | `#9A9EA6` | `#4A4F57` | Texte secondaire (≥ 4.5:1) |
+| `--c-signal` | `#3DDC97` | `#138A5A` | Accent : remplissage des boutons en sombre ; texte et liens en clair |
+| `--c-on-signal` | `#0E0F11` | `#FFFFFF` | Texte posé sur l'accent |
+| `--c-relief` | `#F2B33D` | `#F2B33D` | Badge « Relève active » (texte `#0E0F11` dessus) |
+| `--c-danger` | `#F0605A` | `#C93B36` | Incidents et erreurs critiques uniquement |
+
+En thème clair, le vert `#3DDC97` ne sert qu'en **aplat avec du texte foncé dessus**, jamais en texte sur fond blanc (contraste insuffisant).
+
+Le détail ci-dessous (concept, palette) correspond à la direction A, proposée au départ ; il est conservé pour mémoire.
 
 ### Concept (direction A)
 

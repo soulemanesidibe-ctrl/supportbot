@@ -14,6 +14,7 @@
 | **Chaîne d'approvisionnement** | Paquet npm malveillant ou typosquatté dans le projet | Élevée |
 | **Fuite du prompt système et des données** | L'agent révèle ses consignes, ou des données personnelles d'autres utilisateurs | Élevée |
 | **Empoisonnement de la base de connaissance** | Une fiche piégée oriente les réponses de l'agent | Élevée |
+| **Détournement de la suppléance** | Un attaquant ayant volé une session se désigne valideur suppléant, ou une délégation « temporaire » n'est jamais révoquée | Critique |
 | **Abus d'API** | Bourrage d'identifiants, énumération, épuisement du quota Mistral | Moyenne |
 | **Indisponibilité** | Perte de la base, panne d'un fournisseur | Moyenne |
 
@@ -41,6 +42,7 @@
 | Flux OAuth corrects (PKCE, état, jetons courts, rotation) | `configuring-oauth2-authorization-flow`, `testing-oauth2-implementation-flaws` |
 | Permissions Graph minimales, revues à chaque ajout | `performing-oauth-scope-minimization-review` |
 | Actions exécutées avec l'identité du technicien qui valide, droits temporaires | `implementing-just-in-time-access-provisioning` |
+| Suppléance : délégation nominative et datée, réauthentification MFA, notification de l'administrateur, révocation, revue périodique des délégations actives | `implementing-just-in-time-access-provisioning`, `performing-access-review-and-certification`, `testing-for-business-logic-vulnerabilities` |
 | Recommandations d'accès conditionnel pour les techniciens des clients | `implementing-conditional-access-policies-azure-ad` |
 | Repérer qu'une application (y compris la nôtre) est détournée | `detecting-suspicious-oauth-application-consent`, `detecting-anomalous-authentication-patterns` |
 | Clés des connecteurs chiffrées (Supabase Vault), rotation, jamais dans les journaux | `implementing-api-key-security-controls`, `implementing-aes-encryption-for-data-at-rest` |
