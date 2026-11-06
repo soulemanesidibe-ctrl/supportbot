@@ -8,6 +8,7 @@ Ce document dit **ce qui protège le code de Relève avant même qu'il tourne**,
 |---|---|---|---|---|
 | M04 secret dans le dépôt | Détection de secrets, règles propres à Supabase, Postgres, Mistral, connecteurs | gitleaks | À chaque commit (local) et à chaque push (CI, historique complet) | Oui |
 | M03, M23 contournement de la RLS | `service_role` lu et utilisé en un seul endroit, après vérification d'identité | Semgrep (règles du projet) | Avant chaque push (local) et en CI | Oui |
+| M34 données réelles de pilote dans le dépôt public | Chemins et formats d'export refusés hors des zones synthétiques ; e-mails, IP et téléphones réels refusés dans ces zones ; la valeur trouvée n'est jamais affichée | `scripts/check-no-real-data.sh` | Avant chaque commit (local) et à chaque push (CI) | Oui |
 | M04 secret dans un journal | Pas de secret écrit dans un journal ou un message d'erreur, y compris après transformation | Semgrep (analyse de flux) | Idem | Oui |
 | M01, M07 injection dans le prompt système | Prompt système statique, données externes dans un message `user` | Semgrep | Idem | Oui |
 | M01, M05, M12 action sans validation | Une capacité de connecteur ne s'appelle que par deux portes, qui vérifient avant d'agir | Semgrep | Idem | Oui |
@@ -89,18 +90,20 @@ Pour les outils qui ne sont pas des hooks :
 ```bash
 semgrep --test --metrics=off security/semgrep   # tests des règles du projet
 scripts/test-gitleaks-config.sh                 # tests de la configuration gitleaks (variable GITLEAKS si besoin)
+scripts/test-check-no-real-data.sh              # tests du garde-fou contre les données réelles de pilote
 ```
 
 ## 6. Réglages GitHub à faire de votre côté
 
-Je n'ai pas accès aux réglages du dépôt depuis cette session (l'accès aux réglages Actions est refusé). Voici la liste, à adapter selon votre offre GitHub (certaines options n'existent pas sur l'offre gratuite pour un dépôt privé) :
+Le dépôt est **public** : les fonctions de sécurité de GitHub ci-dessous sont gratuites. Je n'ai pas accès aux réglages du dépôt depuis cette session (l'accès aux réglages Actions est refusé), donc rien de ceci n'est fait :
 
 - [ ] **Actions, Général, permissions des workflows** : « Read repository contents », et décocher « Allow GitHub Actions to create and approve pull requests ».
+- [ ] **Actions, Général, pull requests de forks** : exiger l'approbation pour **tous** les contributeurs extérieurs (un dépôt public reçoit des forks).
 - [ ] **Actions, Général** : si l'option « Require actions to be pinned to a full-length commit SHA » est proposée, l'activer.
-- [ ] **Sécurité du code** : activer les alertes Dependabot et les mises à jour de sécurité ; activer l'analyse des secrets et la protection au push si l'offre le permet.
-- [ ] **Protection de `main`** (ou jeu de règles, selon l'offre) : pull request obligatoire, contrôles requis `Secrets (gitleaks)`, `Analyse statique (Semgrep)`, `Workflows GitHub (actionlint, zizmor)`, `Dépendances (...)`, `Inventaire des composants (SBOM)`, interdiction du force-push et de la suppression. N'exiger la revue des propriétaires de code (`CODEOWNERS`) qu'à l'arrivée d'une deuxième personne : on ne peut pas approuver sa propre pull request.
-- [ ] **Optionnel, Snyk** : créer un compte gratuit, ajouter le secret de dépôt `SNYK_TOKEN`. Sans lui, les autres contrôles de dépendances fonctionnent.
-- [ ] **Optionnel, CodeQL** : possible sur un dépôt public ou avec GitHub Advanced Security ; ajouter la variable de dépôt `ENABLE_CODEQL=true`.
+- [ ] **Sécurité du code** : activer les alertes Dependabot et les mises à jour de sécurité, **l'analyse des secrets avec la protection au push** (elle refuse le push d'un secret connu avant qu'il n'arrive), et le **signalement privé des vulnérabilités**.
+- [ ] **CodeQL** : ajouter la variable de dépôt `ENABLE_CODEQL=true` (Paramètres, Secrets et variables, Actions, Variables). Le job est prêt et sauté tant que la variable est absente.
+- [ ] **Protection de `main`** (jeu de règles) : pull request obligatoire, contrôles requis `Secrets (gitleaks)`, `Analyse statique (Semgrep)`, `Workflows GitHub (actionlint, zizmor)`, `Dépendances (npm audit, OSV, GuardDog, Snyk)`, `Inventaire des composants (SBOM)`, interdiction du force-push et de la suppression. N'exiger la revue des propriétaires de code (`CODEOWNERS`) qu'à l'arrivée d'une deuxième personne : on ne peut pas approuver sa propre pull request.
+- [ ] **Optionnel, Snyk** : compte gratuit puis secret de dépôt `SNYK_TOKEN`. Sans lui, les autres contrôles de dépendances fonctionnent.
 
 ## 7. Si un secret fuite
 
@@ -114,17 +117,21 @@ Je n'ai pas accès aux réglages du dépôt depuis cette session (l'accès aux r
 - **Jeton Snyk hors « environnement » GitHub** (relevé par zizmor en mode auditeur) : le jeton ne sert qu'à lancer des scans et est optionnel ; un environnement dédié n'est pas garanti sur une offre gratuite.
 - **GuardDog est informatif** tant que le premier lot de dépendances n'a pas été trié (il signale aussi des comportements légitimes). À rendre bloquant avec une liste d'exceptions justifiées.
 - **Les jeux de règles du registre Semgrep ne sont pas épinglés** : ils évoluent sans que nous le décidions. Nos propres règles, elles, sont versionnées et testées.
-- **Le dépôt est privé** : pas de CodeQL ni d'onglet « Code scanning » sans offre adaptée ; les rapports Semgrep et le SBOM sont conservés comme artefacts de CI.
+- **Le dépôt est public** (menaces M34 et M40) :
+  - les **journaux de CI sont lisibles de tous** : aucun script n'y affiche de valeur sensible, et le garde-fou contre les données de pilote n'affiche que le fichier, la ligne et le type de donnée ;
+  - les pull requests de forks s'exécutent sans accès aux secrets (`pull_request`, jamais `pull_request_target`, ce que zizmor surveille) ;
+  - **l'historique est définitif** : tout commit publié peut déjà avoir été copié. L'historique ne contient aucun secret (gitleaks), mais il contient l'adresse e-mail professionnelle de l'auteur du premier commit et des documents commerciaux (marché, modèle économique, go-to-market, synergies, conditions envisagées pour les revendeurs). Ce qui doit rester public est une **décision du fondateur** ;
+  - le modèle de menace est public : il ne doit jamais être la seule défense (la sécurité ne repose pas sur le secret de l'architecture).
 - **Dependabot npm** sera ajouté avec le premier `package-lock.json`.
 - **Pas de test de la CI par un commit volontairement fautif sur GitHub** : les preuves de blocage sont les tests exécutés localement et les auto-tests exécutés en CI (§ 9).
 
 ## 9. État des lieux à la fin de J0
 
-**Vérifié sur GitHub** (exécution réelle des deux workflows sur la branche de travail, toutes les étapes vertes) : gitleaks sur les 17 commits, avec le test de configuration ; 15 tests de règles Semgrep, contrôle des exceptions, scan de 21 fichiers avec 578 règles chargées, 0 résultat ; actionlint et zizmor ; SBOM CycloneDX produit et analysé par Grype (0 composant, 0 faille, puisqu'il n'y a pas encore de dépendances).
+**Vérifié sur GitHub** (exécution réelle des deux workflows sur la branche de travail, toutes les étapes vertes, y compris à la dernière exécution, garde-fou contre les données de pilote compris) : gitleaks sur les 17 commits, avec le test de configuration ; 15 tests de règles Semgrep, contrôle des exceptions, scan de 21 fichiers avec 578 règles chargées, 0 résultat ; actionlint et zizmor ; SBOM CycloneDX produit et analysé par Grype (0 composant, 0 faille, puisqu'il n'y a pas encore de dépendances).
 
 **Vérifié en local, avec preuve de blocage** : le hook gitleaks refuse un commit contenant une fausse clé Supabase ; le hook Semgrep refuse un fichier qui lit la clé `service_role` ; le contrôle des exceptions refuse trois cas (exception sans justification, sans règle nommée, ou dans un fichier non prévu) ; l'installateur refuse une archive dont l'empreinte diffère et un hôte inattendu ; l'installation avec `--require-hashes` refuse un fichier de verrouillage altéré ; sur un projet jetable, `npm audit` et OSV-Scanner réussissent sur une dépendance saine et **échouent** sur `lodash@4.17.20`.
 
-**Non vérifié** : les étapes de dépendances n'ont pas tourné **sur GitHub** (pas de `package-lock.json`) ; Dependabot n'a pas encore ouvert de pull request ; Snyk et CodeQL ne sont pas activés ; les réglages GitHub du § 6 ne sont pas faits ; les règles Semgrep n'ont jamais été exécutées sur du vrai code applicatif (il n'y en a pas encore), seulement sur leurs fixtures.
+**Non vérifié** : les étapes de dépendances n'ont pas tourné **sur GitHub** (pas de `package-lock.json`) ; Dependabot n'a pas encore ouvert de pull request ; Snyk et CodeQL ne sont pas activés (CodeQL : une variable à ajouter par vous) ; les réglages GitHub du § 6 ne sont pas faits ; le garde-fou contre les données de pilote n'a jamais vu de vraie donnée de pilote, seulement des cas fabriqués (et ne peut pas reconnaître un nom de personne ou un nom de machine) ; les règles Semgrep n'ont jamais été exécutées sur du vrai code applicatif (il n'y en a pas encore), seulement sur leurs fixtures.
 
 ## Sources
 
