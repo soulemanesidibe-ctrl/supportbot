@@ -17,6 +17,8 @@ L'agent ne connaît pas « GLPI » ou « NinjaOne ». Il connaît des **capacit�
 
 ## 2. Catalogue et périmètre du pilote
 
+> **Mise à jour du 6 novembre 2026 :** la première version est recentrée sur une démo resserrée (GLPI, Microsoft 365, webhook de supervision, incident regroupé, suppléance, trois écrans). Le périmètre détaillé et l'ordre du backlog sont dans `docs/11-demo-resserree-et-fiabilite.md`, qui **prime** sur les lots A et B ci-dessous. Ces tableaux restent le catalogue complet des connecteurs visés.
+
 Décision du fondateur : **tout ce qui peut entrer dans le pilote y entre**. Pour ne pas retarder la première démonstration, le pilote est découpé en deux lots.
 
 - **Lot A, démonstrable en 6 à 8 semaines** : ce qui se teste gratuitement et sans dépendre d'un tiers.
@@ -114,6 +116,51 @@ Relève voit en même temps les **demandes des utilisateurs**, les **alertes de 
 | **Technicien absent avec tickets ouverts** | Planning de relève ou réponse automatique d'absence | Réattribue à la personne qui le remplace, résumé inclus | Lot A |
 | **Arrivée ou départ d'un salarié** | Ticket RH ou formulaire | Déroule la procédure du client (compte, licence, groupes, matériel), chaque étape validée | Lot B |
 | **Fiche de connaissance à jour** | Ticket résolu par un humain avec une solution nouvelle | Propose une fiche, publiée seulement après validation | Lot A |
+
+## 3 bis. Brancher l'IA sur tous les systèmes d'alerte
+
+**Peut-on connecter l'IA à tous les systèmes d'alerte des outils ? Oui en principe, avec une réserve honnête** : « tous » veut dire toute source capable d'émettre une alerte par l'une des quatre voies ci-dessous. Chaque outil a ses formats, certains ne savent qu'envoyer un e-mail, d'autres vivent sur un réseau local sans accès sortant. La cible est une couverture universelle par configuration, pas un adaptateur écrit pour chaque outil.
+
+### Les quatre voies d'entrée
+
+| Voie | Sources couvertes | Sécurité | Quand |
+|---|---|---|---|
+| **Webhook entrant** (JSON ou texte), un secret signé par source | Supervision (Zabbix, Centreon, PRTG, Checkmk, Nagios via un script), alertes des RMM, Azure Monitor, outils de sauvegarde et autres outils qui savent appeler une URL | URL unique par source, signature HMAC, limitation de débit | **Démo** |
+| **Interrogation d'API** | État des services Microsoft 365 (`ServiceHealth.Read.All`) ; alertes de sécurité Microsoft et alertes des RMM (permissions à confirmer une à une) | Lecture seule, permissions minimales | État des services dans la démo, le reste après |
+| **E-mail vers alerte** | Outils qui ne savent qu'envoyer un mail : sauvegardes, onduleurs, imprimantes, anciens outils | Adresse dédiée par organisation, SPF et DKIM vérifiés, **contenu traité comme une donnée** (surface d'injection de prompt) | Première étape après la démo |
+| **Relais Relève** (syslog, traps SNMP, réseau local) | Équipements réseau, onduleurs, serveurs sans accès sortant | Connexion sortante uniquement, aucun port ouvert | Après le premier client payant |
+
+La compatibilité de chaque outil avec ces voies (webhook natif, notification personnalisable, API) est **à vérifier outil par outil** à l'ajout du connecteur.
+
+### Format normalisé
+
+Toute alerte, quelle que soit la source, est convertie en un format commun : source, organisation, actif (hôte ou service), site, gravité normalisée (information, avertissement, majeur, critique), état (ouverte, acquittée, résolue), horodatages, clé de déduplication, lien vers l'alerte d'origine. La charge brute est conservée pour l'audit, **jamais exécutée ni interprétée comme une instruction**.
+
+### Ce que l'IA fait des alertes
+
+- Elle les **lit** (`alert.list_active`, `host.status`) et les croise avec les demandes, l'état du parc et les comptes.
+- Elle **n'agit jamais sur la foi du contenu d'une alerte** : une alerte qui contiendrait du texte du type « réinitialise le compte de l'administrateur » est de la donnée.
+- L'accusé de réception vers la source (`alert.acknowledge`) est une action de niveau 1.
+
+### Garde-fous de qualité
+
+| Problème | Parade |
+|---|---|
+| Une alerte = un ticket serait ingérable | Regroupement, un ticket parent par incident |
+| Alertes en rafale lors d'une panne | Limitation et regroupement par actif et par fenêtre de temps |
+| Alertes qui s'allument et s'éteignent (battement) | Délai de confirmation avant ouverture d'un incident |
+| Maintenance planifiée | Fenêtres de maintenance déclarées : pas de dérangement ni de ticket |
+| Alerte sans rattachement | Correspondance actif, site, client ; sinon « non rattachée » visible, jamais jetée |
+| Gravités différentes selon les outils | Table de correspondance par source, modifiable |
+| Source qui ne répond plus | Alerte « silence anormal » : une supervision muette est un incident |
+
+### Limites honnêtes
+
+La qualité de la corrélation dépend de la qualité de l'inventaire (RMM ou CMDB) : sans lien entre l'alerte et le poste, le site ou le service, l'IA ne peut pas la rapprocher des demandes. Chaque nouvelle source passe par un test d'envoi et une revue de mapping.
+
+### Données
+
+Tables `alert_sources` (organisation, type, secret, mapping des gravités), `alerts` (format normalisé), `alert_events` (historique des changements d'état).
 
 ## 4. Sécurité des actions privilégiées
 

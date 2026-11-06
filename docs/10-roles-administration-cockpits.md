@@ -122,7 +122,9 @@ Principe tiré de Microsoft 365 Lighthouse et des bonnes pratiques ITSM : **chaq
 | Performance | Résolution au premier contact, délai moyen de résolution, respect des SLA avec **causes des dépassements**, taux de réouverture, taux d'escalade, satisfaction |
 | Équipe | Charge par technicien, astreintes, suppléances actives |
 | Accès | Relations et assignations qui expirent, revues trimestrielles à faire |
-| **Rapport mensuel par client** | Généré automatiquement, relu puis envoyé : ce que Relève et l'équipe ont traité. C'est la preuve de valeur qui justifie la facture de l'ESN |
+| **Rapport mensuel par client** | Généré automatiquement, relu puis envoyé, **à la marque de l'ESN** : ce que Relève et l'équipe ont traité, avec un bloc « prochaine étape ». C'est la preuve de valeur qui justifie la facture de l'ESN |
+| **Opportunités et revenu** | Clients sans relève active, pilotes qui se terminent, clients ayant connu des absences ; marge de l'ESN sur Relève. Voir `docs/11` § 3 (ESN revendeur) |
+| **Qualité de Relève** | Indicateurs réels de fiabilité avec leur effectif (`docs/11` § 2) |
 
 ### 5.3 Technicien (ESN ou interne) : « Quoi faire maintenant ? »
 
