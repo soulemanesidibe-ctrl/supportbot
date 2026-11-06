@@ -112,6 +112,7 @@ Chaque story porte une priorité. Les critères d'acceptation des P0 sont en cas
 | T9 | reprendre une conversation escaladée sans demander à l'utilisateur de répéter | gagner du temps | P0 |
 | T10 | une palette de commandes `Ctrl K` | aller vite au clavier | P1 |
 | T11 | valider depuis mon téléphone (console utilisable sur mobile ; installation en PWA) | rester d'astreinte sans ordinateur | P1 |
+| T12 | **connecter mon compte Microsoft** une fois (bouton « Connecter mon compte Microsoft » dans mon profil), et voir si ce lien est actif | que les actions de niveau 1 s'exécutent avec **mon** compte d'administration, sans compte partagé | P0 |
 
 **Critères d'acceptation**
 
@@ -119,6 +120,7 @@ Chaque story porte une priorité. Les critères d'acceptation des P0 sont en cas
 - **T2** : [ ] quatre boutons et un motif en un clic (source manquante, mauvaise version, hors périmètre, sur-confiance, autre) ; [ ] une note est rattachée au technicien, horodatée, **non modifiable** ; [ ] une note « Dangereuse » remet **immédiatement** la catégorie en conseil seul (§ 10.4).
 - **T3** : [ ] l'écran montre l'action exacte (capacité, cible, paramètres) ; [ ] il indique si la vérification d'identité a réussi, et comment ; [ ] valider un autre contenu que celui affiché est **impossible** (empreinte, § 9.2) ; [ ] un technicien ne peut pas valider une action dont **il est la cible** ni une action qu'il a lui-même demandée.
 - **T4** : [ ] l'exécution utilise le jeton délégué du valideur ; [ ] si le valideur n'a pas les droits Microsoft 365 suffisants, l'action échoue **sans repli** sur un autre compte.
+- **T12** : [ ] la connexion est une **connexion Microsoft normale** (fenêtre de l'éditeur, MFA compris) : Relève ne voit **jamais** le mot de passe et ne **stocke aucun jeton** ; [ ] Relève retient seulement qui est lié (locataire, identifiant d'objet, nom d'utilisateur) ; [ ] seul un technicien habilité de l'organisation peut lier son compte, et seulement au locataire du connecteur ; [ ] le lien se révoque (départ du technicien : révocation **avec** ses assignations, ses délégations et ses places dans les chaînes de valideurs) ; [ ] **aucun compte d'administration partagé** et aucune permission d'application en écriture (menaces M05, invariant I1).
 - **T5/T6** : invariants I1 à I12 de `docs/threat-model.md` § 5. En particulier : [ ] créer une délégation exige une session réauthentifiée par MFA récemment ; [ ] durée maximale 30 jours, périmètre limité aux catégories choisies ; [ ] une délégation expirée ou révoquée **cesse d'agir au moment de l'exécution**, même si l'action était déjà validée ; [ ] l'administrateur du client et le valideur remplacé sont notifiés.
 - **T8** : [ ] regroupe par client ce qui a été résolu par Relève, ce qui attend une validation, ce qui a été escaladé, et ce à surveiller ; [ ] chaque élément ouvre la conversation ou l'action concernée.
 
@@ -454,6 +456,7 @@ Les migrations sont écrites en J2 ; **chacune doit être appliquée par le fond
 |---|---|---|---|---|
 | **Organisations** | `organizations` | `type` (`platform`, `partner`, `client`), nom, `slug`, état, `labels`, `plan`, `autonomy_default`, `branding`, `created_via_partner_id` (ESN créatrice, pour la facturation) | membres ; ESN via `partner_can_access` | `admin` (MFA récent) |
 | | `memberships` | utilisateur, organisation, **rôle** (les 10 rôles), état | soi-même ; `org_admin` et `partner_admin` de l'organisation | `admin` |
+| | `plan_features` | fonctionnalités par offre (jamais de test d'offre en dur dans le code ni le SQL) | tous les connectés | migration |
 | | `directory_users` | salariés importés : e-mail, nom, service, e-mail du manager, source (`csv`, `entra`) | `org_admin` ; techniciens assignés | `admin` (import audité) |
 | **Accès** | `partner_relationships` | ESN, client, **rôles approuvés**, état (`active`, `reduced`, `suspended`, `revoked`, `expired`), `created_by_partner`, `confirmed_at`, `expires_at` (12 mois maximum), `revoked_at` | les deux parties | création par l'ESN ; confirmation, réduction et **révocation par le client seul** |
 | | `partner_assignments` | relation, technicien, rôle, `starts_at`, `ends_at`, `revoked_at` | `partner_admin`, le technicien, `org_admin` du client | `partner_admin` |
@@ -475,6 +478,8 @@ Les migrations sont écrites en J2 ; **chacune doit être appliquée par le fond
 | | `alert_events` | historique des changements d'état | idem | idem |
 | | `asset_links` | motif d'actif (hôte, service) vers **catégorie** de demande et site : c'est ce qui permet de rapprocher une alerte des demandes. Sans lien, l'alerte reste « non rattachée » | `org_admin`, `partner_admin` | idem |
 | **Actions** | `action_requests` | capacité, cible, paramètres, **`params_hash`**, état (§ 9.1), vérification d'identité, valideur effectif, délégation utilisée, `idempotency_key`, expiration | techniciens concernés, demandeur | `chat` (création), `actions` (transitions) |
+| | `autonomy_settings` | organisation, catégorie d'action, **niveau** (0 ou 1 ; le 2 n'existe pas), modifié par ; **la base refuse le niveau 1 sans second facteur vérifié** au moment du changement | `org_admin`, `partner_admin` | `admin` (MFA récent) |
+| | `microsoft_identities` | organisation, technicien, connecteur, **locataire, identifiant d'objet, nom d'utilisateur** du compte Microsoft lié, dates de liaison, d'usage et de révocation. **Aucun jeton, aucun secret** | le technicien, `org_admin` | `admin` |
 | | `approval_policies` | catégorie, **chaîne ordonnée** de valideurs, délai | `org_admin`, `partner_admin` | `org_admin` |
 | | `approval_delegations` | délégant, délégué, catégories, début, fin (**≤ 30 jours**, contrainte de base), MFA au moment de la création, révocation | parties, `org_admin` | `admin` (MFA récent) |
 | **Automatisations** | `automation_rules` | déclencheur, conditions, action, **niveau d'autonomie**, plafonds, `dry_run`, version | `org_admin`, `partner_admin` | `org_admin` (MFA récent) |
@@ -569,6 +574,7 @@ Les 12 invariants de suppléance (`docs/threat-model.md` § 5) sont des **critè
 - Au moment de valider, la console demande au valideur une **authentification Microsoft** (fenêtre de connexion, silencieuse si la session existe) pour obtenir un jeton **délégué** aux permissions limitées aux quatre actions. Le jeton est **transmis une fois, utilisé dans la même requête, jamais stocké**. L'exécution a donc lieu pendant la validation : les contrôles d'éligibilité et de délégation sont revérifiés à cet instant (I5).
 - Les permissions déléguées sont limitées par les rôles Entra du valideur lui-même : une escalade de privilège passant par Relève est impossible par construction. **Aucune permission d'application en écriture** (menace M05). Liste des permissions : `docs/permissions-graph.md` (J4), une par une, avec revue de minimisation.
 - Si le valideur n'a pas les droits suffisants, l'action **échoue sans repli** sur un autre compte.
+- **Connecter son compte Microsoft (histoire T12).** Le fondateur a demandé de pouvoir « connecter le compte admin Office afin d'effectuer les actions ». Réponse : chaque technicien valideur connecte **son propre** compte d'administration (une fois), et non un compte commun. Relève ne garde ni mot de passe ni jeton : la table `microsoft_identities` mémorise seulement quel compte Microsoft (locataire, identifiant d'objet, nom d'utilisateur) appartient à quel technicien. À chaque validation, la console redemande un jeton délégué, utilisé dans la même requête, et la fonction `actions` vérifie que l'identifiant d'objet du jeton est **celui du compte lié** à ce technicien. Un compte partagé ou une permission d'application en écriture auraient permis à l'IA, ou à quiconque lui parle, d'agir avec des droits que personne n'a validés : c'est exactement ce que le modèle de menace interdit (M05, I1). Un compte lié à un autre locataire que celui du connecteur est refusé par la base.
 - Le journal indique : qui a demandé, qui a validé, par quelle délégation, quelle vérification d'identité, quel résultat.
 
 ### 9.7 Niveau d'autonomie, arrêt d'urgence
@@ -823,27 +829,33 @@ Définitions de `docs/10` § 6, sans sigle à l'écran. **Aucun pourcentage sans
 
 Un jalon est une série de commits suivie d'un arrêt pour votre validation. **Chaque migration est signalée : c'est vous qui l'appliquez.** Les skills de sécurité sont cités dans les messages de commit concernés.
 
-**J2 : base de données** (skills : `supabase`, `implementing-gdpr-data-protection-controls`, `testing-for-broken-access-control`, `implementing-aes-encryption-for-data-at-rest`)
+**J2 : base de données (livré)** (skills : `supabase`, `implementing-gdpr-data-protection-controls`, `testing-for-broken-access-control`, `implementing-aes-encryption-for-data-at-rest`, `securing-agentic-ai-tool-invocation`)
 
-| # | Commit | Migration |
+Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par domaine (une migration d'une table à la fois n'aurait servi à rien : elles s'appliquent ensemble). **Chacune est appliquée par vous**, dans l'ordre des noms de fichier.
+
+| # | Migration | Contenu |
 |---|---|---|
-| 2.1 | Structure `supabase/`, extensions, schéma des fonctions | 1 |
-| 2.2 | Organisations typées, appartenances, annuaire des salariés | 2 |
-| 2.3 | Fonctions `is_member_of`, `has_role`, `org_has_feature`, `recent_mfa` | 3 |
-| 2.4 | Relations ESN-client, assignations, `partner_can_access` | 4 |
-| 2.5 | Accès d'assistance, invitations, revues d'accès | 5 |
-| 2.6 | Conversations, messages (visibilité), tickets, incidents | 6 |
-| 2.7 | Connecteurs (Vault) | 7 |
-| 2.8 | Base de connaissance, index HNSW, `match_kb_chunks` filtrée par organisation | 8 |
-| 2.9 | Plannings de relève, rapports de passation | 9 |
-| 2.10 | Alertes : sources, fenêtres de maintenance, alertes, événements, `asset_links` | 10 |
-| 2.11 | Actions : `action_requests`, politiques, délégations (contraintes de base) | 11 |
-| 2.12 | Automatisations | 12 |
-| 2.13 | Qualité : notes (insertion seule), portes de catégorie | 13 |
-| 2.14 | Revendeur : prix partenaire, rapports mensuels, usage LLM | 14 |
-| 2.15 | Journal d'audit en insertion seule, purge planifiée | 15 |
-| 2.16 | **Script SQL d'isolation** (SEC-01 à SEC-03, SEC-05 à SEC-07 côté base, SEC-21, SEC-27, SEC-29) | : |
-| 2.17 | Données de démonstration synthétiques : 1 ESN, 2 clients, 20 fiches, salariés, alertes | : |
+| 1 | `20261106100100_fondations` | Extensions, schéma `private` (non exposé), familles et rangs de rôles, masquage des secrets, horodatage |
+| 2 | `20261106100200_acces_et_audit` | Journal d'audit en insertion seule ; organisations typées ; appartenances ; annuaire ; relations ESN-client ; assignations ; accès d'assistance ; invitations ; revues d'accès ; fonctions `is_member_of`, `has_role`, `partner_can_access`, `recent_mfa` |
+| 3 | `20261106100300_support_et_connecteurs` | Connecteurs (secrets dans Vault) ; conversations ; messages avec visibilité ; tickets ; incidents |
+| 4 | `20261106100400_connaissance` | Fiches, morceaux, index HNSW, `match_kb_chunks` filtrée par organisation, fiches validées par un humain seulement |
+| 5 | `20261106100500_releve` | Plannings de relève, rapports de passation |
+| 6 | `20261106100600_alertes` | Sources, fenêtres de maintenance, `asset_links`, alertes dédupliquées, événements |
+| 7 | `20261106100700_actions` | Niveaux d'autonomie, chaînes de valideurs, délégations, `action_requests` (empreinte calculée par la base), compte Microsoft du valideur, départ d'un technicien |
+| 8 | `20261106100800_automatisations_et_qualite` | Règles et exécutions, notes (insertion seule), portes de catégorie, mode ombre imposé par la base, retour arrière automatique, barres de passage |
+| 9 | `20261106100900_revendeur_et_usage` | Prix partenaire et marge (invisibles du client), rapports mensuels, usage du modèle |
+| 10 | `20261106101000_conservation` | Purge planifiable (conversations, charges d'alerte), expirations |
+
+| # | Commit livré |
+|---|---|
+| 2.A | Migrations 1 et 2 + banc d'essai local et script d'isolation |
+| 2.B | Migrations 3 à 6 |
+| 2.C | Migration 7 + 70 vérifications du circuit des actions + test de mutation reproductible |
+| 2.D | Migrations 8 à 10 + tests ; test de mutation étendu à **33 défenses** |
+| 2.E | Données de démonstration synthétiques (1 ESN, 2 clients, 22 fiches) + leur test d'isolation |
+| 2.F | Workflow GitHub « Base de données » (tests à chaque envoi, mutations avant fusion et chaque semaine) |
+
+**Résultat** : 277 vérifications sur un PostgreSQL 16 jetable avec pgvector ; **33 mutations sur 33** détectées par le test prévu pour elles (on casse une défense dans une copie, le bon test doit échouer).
 
 **J3 : orchestrateur** (skills : `defending-llms-with-guardrails`, `securing-agentic-ai-tool-invocation`, `implementing-llm-guardrails-for-security`, `detecting-indirect-prompt-injection`, `testing-for-system-prompt-leakage`, `performing-serverless-function-security-review`, `implementing-api-rate-limiting-and-throttling`)
 
@@ -868,7 +880,7 @@ Un jalon est une série de commits suivie d'un arrêt pour votre validation. **C
 | 4.1 | `docker/glpi` et connecteur GLPI |
 | 4.2 | Connecteur « démo » (sans accès réseau) |
 | 4.3 | Microsoft 365 : diagnostic, état des services ; `docs/permissions-graph.md` |
-| 4.4 | Microsoft 365 niveau 1 : quatre actions en flux délégué |
+| 4.4 | Microsoft 365 niveau 1 : « Connecter mon compte Microsoft » (T12), quatre actions en flux délégué ; vérification que l'identifiant d'objet du jeton est celui du compte lié |
 | 4.5 | `alerts-ingest` : webhook signé, normalisation, mapping |
 | 4.6 | Déduplication, regroupement, anti-battement, maintenance, « non rattachée », silence |
 | 4.7 | Moteur d'automatisations et règles livrées |
@@ -907,8 +919,8 @@ Un jalon est une série de commits suivie d'un arrêt pour votre validation. **C
 
 | ID | Question | Qui | Proposition par défaut |
 |---|---|---|---|
-| Q1 | **Comment l'identité du technicien d'une ESN agit-elle dans le tenant Microsoft 365 d'un client ?** L'exécution « avec l'identité du valideur » suppose qu'il possède des droits dans ce tenant : relation d'administration déléguée (GDAP, Partner Center) ou compte dans le tenant du client. Dans la démo, tout est dans **un seul tenant de test** | Fondateur, avec l'ESN pilote | Étudier GDAP avant J4 ; `docs/10` § 3.1 exclut les comptes invités créés à la main |
-| Q2 | Que signifie **« débloquer » un compte** dans Entra ID (réactiver un compte désactivé, révoquer les sessions, réinitialiser le mot de passe) ? Le verrouillage intelligent d'Entra expire seul | Technique, J4 | Définir en J4 avec le tenant de test ; sans précision, `user.unlock` = réactiver un compte désactivé |
+| Q1 | **Comment l'identité du technicien d'une ESN agit-elle dans le tenant Microsoft 365 d'un client ?** L'exécution « avec l'identité du valideur » suppose qu'il possède des droits dans ce tenant : relation d'administration déléguée (GDAP, Partner Center) ou compte dans le tenant du client. Dans la démo, tout est dans **un seul tenant de test**. **Réponse du fondateur (6 novembre) :** il faut pouvoir connecter le compte d'administration Office pour effectuer les actions → **fait côté base (T12, § 9.6)** : chaque technicien lie son propre compte, sans compte partagé ni jeton stocké. **Reste ouvert, avant le premier pilote réel :** quel type de compte l'ESN utilisera dans le tenant d'un client (GDAP ou compte dans le tenant) | Fondateur, avec l'ESN pilote | Étudier GDAP avant J4 ; `docs/10` § 3.1 exclut les comptes invités créés à la main |
+| Q2 | Que signifie **« débloquer » un compte** dans Entra ID ? Le verrouillage intelligent d'Entra expire seul. **Décision du fondateur (6 novembre) : « ok » à la proposition** → `user.unlock` = **réactiver un compte désactivé** ; l'attente d'un verrouillage temporaire n'est pas une action. Se finalise en J4 avec le tenant de test | Technique, J4 | Appliquée ; les permissions exactes sont revues une à une dans `docs/permissions-graph.md` |
 
 **À confirmer pour la démo (non bloquantes, j'avance avec la proposition)**
 

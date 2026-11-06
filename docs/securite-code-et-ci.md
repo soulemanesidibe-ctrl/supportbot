@@ -63,7 +63,7 @@ Une première version des règles ne détectait que l'écriture la plus directe 
 
 ## 4. La CI en détail
 
-Deux workflows, déclenchés à chaque push, sur les pull requests vers `main`, à la demande, et chaque lundi.
+Trois workflows, déclenchés à chaque push, sur les pull requests vers `main`, à la demande, et chaque lundi. Le workflow « Base de données » ne se déclenche que si `supabase/` change.
 
 | Workflow | Job | Ce qu'il fait |
 |---|---|---|
@@ -71,6 +71,8 @@ Deux workflows, déclenchés à chaque push, sur les pull requests vers `main`, 
 | | Analyse statique (Semgrep) | Tests des règles, contrôle des exceptions, scan avec les règles du projet et les jeux `p/typescript` et `p/owasp-top-ten` du registre Semgrep |
 | | Workflows GitHub | actionlint (syntaxe) et zizmor (sécurité des workflows) |
 | | CodeQL (optionnel) | Désactivé par défaut (voir § 6) |
+| Base de données | Migrations et tests d'isolation | Applique les migrations sur un **PostgreSQL 16 jetable** du runner (avec pgvector), charge la graine de démonstration, lance les 277 vérifications d'isolation, de circuit des actions, de mode ombre et de conservation. **Jamais sur un projet Supabase** |
+| | Test de mutation | À chaque pull request vers `main`, chaque lundi et à la demande : casse volontairement chacune des 33 défenses dans une copie des migrations et exige que **le test prévu pour elle** échoue (un test qui n'a jamais échoué ne prouve rien) |
 | Chaîne d'approvisionnement | Dépendances | **Dort tant qu'il n'y a pas de `package-lock.json`.** Ensuite : `npm ci` sans scripts, `npm audit`, signatures du registre, OSV-Scanner, GuardDog (informatif), Snyk si un jeton est configuré |
 | | SBOM | Inventaire CycloneDX (Syft) conservé 90 jours, analysé par Grype (échoue sur une faille grave **corrigeable**) |
 
@@ -124,6 +126,12 @@ Le dépôt est **public** : les fonctions de sécurité de GitHub ci-dessous son
   - le modèle de menace est public : il ne doit jamais être la seule défense (la sécurité ne repose pas sur le secret de l'architecture).
 - **Dependabot npm** sera ajouté avec le premier `package-lock.json`.
 - **Pas de test de la CI par un commit volontairement fautif sur GitHub** : les preuves de blocage sont les tests exécutés localement et les auto-tests exécutés en CI (§ 9).
+
+## 8 bis. Ce que les tests de base de données ne prouvent pas
+
+- Ils tournent sur PostgreSQL 16 avec des **imitations** des rôles, de `auth` et de Vault (`supabase/tests/harness/`) : ils prouvent nos migrations et nos politiques, pas la configuration d'un projet Supabase hébergé. À vérifier une fois sur le vrai projet : `recent_mfa` lit le champ `amr` du jeton, dont le format réel est à confirmer ; les schémas exposés doivent se limiter à `public` ; les inscriptions libres doivent être désactivées.
+- Le test de mutation prouve que les 33 défenses listées sont vues, pas que la liste est complète : chaque nouvelle règle de sécurité ajoute sa mutation à `supabase/tests/mutations.json`.
+- Le journal d'audit est en insertion seule pour tous les rôles de la base, mais **le propriétaire du projet Supabase peut toujours le modifier** en désactivant le déclencheur : seule une chaîne de hachage conservée hors de la base (backlog B08) le rendrait vérifiable.
 
 ## 9. État des lieux à la fin de J0
 
