@@ -251,7 +251,7 @@ Le guide *Sécuriser un système IA agentique* (ANSSI, V1.0, octobre 2026) résu
 
 ## 10. État des défenses à la fin de J0
 
-Voir le rapport de jalon (`docs/securite-code-et-ci.md`, section « État des lieux »). En résumé, J0 met en place **M06** (chaîne d'approvisionnement), le socle de **M04** (détection de secrets) et les **règles Semgrep** qui empêcheront dès l'écriture du code les erreurs à l'origine de **M01, M04, M23** et de l'exécution d'action sans validation. Tout le reste est **prévu** et sera construit aux jalons indiqués.
+Voir `docs/securite-code-et-ci.md`, section 9 (ce qui est vérifié sur GitHub, vérifié en local, et non vérifié). En résumé, J0 met en place **M06** (chaîne d'approvisionnement), le socle de **M04** (détection de secrets) et les **règles Semgrep** qui empêcheront dès l'écriture du code les erreurs à l'origine de **M01, M04, M23** et de l'exécution d'action sans validation. Tout le reste est **prévu** et sera construit aux jalons indiqués.
 
 ## Sources
 
