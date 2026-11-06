@@ -1,0 +1,66 @@
+# Tests de la base de données : migrations, isolation entre organisations, circuit des actions, mode ombre, graine de démonstration.
+# Tout tourne sur un PostgreSQL jetable du runner (jamais sur un projet Supabase) : supabase/tests/run.sh.
+# Le test de mutation CASSE volontairement chaque défense dans une copie et vérifie que le BON test le voit.
+# Modèle : docs/threat-model.md ; mode d'emploi : docs/securite-code-et-ci.md.
+name: Base de données
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/database.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/database.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: base-de-donnees-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Migrations et tests d'isolation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer l'extension de recherche vectorielle (pgvector)
+        run: sudo apt-get install --yes --no-install-recommends postgresql-16-pgvector
+
+      - name: Appliquer les migrations sur un PostgreSQL jetable et lancer les tests
+        run: supabase/tests/run.sh
+
+  mutations:
+    name: Test de mutation (chaque défense cassée doit être vue)
+    # Plus long (environ 10 s par défense) : pas à chaque envoi de branche, mais avant toute fusion, chaque semaine et à la demande.
+    if: ${{ github.event_name != 'push' }}
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer l'extension de recherche vectorielle (pgvector)
+        run: sudo apt-get install --yes --no-install-recommends postgresql-16-pgvector
+
+      - name: Casser chaque défense et vérifier que le bon test échoue
+        run: supabase/tests/mutations.sh
