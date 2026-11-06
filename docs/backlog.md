@@ -9,6 +9,7 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B03 | Analyse antivirus des pièces jointes (captures d'écran, fichiers) avant stockage durable | Modèle de menace M20 | J3 ou J7 |
 | B04 | Interface : parcours clairs par rôle (ce que je vois, ce que je peux faire, ce que je ne peux pas faire) et indicateurs de valeur de production à définir avec le fondateur | Consigne du fondateur du 5 novembre 2026 | J1 (spec) puis J5 |
 | B05 | Rendre vérifiable l'engagement « même l'éditeur ne lit pas vos données sans votre accord » : chiffrement applicatif par organisation du contenu des conversations (clés dans Vault), car la RLS n'empêche pas le propriétaire du projet Supabase de lire la base | Modèle de menace M30 | Avant le premier client payant |
+| B06 | Au premier `package-lock.json` : ajouter npm à Dependabot, vérifier sur GitHub les étapes de dépendances (qui n'ont tourné qu'en local), trier les alertes GuardDog puis le rendre bloquant, et revoir la règle `releve-env-bulk-read` pour la configuration Vite si elle gêne | J0 : ces étapes dorment sans fichier de verrouillage | Premier jalon applicatif (J3 ou J5) |
 
 ## Compléments de jalons (message du fondateur du 5 novembre 2026)
 
