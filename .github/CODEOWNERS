@@ -1,0 +1,13 @@
+# Propriétaires du code. Pris en compte par GitHub lorsque la revue des propriétaires est exigée
+# (règle de protection de branche, utile dès qu'une deuxième personne rejoint le projet).
+* @soulemanesidibe-ctrl
+
+# Tout ce qui touche la chaîne de livraison et les garde-fous de sécurité
+/.github/ @soulemanesidibe-ctrl
+/security/ @soulemanesidibe-ctrl
+/scripts/ @soulemanesidibe-ctrl
+/.gitleaks.toml @soulemanesidibe-ctrl
+/.pre-commit-config.yaml @soulemanesidibe-ctrl
+
+# Base de données : migrations et politiques RLS
+/supabase/migrations/ @soulemanesidibe-ctrl

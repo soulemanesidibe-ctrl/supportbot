@@ -1,0 +1,27 @@
+# Mises à jour automatiques des actions GitHub (SHA épinglés) et des outils Python de la CI
+# (versions et empreintes verrouillées). Les dépendances npm de l'application seront ajoutées
+# avec le premier package-lock.json (docs/securite-code-et-ci.md).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /security/requirements
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(security)"
