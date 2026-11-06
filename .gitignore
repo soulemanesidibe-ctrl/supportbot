@@ -11,6 +11,13 @@
 secrets/
 .secrets/
 
+# Données réelles de pilote : JAMAIS dans le dépôt (public). Stockage privé de la plateforme.
+data/real/
+eval/real/
+pilot-data/
+donnees-pilote/
+private/
+
 # Supabase (état local)
 supabase/.branches/
 supabase/.temp/

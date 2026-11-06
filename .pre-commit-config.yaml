@@ -33,6 +33,13 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: check-no-real-data
+        name: aucune donnée réelle de pilote dans le dépôt public
+        entry: scripts/check-no-real-data.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+
       - id: semgrep-releve
         name: semgrep (règles de sécurité du projet)
         entry: semgrep --config security/semgrep --strict --error --metrics=off --quiet

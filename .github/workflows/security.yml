@@ -48,6 +48,12 @@ jobs:
       - name: Rechercher des secrets dans tout l'historique
         run: gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 --verbose
 
+      - name: Tester le garde-fou contre les données réelles de pilote
+        run: scripts/test-check-no-real-data.sh
+
+      - name: Refuser les données réelles de pilote dans le dépôt public
+        run: scripts/check-no-real-data.sh
+
   sast:
     name: Analyse statique (Semgrep)
     runs-on: ubuntu-24.04
