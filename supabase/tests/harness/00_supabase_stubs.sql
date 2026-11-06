@@ -42,9 +42,14 @@ create function vault.create_secret(new_secret text, new_name text default null,
 returns uuid language plpgsql as
 $$ declare v uuid; begin insert into vault.secrets (secret, name, description) values (new_secret, new_name, new_description) returning id into v; return v; end $$;
 
+create view vault.decrypted_secrets as select id, name, description, secret as decrypted_secret, created_at from vault.secrets;
+
 -- Comme sur Supabase : le schéma public donne tous les droits aux rôles d'API par défaut.
 -- C'est pourquoi chaque migration retire explicitement ces droits et active la RLS.
 grant usage on schema public to anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+
+-- Publication temps réel (Supabase la fournit ; les migrations y ajoutent leurs tables).
+create publication supabase_realtime;
