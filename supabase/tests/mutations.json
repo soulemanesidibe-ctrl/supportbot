@@ -1,36 +1,374 @@
 [
-  {"label": "assignation expirée ignorée", "file": "20261106100200_acces_et_audit.sql", "expect": "SEC-02 une assignation expirée",
-   "edits": [["        and a.revoked_at is null and a.starts_at <= now() and a.ends_at > now()\n", "        and a.revoked_at is null and a.starts_at <= now()\n"]]},
-  {"label": "dernier administrateur retirable", "file": "20261106100200_acces_et_audit.sql", "expect": "R9 on ne retire pas",
-   "edits": [["create trigger memberships_guard before insert or update or delete on public.memberships", "create trigger memberships_guard before insert or update on public.memberships"]]},
-  {"label": "accès d'assistance approuvable par n'importe qui", "file": "20261106100200_acces_et_audit.sql", "expect": "SEC-03 un technicien ne peut pas approuver",
-   "edits": [["    if not (private._member(new.approved_by, new.client_org_id, array['org_admin'])\n         or private._partner_can_access(new.approved_by, new.client_org_id, 'partner_admin')) then\n      raise exception 'L''accès d''assistance doit être approuvé par l''administrateur du client ou de son ESN'; end if;\n", ""]]},
-  {"label": "accès d'assistance sans expiration", "file": "20261106100200_acces_et_audit.sql", "expect": "SEC-03 une fenêtre échue",
-   "edits": [["      and g.starts_at <= now() and g.ends_at > now()\n", "      and g.starts_at <= now()\n"]]},
-  {"label": "élévation de rôle par invitation", "file": "20261106100200_acces_et_audit.sql", "expect": "SEC-05 un observateur",
-   "edits": [["    if private.role_rank(new.role) > private.role_rank(v_inviter_role) then\n      raise exception 'On ne peut pas inviter un rôle supérieur au sien (élévation de rôle refusée)'; end if;\n", ""]]},
-  {"label": "relation révoquée rétablissable", "file": "20261106100200_acces_et_audit.sql", "expect": "relation révoquée ne peut pas être rétablie",
-   "edits": [["    if old.status = 'revoked' then raise exception 'Une relation révoquée ne peut plus changer (il faut une nouvelle relation)'; end if;\n", ""]]},
-  {"label": "ESN qui élargit ses propres rôles", "file": "20261106100200_acces_et_audit.sql", "expect": "relation : une ESN ne peut pas élargir",
-   "edits": [["    if old.status <> 'proposed' and not (new.approved_roles <@ old.approved_roles) then\n      raise exception 'Les rôles approuvés ne peuvent que diminuer : une extension exige une nouvelle approbation du client'; end if;\n", ""]]},
-  {"label": "journal d'audit modifiable par le propriétaire", "file": "20261106100200_acces_et_audit.sql", "expect": "SEC-27 UPDATE refusé même au propriétaire",
-   "edits": [["create trigger audit_logs_no_update_delete before update or delete on public.audit_logs\n  for each row execute function private.audit_logs_immutable();\n", ""]]},
-
-  {"label": "I5 : éligibilité non revérifiée à l'exécution", "file": "20261106100700_actions.sql", "expect": "I5 l'exécution est refusée",
-   "edits": [["    if not private.is_eligible_approver(old.org_id, old.category, old.approver_id, now()) then\n      raise exception 'Le valideur n''est plus éligible au moment de l''exécution (I5)'; end if;\n", ""]]},
-  {"label": "SEC-12 : vérification d'identité non exigée", "file": "20261106100700_actions.sql", "expect": "SEC-12 validation impossible sans vérification",
-   "edits": [["v_requires_identity := old.capability like 'user.%';", "v_requires_identity := false;"]]},
-  {"label": "I2 : auto-validation autorisée", "file": "20261106100700_actions.sql", "expect": "I2 un valideur ne valide pas une action sur son propre compte",
-   "edits": [["    if new.approver_id = old.requester_user_id or new.approver_id = old.target_user_id then\n      raise exception 'Auto-validation interdite (I2)'; end if;\n", ""],
-             ["    if old.capability like 'user.%' and lower(coalesce(v_approver_email, '')) = lower(old.target_ref) then\n      raise exception 'Un valideur ne valide pas une action sur son propre compte (I2)'; end if;\n", ""]]},
-  {"label": "I6 : une délégation peut se transmettre", "file": "20261106100700_actions.sql", "expect": "I6 on ne délègue que ce que l'on détient",
-   "edits": [["    if not private._direct_step_match(new.org_id, c, new.delegator_id, new.starts_at) then", "    if false then"]]},
-  {"label": "SEC-30 : action avant l'activation du client", "file": "20261106100700_actions.sql", "expect": "SEC-30 aucune action pour un client non activé",
-   "edits": [["    if v_org.activated_at is null then raise exception 'Le client n''a pas été activé par son administrateur : aucune action (SEC-30)'; end if;\n", ""]]},
-  {"label": "SEC-28 : validation sur organisation gelée", "file": "20261106100700_actions.sql", "expect": "SEC-28 organisation gelée : aucune validation",
-   "edits": [["    if v_org.frozen_at is not null then raise exception 'Organisation gelée : validation impossible (SEC-28)'; end if;\n", ""]]},
-  {"label": "I7 : délégation déclarée non vérifiée", "file": "20261106100700_actions.sql", "expect": "I7 …et ce doit être une délégation valide",
-   "edits": [["    elsif not exists (\n        select 1 from public.approval_delegations d\n         where d.id = new.approved_via_delegation_id", "    elsif false and not exists (\n        select 1 from public.approval_delegations d\n         where d.id = new.approved_via_delegation_id"]]},
-  {"label": "SEC-09 : doublon d'action possible", "file": "20261106100700_actions.sql", "expect": "SEC-09 la même action exacte",
-   "edits": [["create unique index action_requests_open_unique on public.action_requests (org_id, params_hash)\n  where status in ('pending_approval', 'approved', 'executing');\n", ""]]}
+ {
+  "label": "assignation expirée ignorée",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "SEC-02 une assignation expirée",
+  "edits": [
+   [
+    "        and a.revoked_at is null and a.starts_at <= now() and a.ends_at > now()\n",
+    "        and a.revoked_at is null and a.starts_at <= now()\n"
+   ]
+  ]
+ },
+ {
+  "label": "dernier administrateur retirable",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "R9 on ne retire pas",
+  "edits": [
+   [
+    "create trigger memberships_guard before insert or update or delete on public.memberships",
+    "create trigger memberships_guard before insert or update on public.memberships"
+   ]
+  ]
+ },
+ {
+  "label": "accès d'assistance approuvable par n'importe qui",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "SEC-03 un technicien ne peut pas approuver",
+  "edits": [
+   [
+    "    if not (private._member(new.approved_by, new.client_org_id, array['org_admin'])\n         or private._partner_can_access(new.approved_by, new.client_org_id, 'partner_admin')) then\n      raise exception 'L''accès d''assistance doit être approuvé par l''administrateur du client ou de son ESN'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "accès d'assistance sans expiration",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "SEC-03 une fenêtre échue",
+  "edits": [
+   [
+    "      and g.starts_at <= now() and g.ends_at > now()\n",
+    "      and g.starts_at <= now()\n"
+   ]
+  ]
+ },
+ {
+  "label": "élévation de rôle par invitation",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "SEC-05 un observateur",
+  "edits": [
+   [
+    "    if private.role_rank(new.role) > private.role_rank(v_inviter_role) then\n      raise exception 'On ne peut pas inviter un rôle supérieur au sien (élévation de rôle refusée)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "relation révoquée rétablissable",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "relation révoquée ne peut pas être rétablie",
+  "edits": [
+   [
+    "    if old.status = 'revoked' then raise exception 'Une relation révoquée ne peut plus changer (il faut une nouvelle relation)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "ESN qui élargit ses propres rôles",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "relation : une ESN ne peut pas élargir",
+  "edits": [
+   [
+    "    if old.status <> 'proposed' and not (new.approved_roles <@ old.approved_roles) then\n      raise exception 'Les rôles approuvés ne peuvent que diminuer : une extension exige une nouvelle approbation du client'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "journal d'audit modifiable par le propriétaire",
+  "file": "20261106100200_acces_et_audit.sql",
+  "expect": "SEC-27 UPDATE refusé même au propriétaire",
+  "edits": [
+   [
+    "create trigger audit_logs_no_update_delete before update or delete on public.audit_logs\n  for each row execute function private.audit_logs_immutable();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "I5 : éligibilité non revérifiée à l'exécution",
+  "file": "20261106100700_actions.sql",
+  "expect": "I5 l'exécution est refusée",
+  "edits": [
+   [
+    "    if not private.is_eligible_approver(old.org_id, old.category, old.approver_id, now()) then\n      raise exception 'Le valideur n''est plus éligible au moment de l''exécution (I5)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "SEC-12 : vérification d'identité non exigée",
+  "file": "20261106100700_actions.sql",
+  "expect": "SEC-12 validation impossible sans vérification",
+  "edits": [
+   [
+    "v_requires_identity := old.capability like 'user.%';",
+    "v_requires_identity := false;"
+   ]
+  ]
+ },
+ {
+  "label": "I2 : auto-validation autorisée",
+  "file": "20261106100700_actions.sql",
+  "expect": "I2 un valideur ne valide pas une action sur son propre compte",
+  "edits": [
+   [
+    "    if new.approver_id = old.requester_user_id or new.approver_id = old.target_user_id then\n      raise exception 'Auto-validation interdite (I2)'; end if;\n",
+    ""
+   ],
+   [
+    "    if old.capability like 'user.%' and lower(coalesce(v_approver_email, '')) = lower(old.target_ref) then\n      raise exception 'Un valideur ne valide pas une action sur son propre compte (I2)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "I6 : une délégation peut se transmettre",
+  "file": "20261106100700_actions.sql",
+  "expect": "I6 on ne délègue que ce que l'on détient",
+  "edits": [
+   [
+    "    if not private._direct_step_match(new.org_id, c, new.delegator_id, new.starts_at) then",
+    "    if false then"
+   ]
+  ]
+ },
+ {
+  "label": "SEC-30 : action avant l'activation du client",
+  "file": "20261106100700_actions.sql",
+  "expect": "SEC-30 aucune action pour un client non activé",
+  "edits": [
+   [
+    "    if v_org.activated_at is null then raise exception 'Le client n''a pas été activé par son administrateur : aucune action (SEC-30)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "SEC-28 : validation sur organisation gelée",
+  "file": "20261106100700_actions.sql",
+  "expect": "SEC-28 organisation gelée : aucune validation",
+  "edits": [
+   [
+    "    if v_org.frozen_at is not null then raise exception 'Organisation gelée : validation impossible (SEC-28)'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "I7 : délégation déclarée non vérifiée",
+  "file": "20261106100700_actions.sql",
+  "expect": "I7 …et ce doit être une délégation valide",
+  "edits": [
+   [
+    "    elsif not exists (\n        select 1 from public.approval_delegations d\n         where d.id = new.approved_via_delegation_id",
+    "    elsif false and not exists (\n        select 1 from public.approval_delegations d\n         where d.id = new.approved_via_delegation_id"
+   ]
+  ]
+ },
+ {
+  "label": "SEC-09 : doublon d'action possible",
+  "file": "20261106100700_actions.sql",
+  "expect": "SEC-09 la même action exacte",
+  "edits": [
+   [
+    "create unique index action_requests_open_unique on public.action_requests (org_id, params_hash)\n  where status in ('pending_approval', 'approved', 'executing');\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "SEC-19 : le mode ombre n'est plus imposé par la base",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "SEC-19 catégorie fermée",
+  "edits": [
+   [
+    "create trigger messages_shadow_gate before insert on public.messages\n  for each row execute function private.messages_shadow_gate();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "SEC-20 : pas de retour arrière sur note dangereuse",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "SEC-20 la catégorie repasse aussitôt",
+  "edits": [
+   [
+    "create trigger response_ratings_rollback after insert on public.response_ratings\n  for each row execute function private.rollback_on_dangerous();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "barres : effectif minimal de 300 ignoré",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "barres : 299 notes",
+  "edits": [
+   [
+    "  if n < 300 then return false; end if;\n",
+    "  if n < 1 then return false; end if;\n"
+   ]
+  ]
+ },
+ {
+  "label": "barres : un cas dangereux n'empêche plus l'ouverture",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "barres : UN cas dangereux",
+  "edits": [
+   [
+    "  if (s ->> 'dangerous')::int > 0 then return false; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "fermer une catégorie sans nouveau motif",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "fermer ou réduire une catégorie exige un motif",
+  "edits": [
+   [
+    "      if new.reason is null or new.reason is not distinct from old.reason then\n        raise exception 'Un NOUVEAU motif est obligatoire pour fermer ou réduire une catégorie'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "règle verrouillée supprimable",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "règles : une règle verrouillée ne se supprime pas",
+  "edits": [
+   [
+    "    if old.locked then raise exception 'Une règle verrouillée ne se supprime pas'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "notes modifiables",
+  "file": "20261106100800_automatisations_et_qualite.sql",
+  "expect": "M36 une note ne se modifie pas",
+  "edits": [
+   [
+    "    raise exception 'response_ratings est en insertion seule (notes non modifiables, M36)' using errcode = '42501';\n",
+    "    return new;\n"
+   ]
+  ]
+ },
+ {
+  "label": "filtre par organisation retiré de la recherche vectorielle",
+  "file": "20261106100400_connaissance.sql",
+  "expect": "SEC-01 recherche vectorielle",
+  "edits": [
+   [
+    "  where c.org_id = p_org and d.org_id = p_org\n    and d.status = 'validated' and c.embedding is not null",
+    "  where d.status = 'validated' and c.embedding is not null"
+   ]
+  ]
+ },
+ {
+  "label": "fiches non validées lisibles par l'agent",
+  "file": "20261106100400_connaissance.sql",
+  "expect": "M08 une fiche en brouillon",
+  "edits": [
+   [
+    "    and d.status = 'validated' and c.embedding is not null",
+    "    and c.embedding is not null"
+   ]
+  ]
+ },
+ {
+  "label": "fiche validable par n'importe qui",
+  "file": "20261106100400_connaissance.sql",
+  "expect": "M08 une fiche ne peut pas être validée",
+  "edits": [
+   [
+    "create trigger kb_documents_guard before insert or update on public.kb_documents\n  for each row execute function private.kb_documents_guard();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "le salarié lit la réponse préparée par l'IA",
+  "file": "20261106100300_support_et_connecteurs.sql",
+  "expect": "SEC-19 le salarié lit",
+  "edits": [
+   [
+    "  or (visibility = 'public' and private.owns_conversation(conversation_id)));",
+    "  or (private.owns_conversation(conversation_id)));"
+   ]
+  ]
+ },
+ {
+  "label": "un message d'une autre organisation que sa conversation",
+  "file": "20261106100300_support_et_connecteurs.sql",
+  "expect": "un message doit appartenir",
+  "edits": [
+   [
+    "  if not exists (select 1 from public.conversations c where c.id = new.conversation_id and c.org_id = new.org_id) then\n    raise exception 'Le message doit appartenir à l''organisation de sa conversation'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "déduplication des alertes retirée",
+  "file": "20261106100600_alertes.sql",
+  "expect": "M35 déduplication",
+  "edits": [
+   [
+    "create unique index alerts_open_dedup on public.alerts (source_id, dedup_key) where state in ('open', 'acknowledged');\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "charge brute d'alerte illimitée",
+  "file": "20261106100600_alertes.sql",
+  "expect": "M35 la charge brute",
+  "edits": [
+   [
+    " check (pg_column_size(raw) <= 65536)",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "prix partenaire visible du client",
+  "file": "20261106100900_revendeur_et_usage.sql",
+  "expect": "SEC-21 le CLIENT",
+  "edits": [
+   [
+    "  private.is_member_of(partner_org_id, array['partner_admin']) or private.is_super_admin());",
+    "  private.is_member_of(partner_org_id, array['partner_admin']) or private.is_member_of(client_org_id) or private.is_super_admin());"
+   ]
+  ]
+ },
+ {
+  "label": "marge autorisée dans un rapport",
+  "file": "20261106100900_revendeur_et_usage.sql",
+  "expect": "M37 un rapport",
+  "edits": [
+   [
+    "\n    check (not (content ?| array['margin', 'marge', 'partner_price', 'prix_partenaire', 'client_price_cents', 'partner_price_cents'])),\n",
+    ",\n"
+   ]
+  ]
+ },
+ {
+  "label": "le journal d'audit est purgé (défense en profondeur : purge ET verrous retirés)",
+  "file": "20261106101000_conservation.sql",
+  "expect": "purge : le journal d'audit n'est JAMAIS purgé",
+  "edits": [
+   [
+    "  delete from public.invitations where expires_at < now() - interval '30 days';      get diagnostics i = row_count;\n",
+    "  delete from public.invitations where expires_at < now() - interval '30 days';      get diagnostics i = row_count;\n  begin delete from public.audit_logs where at < now() - interval '1 year'; exception when others then null; end;\n"
+   ],
+   [
+    "create trigger audit_logs_no_update_delete before update or delete on public.audit_logs\n  for each row execute function private.audit_logs_immutable();\n",
+    "",
+    "20261106100200_acces_et_audit.sql"
+   ]
+  ]
+ }
 ]

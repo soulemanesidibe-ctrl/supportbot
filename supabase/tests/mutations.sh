@@ -25,14 +25,18 @@ for i, m in enumerate(muts, 1):
     d = os.path.join(work, f'm{i}')
     subprocess.run(['rm', '-rf', d]); os.makedirs(d)
     subprocess.run(['cp', '-r', os.path.join(root, 'supabase'), os.path.join(d, 'supabase')], check=True)
-    path = os.path.join(d, 'supabase/migrations', m['file'])
-    src = open(path, encoding='utf-8').read()
-    for old, new in m['edits']:
-        if old not in src:
-            print(f"mutation {i:2d} ({m['label']}) : MOTIF INTROUVABLE, mutation invalide"); bad += 1; break
-        src = src.replace(old, new, 1)
-    else:
-        open(path, 'w', encoding='utf-8').write(src)
+    sources, invalid = {}, False
+    for edit in m['edits']:
+        old, new = edit[0], edit[1]
+        name = edit[2] if len(edit) > 2 else m['file']          # 3e élément facultatif : autre fichier de migration
+        path = os.path.join(d, 'supabase/migrations', name)
+        sources.setdefault(path, open(path, encoding='utf-8').read())
+        if old not in sources[path]:
+            print(f"mutation {i:2d} ({m['label']}) : MOTIF INTROUVABLE, mutation invalide"); bad += 1; invalid = True; break
+        sources[path] = sources[path].replace(old, new, 1)
+    if not invalid:
+        for path, src in sources.items():
+            open(path, 'w', encoding='utf-8').write(src)
         subprocess.run(['chmod', '-R', 'a+rwX', d])
         r = subprocess.run(['bash', os.path.join(d, 'supabase/tests/run.sh')], capture_output=True, text=True)
         found = re.findall(r'ECHEC : (.*)', r.stdout + r.stderr)
@@ -40,10 +44,13 @@ for i, m in enumerate(muts, 1):
             print(f"mutation {i:2d} ({m['label']}) : NON DÉTECTÉE ✘"); bad += 1
         elif not found:
             print(f"mutation {i:2d} ({m['label']}) : le banc plante sans test nommé ✘"); bad += 1
-        elif m['expect'] not in found[0]:
+        elif not m.get('expect'):
+            print(f"mutation {i:2d} ({m['label']}) : « expect » vide, mutation invalide ✘"); bad += 1
+        elif not any(m['expect'] in f for f in found):
             print(f"mutation {i:2d} ({m['label']}) : détectée par un AUTRE test ({found[0][:60]}), attendu « {m['expect']} » ✘"); bad += 1
         else:
-            print(f"mutation {i:2d} ({m['label']}) : détectée par « {found[0][:70]} » ✔")
+            hit = next(f for f in found if m['expect'] in f)
+            print(f"mutation {i:2d} ({m['label']}) : détectée par « {hit[:70]} » ✔")
 print(f"\n{len(muts) - bad}/{len(muts)} mutations détectées par le bon test")
 sys.exit(1 if bad else 0)
 PY
