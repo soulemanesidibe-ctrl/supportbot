@@ -66,13 +66,16 @@ Source : `docs/11` § 2. Jamais de pourcentage sans son effectif ; avec 100 dema
 - Le client est rattaché à l'offre partenaire de l'ESN pour la facturation, et lui reste rattaché (Relève ne le démarche jamais).
 - Un client créé par une ESN ne peut pas être rattaché à une autre ESN sans l'accord de son administrateur.
 
-### Questions ouvertes pour le fondateur
+### Décisions du fondateur sur l'ESN revendeur (6 novembre 2026)
 
-À poser au démarrage de J1 ; je n'invente ni la grille de remise ni le contrat revendeur, qui seront relus par un juriste (`docs/11` § 3).
+| Sujet | Décision | Ce qui reste à faire |
+|---|---|---|
+| Remise revendeur | **Paliers selon le volume : 25 %, 30 %, 35 %** | Fixer les seuils de clients actifs ; contrat revendeur à faire relire par un juriste. Le schéma `partner_pricing` porte le palier, il ne fige pas les seuils |
+| Engagement minimal | **Aucun pendant les pilotes, puis 12 mois** à la signature du premier contrat payant | Rédiger la clause, relecture par un juriste |
+| Marque blanche | **Oui, interface et rapports sans mention** « propulsé par Relève » | Relève reste nommé comme **sous-traitant** dans la liste des sous-traitants et le contrat de l'ESN avec son client (RGPD, art. 28 : à confirmer par un juriste). La marque blanche ne couvre donc ni le contrat ni la liste des sous-traitants |
+| Kit de vente de l'ESN | **Pas dans la démo** : seulement le rapport à sa marque, le tableau d'opportunités et la marge visible | Démonstration en un clic, calculateur de valeur et modèles de proposition et de contrat vont au backlog (avec le premier partenaire payant) |
 
-1. Remise revendeur : 25 %, 30 % ou 35 % selon le volume ?
-2. Engagement minimal du partenaire (nombre de clients, durée) ?
-3. L'ESN peut-elle revendre sous son seul nom, sans mention « propulsé par Relève » ?
-4. Le kit de vente de l'ESN (démonstration en un clic, calculateur de valeur, modèles de proposition et de contrat de sous-traitance) est-il dans la démo ? Il n'est pas listé au périmètre A.
-5. Dans la démo, « panne localisée » et « fin d'incident » (`docs/07` § 3.1) sont-elles incluses avec l'incident regroupé ?
-6. Avant que l'administrateur d'un client créé par l'ESN ait activé son compte, l'ESN peut-elle brancher un connecteur ou importer des salariés réels ? (risque posé dans le modèle de menace, § 8)
+### Questions encore ouvertes (à poser à l'écriture de la spec J1)
+
+1. Dans la démo, « panne localisée » et « fin d'incident » (`docs/07` § 3.1) sont-elles incluses avec l'incident regroupé ?
+2. Avant que l'administrateur d'un client créé par l'ESN ait activé son compte, l'ESN peut-elle brancher un connecteur ou importer des salariés réels ? (risque posé dans le modèle de menace, § 8)
