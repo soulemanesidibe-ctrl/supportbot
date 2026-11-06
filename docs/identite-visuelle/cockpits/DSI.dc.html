@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève · Administrateur client</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F6}
+a{color:#138A5A}a:hover{color:#0E6B45}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F4F5F6; color: #0E0F11; font-family: Geist, system-ui, sans-serif; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Navigation administrateur client" style="flex: 1 1 220px; box-sizing: border-box; padding: 24px 16px; background: #FFFFFF; border-right: 1px solid #DCDFE3; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 6px">
+      <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#0E0F11"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#F4F5F6" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="#3DDC97"></circle></svg>
+      <span style="font-weight: 600; font-size: 20px; letter-spacing: -0.03em">relève<span style="color: #138A5A">.</span></span>
+    </div>
+    <div style="padding: 0 8px 18px; font-size: 13px; color: #4A4F57">Transports Morel</div>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; background: #ECEEF0; color: #0E0F11; text-decoration: none; font-weight: 500; font-size: 14px">Vue d'ensemble</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #4A4F57; text-decoration: none; font-size: 14px">Accès</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #4A4F57; text-decoration: none; font-size: 14px">Valideurs et suppléance</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #4A4F57; text-decoration: none; font-size: 14px">Connecteurs</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #4A4F57; text-decoration: none; font-size: 14px">Utilisateurs</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #4A4F57; text-decoration: none; font-size: 14px">Réglages</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em">Votre support informatique</h1>
+      <p style="margin: 0; color: #4A4F57; font-size: 15px">Mon support tient-il, et qui a accès à quoi ? <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid #DCDFE3; font-size: 12px; margin-left: 6px">Données fictives</span></p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+      <div style="padding: 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-size: 13px; color: #4A4F57">Demandes ce mois</div><div style="font-family: 'Geist Mono', monospace; font-size: 28px; margin-top: 8px">142</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-size: 13px; color: #4A4F57">Résolues par Relève</div><div style="font-family: 'Geist Mono', monospace; font-size: 28px; margin-top: 8px; color: #138A5A">58</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-size: 13px; color: #4A4F57">Délai de résolution</div><div style="font-family: 'Geist Mono', monospace; font-size: 28px; margin-top: 8px">2 h 45</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3"><div style="font-size: 13px; color: #4A4F57">Satisfaction</div><div style="font-family: 'Geist Mono', monospace; font-size: 28px; margin-top: 8px">4,5 / 5</div></div>
+    </div>
+
+    <section aria-labelledby="acces" style="border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <h2 id="acces" style="margin: 0; font-size: 18px; font-weight: 600">Qui a accès à quoi</h2>
+        <span style="font-size: 13px; color: #4A4F57">Prochaine revue trimestrielle : 15 janvier</span>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px">
+          <thead><tr style="color: #4A4F57; text-align: left"><th style="padding: 8px 6px; font-weight: 500">Qui</th><th style="padding: 8px 6px; font-weight: 500">Accès</th><th style="padding: 8px 6px; font-weight: 500">Jusqu'au</th><th style="padding: 8px 6px; font-weight: 500"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Action</span></th></tr></thead>
+          <tbody>
+            <tr style="border-top: 1px solid #DCDFE3"><td style="padding: 12px 6px"><strong style="font-weight: 600">Atelier Numérique Loire</strong> (ESN)</td><td style="padding: 12px 6px">Techniciens, responsable de compte</td><td style="padding: 12px 6px; font-family: 'Geist Mono', monospace">14/10/2027</td><td style="padding: 12px 6px; text-align: right"><button style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #C93B36; background: #FFFFFF; color: #C93B36; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Révoquer</button></td></tr>
+            <tr style="border-top: 1px solid #DCDFE3"><td style="padding: 12px 6px">Inès Haddad, Karim Belkacem</td><td style="padding: 12px 6px">Techniciens assignés par l'ESN</td><td style="padding: 12px 6px; font-family: 'Geist Mono', monospace">31/12/2026</td><td style="padding: 12px 6px; text-align: right"><button style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #DCDFE3; background: #FFFFFF; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 13px">Gérer</button></td></tr>
+            <tr style="border-top: 1px solid #DCDFE3"><td style="padding: 12px 6px">Support Relève</td><td style="padding: 12px 6px">Accès d'assistance</td><td style="padding: 12px 6px; color: #4A4F57">Aucun en cours</td><td style="padding: 12px 6px"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px">
+      <section style="border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Valideurs et suppléance</h2>
+        <div style="padding: 12px; border-radius: 10px; background: #F4F5F6; font-size: 14px; line-height: 1.5"><strong style="font-weight: 600">Comptes et MFA</strong><br>Thomas Girard, absent · suppléé par Inès Haddad jusqu'au 22/11</div>
+        <div style="padding: 12px; border-radius: 10px; background: #F4F5F6; font-size: 14px; line-height: 1.5"><strong style="font-weight: 600">Boîtes mail et licences</strong><br>Sophie Marchand, puis l'ESN en dernier recours</div>
+        <button style="align-self: flex-start; height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #0E0F11; color: #FFFFFF; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Ajouter une délégation</button>
+      </section>
+      <section style="border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">À anticiper</h2>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 10px 0; border-bottom: 1px solid #ECEEF0"><span>Licences Business Premium</span><span style="font-weight: 600">2 restantes</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 10px 0; border-bottom: 1px solid #ECEEF0"><span>Mots de passe qui expirent sous 7 jours</span><span style="font-weight: 600">6 salariés prévenus</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 10px 0"><span>Sauvegarde du serveur de fichiers</span><span style="font-weight: 600; color: #C93B36">Échec hier soir</span></div>
+      </section>
+      <section style="border-radius: 12px; background: #FFFFFF; border: 1px solid #DCDFE3; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Connecteurs</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <span style="padding: 6px 12px; border-radius: 999px; background: #E3F4EC; color: #0E0F11; font-size: 13px; font-weight: 500">GLPI · synchronisé il y a 2 min</span>
+          <span style="padding: 6px 12px; border-radius: 999px; background: #E3F4EC; color: #0E0F11; font-size: 13px; font-weight: 500">Microsoft 365 · lecture et niveau 1</span>
+          <span style="padding: 6px 12px; border-radius: 999px; background: #E3F4EC; color: #0E0F11; font-size: 13px; font-weight: 500">RG System · synchronisé il y a 5 min</span>
+        </div>
+        <div style="font-size: 13px; color: #4A4F57; line-height: 1.5">Niveau d'autonomie : 0 par défaut, 1 pour les mots de passe et le MFA.</div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

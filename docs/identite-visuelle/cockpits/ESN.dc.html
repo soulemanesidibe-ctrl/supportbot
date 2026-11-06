@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève · ESN · tous les clients</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E0F11}
+a{color:#3DDC97}a:hover{color:#8EF0C3}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E0F11; color: #EDEEF0; font-family: Geist, system-ui, sans-serif; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Navigation ESN" style="flex: 1 1 220px; box-sizing: border-box; padding: 24px 16px; border-right: 1px solid #26282D; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 6px">
+      <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#F4F5F6"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#0E0F11" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="#3DDC97"></circle></svg>
+      <span style="font-weight: 600; font-size: 20px; letter-spacing: -0.03em">relève<span style="color: #3DDC97">.</span></span>
+    </div>
+    <div style="padding: 0 8px 18px; font-size: 13px; color: #9A9EA6">Atelier Numérique Loire</div>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; background: #1F2125; color: #F4F5F6; text-decoration: none; font-weight: 500; font-size: 14px">Tous les clients</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Équipe et astreintes</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Rapports</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Accès et relations</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Automatisations</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Marque blanche</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em">Tous les clients</h1>
+        <p style="margin: 0; color: #9A9EA6; font-size: 15px">Lequel de mes clients a besoin de moi maintenant ? <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid #33363C; font-size: 12px; margin-left: 6px">Données fictives</span></p>
+      </div>
+      <button style="height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #3DDC97; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Ajouter un client</button>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+      <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #3DDC97; background: #13261E; color: #EDEEF0; font-family: Geist, sans-serif; font-size: 13px; font-weight: 600">Tous · 9</button>
+      <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #33363C; background: transparent; color: #B4B8BF; font-family: Geist, sans-serif; font-size: 13px">Santé · 2</button>
+      <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #33363C; background: transparent; color: #B4B8BF; font-family: Geist, sans-serif; font-size: 13px">Collectivités · 3</button>
+      <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #33363C; background: transparent; color: #B4B8BF; font-family: Geist, sans-serif; font-size: 13px">Industrie · 4</button>
+      <label style="margin-left: auto; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #9A9EA6">Rechercher un client<input placeholder="Nom, étiquette, technicien" style="height: 40px; width: 240px; max-width: 100%; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #33363C; background: #17181B; color: #EDEEF0; font-family: Geist, sans-serif; font-size: 14px"></label>
+    </div>
+
+    <div style="overflow-x: auto; border-radius: 12px; border: 1px solid #26282D; background: #17181B">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px">
+        <thead><tr style="color: #9A9EA6; text-align: left"><th style="padding: 12px 16px; font-weight: 500">Client</th><th style="padding: 12px 16px; font-weight: 500">Incidents ouverts</th><th style="padding: 12px 16px; font-weight: 500">À valider</th><th style="padding: 12px 16px; font-weight: 500">SLA</th><th style="padding: 12px 16px; font-weight: 500">Connecteurs</th><th style="padding: 12px 16px; font-weight: 500">Relève</th></tr></thead>
+        <tbody>
+          <tr style="border-top: 1px solid #26282D; background: #1F2125"><td style="padding: 14px 16px; font-weight: 600">Clinique des Tilleuls</td><td style="padding: 14px 16px"><span style="padding: 3px 8px; border-radius: 6px; background: #1E1214; color: #F0605A; font-size: 12px; font-weight: 600">1 majeur</span> VPN siège</td><td style="padding: 14px 16px; font-family: 'Geist Mono', monospace">3</td><td style="padding: 14px 16px"><span style="padding: 3px 8px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">En danger</span> 2 tickets</td><td style="padding: 14px 16px; color: #B4B8BF">4 sur 4 OK</td><td style="padding: 14px 16px"><span style="padding: 3px 8px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">Active</span></td></tr>
+          <tr style="border-top: 1px solid #26282D"><td style="padding: 14px 16px; font-weight: 600">Mairie de Valbrune</td><td style="padding: 14px 16px; color: #B4B8BF">0</td><td style="padding: 14px 16px; font-family: 'Geist Mono', monospace">1</td><td style="padding: 14px 16px; color: #B4B8BF">Tenu</td><td style="padding: 14px 16px"><span style="padding: 3px 8px; border-radius: 6px; background: #1E1214; color: #F0605A; font-size: 12px; font-weight: 600">GLPI en erreur</span></td><td style="padding: 14px 16px; color: #B4B8BF">Équipe présente</td></tr>
+          <tr style="border-top: 1px solid #26282D"><td style="padding: 14px 16px; font-weight: 600">Transports Morel</td><td style="padding: 14px 16px; color: #B4B8BF">0</td><td style="padding: 14px 16px; font-family: 'Geist Mono', monospace">2</td><td style="padding: 14px 16px; color: #B4B8BF">Tenu</td><td style="padding: 14px 16px; color: #B4B8BF">3 sur 3 OK</td><td style="padding: 14px 16px"><span style="padding: 3px 8px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">Active</span></td></tr>
+          <tr style="border-top: 1px solid #26282D"><td style="padding: 14px 16px; font-weight: 600">Fonderie Bastide</td><td style="padding: 14px 16px; color: #B4B8BF">0</td><td style="padding: 14px 16px; font-family: 'Geist Mono', monospace">0</td><td style="padding: 14px 16px; color: #B4B8BF">Tenu</td><td style="padding: 14px 16px; color: #B4B8BF">2 sur 2 OK</td><td style="padding: 14px 16px; color: #B4B8BF">Équipe présente</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 style="margin: 8px 0 0; font-size: 20px; font-weight: 600">Clinique des Tilleuls</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Performance sur 30 jours</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <div><div style="font-size: 13px; color: #9A9EA6">Résolution au premier contact</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 4px">72 %</div></div>
+          <div><div style="font-size: 13px; color: #9A9EA6">Délai de résolution</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 4px">3 h 10</div></div>
+          <div><div style="font-size: 13px; color: #9A9EA6">Respect des SLA</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 4px">94 %</div></div>
+          <div><div style="font-size: 13px; color: #9A9EA6">Satisfaction</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 4px">4,6 / 5</div></div>
+        </div>
+        <div style="font-size: 13px; color: #9A9EA6; line-height: 1.5">Causes des dépassements : attente fournisseur (3), pièce matérielle (2), demande incomplète (1)</div>
+      </section>
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Équipe sur ce client</h3>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Inès Haddad</span><span style="color: #9A9EA6">7 tickets · astreinte</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Thomas Girard</span><span style="color: #9A9EA6">absent · suppléé par Inès</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Karim Belkacem</span><span style="color: #9A9EA6">4 tickets</span></div>
+        <div style="font-size: 13px; color: #9A9EA6; padding-top: 6px; border-top: 1px solid #26282D">Assignation de Karim : expire le 31/12, à renouveler</div>
+      </section>
+      <section style="border-radius: 12px; background: #13261E; border: 1px solid #1F5A40; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Rapport de novembre</h3>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #D2D5DA">186 demandes, dont 79 résolues par Relève et confirmées par les salariés. Un incident majeur regroupé (VPN), 14 demandes rattachées.</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button style="height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #3DDC97; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Relire et envoyer</button>
+          <button style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Aperçu PDF</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

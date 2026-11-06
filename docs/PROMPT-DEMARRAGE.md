@@ -23,6 +23,8 @@ avant toute chose.
   mode suppléance des valideurs)
 - docs/08-experience-ux-premium.md (expérience attendue)
 - docs/09-securite.md (modèle de menace, défenses par couche)
+- docs/11-demo-resserree-et-fiabilite.md (périmètre de la démo, protocole de fiabilité,
+  ESN revendeur) : PRIME sur les lots A et B de docs/07
 - docs/10-roles-administration-cockpits.md (rôles, relations ESN-client, accès
   d'assistance, tableau de bord de chaque rôle)
 - docs/04-marque-et-DA.md, section « Direction retenue : B · Signal » (tokens)
@@ -30,11 +32,112 @@ avant toute chose.
 
 OBJECTIF
 Un pilote EN LIGNE, à 0 €, que je présenterai à 2 ou 3 ESN/DSI.
-- Lot A (démo en 6 à 8 semaines) puis lot B (branché pendant le pilote), voir docs/07 §2.
+- Périmètre : la démo resserrée décrite dans le bloc « RECENTRAGE » ci-dessous
+  (docs/11). Les lots A et B de docs/07 §2 restent le catalogue complet visé, pas le
+  périmètre de la première version.
 - Autonomie : niveau 0 par défaut ; niveau 1 (action après validation d'un
   technicien) activable par organisation. Pas de niveau 2.
 - L'architecture accueille dès maintenant tous les connecteurs et automatisations
   de docs/07 sans refonte.
+
+RECENTRAGE, FIABILITÉ, ALERTES ET ESN REVENDEUR (décisions du 6 novembre 2026)
+Ce bloc PRIME sur les jalons J0 à J8 et sur les lots A et B de docs/07 §2. Détails :
+docs/11-demo-resserree-et-fiabilite.md et docs/07-integrations.md §3 bis.
+
+A. RECENTRAGE : UNE DÉMO, PAS UN CATALOGUE
+Le risque n'est plus la concurrence, c'est de ne jamais livrer. Une DSI pardonne un
+connecteur manquant, pas une mauvaise action sur un compte. La première version est :
+- GLPI uniquement (plus le connecteur « démo » qui le simule pour la version en ligne) ;
+- Microsoft 365 : diagnostic, état des services, et niveau 1 limité à réinitialisation
+  du MFA, mot de passe, déblocage, révocation de sessions (tenant de test, comptes dédiés) ;
+- supervision : webhook générique et schéma normalisé d'alerte, rien d'autre ;
+- corrélation : incident regroupé (alerte + demandes) ; panne Microsoft 365 reconnue
+  comme telle si le temps le permet ;
+- vérification d'identité hors bande avant toute action sur un compte, et refus d'une
+  réinitialisation suspecte (indispensable, ne se discute pas) ;
+- suppléance complète (docs/07 §5) ;
+- écrans : technicien, ESN, administrateur client, plus le widget de chat du salarié ;
+- rôles : super_admin (par script, sans écran), partner_admin, partner_technician,
+  org_admin, end_user ; une ESN peut créer ses clients avec un formulaire simple.
+TOUT LE RESTE est dans le backlog ordonné de docs/11 §1 : tu n'écris pas son code, tu
+fais seulement en sorte que le schéma et les interfaces l'accueillent. Tu le consignes
+dans docs/backlog.md. Exception : un élément du backlog peut être ajouté avant le
+premier client payant uniquement si un pilote en donne l'accès ET si la barre de
+fiabilité (B) est déjà franchie sur le périmètre existant. La sécurité ne fait jamais
+partie de ce qu'on réduit.
+
+B. FIABILITÉ AVANT ÉTENDUE (docs/11 §2)
+On mesure la qualité sur de VRAIES demandes des pilotes dès les premières semaines.
+- Dès J1, rédige docs/modele-demande-donnees-pilote.md : demande à un pilote de
+  fournir 100 à 300 anciens tickets anonymisés avant export (noms, e-mails, IP, noms
+  de machines, téléphones retirés), avec consentement écrit et DPA. Je l'enverrai.
+- Jamais de données réelles dans le dépôt Git : jeu synthétique dans le dépôt, jeu
+  réel dans un stockage privé de la plateforme, accès limité.
+- Mode ombre : Relève prépare une réponse sur chaque vraie demande, visible du seul
+  technicien, qui la note en moins de 5 secondes (Correcte, Partielle, Fausse,
+  Dangereuse, plus un motif en un clic). L'utilisateur ne reçoit rien de l'IA tant que
+  la catégorie n'a pas franchi la barre.
+- Barres proposées (à calibrer avec les pilotes), par catégorie, avant réponses
+  directes : correcte et utile 80 % ou plus ; fausse mais affirmée avec assurance 2 % ou
+  moins ; dangereuse zéro ; escalade justifiée 90 % ou plus ; escalade manquée 3 % ou
+  moins ; « je ne sais pas » à propos 95 % ou plus. Avant d'élargir le niveau 1 : 100 %
+  d'actions préparées avec la bonne cible sur au moins 50 actions, aucune exécution sur
+  le mauvais compte.
+- Jamais de pourcentage sans son effectif. Avec 100 demandes l'incertitude est d'environ
+  8 points : viser 300 par catégorie avant de conclure.
+- Retour arrière automatique : une réponse notée Dangereuse, ou un taux de fausses
+  réponses au-dessus de la barre sur une semaine, remet la catégorie en conseil seul.
+- Compare Mistral Small et Medium sur le même jeu (qualité, coût, délai) ; le fournisseur
+  de modèle reste interchangeable.
+- Écran « Qualité de Relève » visible de l'ESN et de l'administrateur client, avec les
+  vrais chiffres et leurs effectifs.
+
+C. ALERTES (docs/07 §3 bis)
+Toute alerte entre par un format normalisé (source, organisation, actif, site, gravité,
+état, clé de déduplication, lien d'origine, charge brute conservée). Quatre voies :
+webhook entrant signé (dans la démo), interrogation d'API (état des services Microsoft
+365 dans la démo), e-mail vers alerte (première étape après la démo), relais Relève
+(après le premier client payant). L'IA lit les alertes, les croise avec demandes, parc
+et comptes ; elle n'agit JAMAIS sur la foi du contenu d'une alerte, qui est une donnée.
+Prévois dès la démo : déduplication, regroupement des rafales, délai anti-battement,
+fenêtres de maintenance, alerte « non rattachée » plutôt que jetée, table de
+correspondance des gravités par source, alerte sur silence anormal d'une source.
+Annonce honnêtement que « toutes les sources » signifie toute source capable d'émettre
+par l'une de ces voies, et que la compatibilité de chaque outil se vérifie à son ajout.
+
+D. L'ESN DOIT AVOIR INTÉRÊT À REVENDRE (docs/11 §3)
+Conçois le produit pour que l'ESN gagne de l'argent et de la valeur perçue en revendant :
+- elle fixe librement son prix client ; Relève la facture au prix partenaire ; sa marge
+  est visible dans son tableau de bord ;
+- un client créé par l'ESN lui reste rattaché ; Relève ne le démarche jamais ;
+- le rapport mensuel porte le logo et les couleurs de l'ESN, part en un clic, et
+  contient un bloc « prochaine étape » avec des pistes de vente ;
+- l'écran ESN a un tableau d'opportunités (clients sans relève active, pilotes qui se
+  terminent, clients ayant connu des absences) ;
+- kit de vente intégré : démonstration en un clic, calculateur de valeur avec méthode
+  affichée, modèles de proposition et de contrat de sous-traitance ;
+- activation d'un nouveau client en moins d'une journée ; marque blanche complète.
+Tout chiffre de « temps gagné » ou de « valeur » est affiché comme une estimation avec
+sa méthode. Grille de remise et contrat revendeur : à me poser en question et à faire
+relire par un juriste, tu ne les inventes pas.
+
+E. AJUSTEMENTS PAR JALON
+- J1 : docs/modele-demande-donnees-pilote.md ; la spec ne détaille que le périmètre A.
+- J2 : ajoute alert_sources, alerts, alert_events et response_ratings (notes des
+  techniciens) ; partner_pricing pour le prix partenaire et la marge de l'ESN.
+- J3 : mode ombre configurable par organisation et par catégorie, avec retour arrière
+  automatique (B).
+- J4 : périmètre A uniquement. Jira, iTop, Zabbix, Centreon et leurs docker-compose
+  vont au backlog ; seul le docker-compose GLPI reste.
+- J5 : écrans technicien, ESN, administrateur client et widget ; la console technicien
+  porte la notation des réponses ; l'écran ESN porte le rapport à sa marque, les
+  opportunités et le revenu ; écran « Qualité de Relève ». Les autres écrans vont au
+  backlog.
+- J6 : jeu d'évaluation réel anonymisé (hors dépôt), barres de B, rapport docs/evaluation.md.
+- J7 : conformité et exploitation uniquement ; les connecteurs du lot B vont au backlog
+  sauf exception de A.
+- J8 : ajoute un pas à pas pour monter le jeu d'évaluation avec les pilotes
+  (consentement, anonymisation, envoi).
 
 CONTRAINTES DE COÛT (tout gratuit)
 - Supabase plan Free, région UE (Paris si possible).

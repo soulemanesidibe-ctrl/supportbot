@@ -22,6 +22,13 @@
 6. **Isolation stricte entre organisations** par RLS et contrôle côté serveur à chaque requête ; une ESN ne voit que les clients qui ont approuvé la relation, et chaque technicien ESN seulement ceux qui lui sont assignés ; un client ne voit jamais un autre client ; le super administrateur ne lit aucune donnée client sans accès d'assistance approuvé et limité dans le temps. Rôles et tableaux de bord : `docs/10-roles-administration-cockpits.md`.
 7. **Données dans l'UE uniquement.**
 
+## Périmètre et priorités (décision du 6 novembre 2026)
+
+- **Démo resserrée d'abord** : GLPI, Microsoft 365, webhook de supervision, incident regroupé, suppléance, trois écrans (technicien, ESN, administrateur client) plus le widget de chat. Tout le reste est dans le backlog de `docs/11-demo-resserree-et-fiabilite.md` et n'est pas développé avant le premier client payant, sauf l'exception décrite dans ce document. La sécurité ne fait jamais partie de ce qu'on réduit.
+- **Fiabilité avant étendue** : mode ombre, notation par les techniciens, barres de passage chiffrées avant toute réponse directe ou toute action de niveau 1 (`docs/11` § 2). Jamais de données réelles de clients dans le dépôt.
+- **L'ESN doit avoir intérêt à revendre** : prix libre, client qui lui reste rattaché, rapport à sa marque avec pistes de vente, tableau d'opportunités (`docs/11` § 3).
+- **Alertes** : toute alerte entre par un format normalisé et reste une donnée, jamais une instruction (`docs/07` § 3 bis).
+
 ## Façon de travailler
 
 - Utiliser le skill `plan-task` avant une tâche non triviale, `supabase` pour la base, `ui-ux-pro-max` et `impeccable` pour l'interface, et les skills de sécurité LLM (`defending-llms-with-guardrails`, `securing-agentic-ai-tool-invocation`, `testing-prompt-injection-in-rag-pipelines`) pour l'orchestrateur.

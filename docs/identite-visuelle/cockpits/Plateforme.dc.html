@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Relève · Plateforme · super administrateur</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E0F11}
+a{color:#3DDC97}a:hover{color:#8EF0C3}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E0F11; color: #EDEEF0; font-family: Geist, system-ui, sans-serif; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Navigation plateforme" style="flex: 1 1 220px; box-sizing: border-box; padding: 24px 16px; border-right: 1px solid #26282D; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 20px">
+      <svg width="28" height="28" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="12" fill="#F4F5F6"></rect><path d="M10 31 H20 L25 19 L31 38 L35 28 H46" stroke="#0E0F11" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="46" cy="28" r="4" fill="#3DDC97"></circle></svg>
+      <span style="font-weight: 600; font-size: 20px; letter-spacing: -0.03em">relève<span style="color: #3DDC97">.</span></span>
+    </div>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; background: #1F2125; color: #F4F5F6; text-decoration: none; font-weight: 500; font-size: 14px">Vue d'ensemble</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Organisations</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Connecteurs</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Sécurité</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Accès d'assistance</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 10px; color: #B4B8BF; text-decoration: none; font-size: 14px">Facturation</a>
+    <div style="margin-top: 20px; padding: 12px; border-radius: 10px; border: 1px solid #26282D; font-size: 13px; color: #9A9EA6; line-height: 1.5">Compte d'administration dédié<br><span style="color: #EDEEF0">Session passkey · expire dans 42 min</span></div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em">Plateforme</h1>
+        <p style="margin: 0; color: #9A9EA6; font-size: 15px">La plateforme va-t-elle bien, et mes clients en tirent-ils de la valeur ? <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid #33363C; font-size: 12px; margin-left: 6px">Données fictives</span></p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #33363C; background: transparent; color: #EDEEF0; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Créer un client direct</button>
+        <button style="height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #3DDC97; color: #0E0F11; font-family: Geist, sans-serif; font-weight: 600; font-size: 14px">Créer une ESN</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px">
+      <div style="padding: 18px; border-radius: 12px; background: #17181B; border: 1px solid #26282D"><div style="font-size: 13px; color: #9A9EA6">ESN partenaires</div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; margin-top: 8px">4</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">dont 1 en activation</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #17181B; border: 1px solid #26282D"><div style="font-size: 13px; color: #9A9EA6">Clients</div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; margin-top: 8px">23</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">19 via ESN, 4 directs</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #17181B; border: 1px solid #26282D"><div style="font-size: 13px; color: #9A9EA6">Conversations ce mois</div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; margin-top: 8px">3 418</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">+12 % sur octobre</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #17181B; border: 1px solid #26282D"><div style="font-size: 13px; color: #9A9EA6">Résolution par l'IA, confirmée</div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; margin-top: 8px; color: #3DDC97">41 %</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">objectif pilote : 30 %</div></div>
+      <div style="padding: 18px; border-radius: 12px; background: #17181B; border: 1px solid #26282D"><div style="font-size: 13px; color: #9A9EA6">Quota Mistral du mois</div><div style="font-family: 'Geist Mono', monospace; font-size: 30px; margin-top: 8px">62 %</div><div style="font-size: 13px; color: #9A9EA6; margin-top: 4px">file d'attente : 0 s</div></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px">
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Organisations à surveiller</h2>
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px">
+            <thead><tr style="color: #9A9EA6; text-align: left"><th style="padding: 8px 6px; font-weight: 500">Organisation</th><th style="padding: 8px 6px; font-weight: 500">Type</th><th style="padding: 8px 6px; font-weight: 500">Point d'attention</th></tr></thead>
+            <tbody>
+              <tr style="border-top: 1px solid #26282D"><td style="padding: 10px 6px">Transports Morel</td><td style="padding: 10px 6px; color: #9A9EA6">Client via ESN</td><td style="padding: 10px 6px"><span style="padding: 3px 8px; border-radius: 6px; background: #2A2312; color: #F2B33D; font-size: 12px; font-weight: 600">Activation bloquée</span> administrateur non activé depuis 6 jours</td></tr>
+              <tr style="border-top: 1px solid #26282D"><td style="padding: 10px 6px">Clinique des Tilleuls</td><td style="padding: 10px 6px; color: #9A9EA6">Client via ESN</td><td style="padding: 10px 6px"><span style="padding: 3px 8px; border-radius: 6px; background: #1F2125; border: 1px solid #33363C; font-size: 12px; font-weight: 600">Pilote</span> fin dans 9 jours</td></tr>
+              <tr style="border-top: 1px solid #26282D"><td style="padding: 10px 6px">Numéris Conseil</td><td style="padding: 10px 6px; color: #9A9EA6">ESN</td><td style="padding: 10px 6px"><span style="padding: 3px 8px; border-radius: 6px; background: #1F2125; border: 1px solid #33363C; font-size: 12px; font-weight: 600">Activation</span> 2 techniciens sur 5 ont activé leur compte</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Santé des connecteurs</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; background: #1E1214; border: 1px solid #4A2326"><span>GLPI · Mairie de Valbrune</span><span style="color: #F0605A; font-weight: 600">En erreur · jeton expiré</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; background: #1F2125"><span>Microsoft Graph · 21 clients</span><span style="color: #3DDC97; font-weight: 600">Opérationnel</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; background: #1F2125"><span>Jira Service Management · 6 clients</span><span style="color: #3DDC97; font-weight: 600">Opérationnel</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; background: #1F2125"><span>Webhook supervision · 14 sources</span><span style="color: #3DDC97; font-weight: 600">Opérationnel</span></div>
+        </div>
+      </section>
+
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Sécurité</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.5">
+          <div style="padding: 12px; border-radius: 10px; background: #1F2125"><strong style="font-weight: 600">2 administrateurs ESN sans passkey</strong><br><span style="color: #9A9EA6">Numéris Conseil · relance envoyée hier</span></div>
+          <div style="padding: 12px; border-radius: 10px; background: #1F2125"><strong style="font-weight: 600">1 accès d'assistance en cours</strong><br><span style="color: #9A9EA6">Clinique des Tilleuls · lecture seule · expire dans 2 h 40</span></div>
+          <div style="padding: 12px; border-radius: 10px; background: #1F2125"><strong style="font-weight: 600">Vague de comptes verrouillés détectée</strong><br><span style="color: #9A9EA6">Transports Morel · 9 comptes en 12 min · déblocages suspendus</span></div>
+        </div>
+      </section>
+
+      <section style="border-radius: 12px; background: #17181B; border: 1px solid #26282D; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Commercial</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div><div style="font-size: 13px; color: #9A9EA6">Revenu mensuel</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 6px">[MONTANT]</div></div>
+          <div><div style="font-size: 13px; color: #9A9EA6">Pilotes en cours</div><div style="font-family: 'Geist Mono', monospace; font-size: 24px; margin-top: 6px">3</div></div>
+        </div>
+        <div style="font-size: 14px; color: #9A9EA6; line-height: 1.5">Relations ESN-client qui expirent sous 30 jours : <span style="color: #EDEEF0">2</span></div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

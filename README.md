@@ -16,6 +16,7 @@ La relève IA du support informatique : un agent de niveau 1 qui prend la garde 
 | [08 · Expérience premium](docs/08-experience-ux-premium.md) | Chat, console technicien, qualité perçue |
 | [09 · Sécurité](docs/09-securite.md) | Modèle de menace, défenses par couche, skills de sécurité, calendrier |
 | [10 · Rôles et tableaux de bord](docs/10-roles-administration-cockpits.md) | Super administrateur, ESN multi-clients, accès délégués, tableau de bord de chaque rôle |
+| [11 · Démo resserrée, fiabilité, ESN revendeur](docs/11-demo-resserree-et-fiabilite.md) | Périmètre de la première version, protocole de mesure de la qualité, intérêt de l'ESN à revendre |
 | [Modèle de menace](docs/threat-model.md) | 33 menaces, invariants de suppléance et de contrôle d'accès, correspondance avec les principes ANSSI |
 | [Sécurité du code et de la CI](docs/securite-code-et-ci.md) | Garde-fous automatiques, conventions de code, limites, réglages GitHub |
 | [Sources](docs/sources.md) | Toutes les sources, classées par fiabilité |

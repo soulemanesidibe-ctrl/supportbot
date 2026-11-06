@@ -122,7 +122,9 @@ Principe tiré de Microsoft 365 Lighthouse et des bonnes pratiques ITSM : **chaq
 | Performance | Résolution au premier contact, délai moyen de résolution, respect des SLA avec **causes des dépassements**, taux de réouverture, taux d'escalade, satisfaction |
 | Équipe | Charge par technicien, astreintes, suppléances actives |
 | Accès | Relations et assignations qui expirent, revues trimestrielles à faire |
-| **Rapport mensuel par client** | Généré automatiquement, relu puis envoyé : ce que Relève et l'équipe ont traité. C'est la preuve de valeur qui justifie la facture de l'ESN |
+| **Rapport mensuel par client** | Généré automatiquement, relu puis envoyé, **à la marque de l'ESN** : ce que Relève et l'équipe ont traité, avec un bloc « prochaine étape ». C'est la preuve de valeur qui justifie la facture de l'ESN |
+| **Opportunités et revenu** | Clients sans relève active, pilotes qui se terminent, clients ayant connu des absences ; marge de l'ESN sur Relève. Voir `docs/11` § 3 (ESN revendeur) |
+| **Qualité de Relève** | Indicateurs réels de fiabilité avec leur effectif (`docs/11` § 2) |
 
 ### 5.3 Technicien (ESN ou interne) : « Quoi faire maintenant ? »
 
@@ -155,6 +157,10 @@ Journal d'audit filtrable (personne, action, client, période), actions privilé
 ### 5.7 Salarié : « Où en est ma demande ? »
 
 Ses demandes et leur statut, les incidents en cours qui le concernent (« Panne Outlook en cours, rétablissement estimé… »), le bouton « Parler à un technicien ».
+
+### Maquettes
+
+Les sept écrans sont maquettés en direction B sur la planche [Relève IA · Identité visuelle](https://claude.ai/artifact/R9f1Z9Bnw4mZ4p2HymWNmT) (deuxième et troisième rangées), sources dans `docs/identite-visuelle/cockpits/`. Données fictives.
 
 ## 6. Définition des indicateurs
 
