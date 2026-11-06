@@ -67,3 +67,14 @@ $$ begin execute p_sql; return null; exception when others then return sqlstate;
 -- que le refus vient bien de la bonne défense et pas d'une autre.
 create or replace function test.msg_admin(p_sql text) returns text language plpgsql as
 $$ begin execute p_sql; return null; exception when others then return sqlerrm; end $$;
+
+-- Comme test.q mais sous un rôle d'API précis (par exemple service_role, qui contourne la RLS).
+create or replace function test.q_role(p_role text, p_sql text) returns bigint language plpgsql as
+$$ declare v bigint;
+begin
+  execute format('set local role %I', p_role);
+  execute p_sql into v;
+  execute 'reset role';
+  return v;
+exception when others then execute 'reset role'; raise;
+end $$;
