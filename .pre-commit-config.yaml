@@ -39,4 +39,6 @@ repos:
         language: python
         additional_dependencies: ["semgrep==1.184.0"]
         types_or: [ts, tsx, javascript, jsx]
+        # Miroir de .semgrepignore : pre-commit passe les fichiers un par un, ce qui contourne ce fichier.
+        exclude: '^(security/semgrep/|\.claude/|\.agents/|docs/)|\.(test|spec)\.tsx?$|/__tests__/'
         stages: [pre-push]
