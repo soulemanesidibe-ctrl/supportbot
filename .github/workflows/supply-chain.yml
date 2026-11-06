@@ -1,0 +1,188 @@
+# Chaîne d'approvisionnement : dépendances, paquets malveillants, SBOM.
+# Modèle : docs/threat-model.md (M06) ; mode d'emploi : docs/securite-code-et-ci.md.
+# L'analyse des dépendances s'active seule dès qu'un package-lock.json est versionné ;
+# le SBOM est produit à chaque exécution.
+name: Chaîne d'approvisionnement
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Hebdomadaire : de nouvelles failles sont publiées sur des versions déjà installées.
+    - cron: "7 6 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: chaine-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies:
+    name: Dépendances (npm audit, OSV, GuardDog, Snyk)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Chercher les fichiers de verrouillage npm
+        id: detect
+        run: |
+          git ls-files -- '*package-lock.json' ':!:.claude/*' ':!:.agents/*' > "$RUNNER_TEMP/locks.txt"
+          if [ -s "$RUNNER_TEMP/locks.txt" ]; then
+            echo "has_lock=true" >> "$GITHUB_OUTPUT"
+            echo "Fichiers de verrouillage analysés :" >> "$GITHUB_STEP_SUMMARY"
+            sed 's/^/- /' "$RUNNER_TEMP/locks.txt" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_lock=false" >> "$GITHUB_OUTPUT"
+            echo "Aucun package-lock.json versionné : l'analyse des dépendances s'activera avec le premier jalon applicatif." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Installer Node.js
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Installer les dépendances sans exécuter leurs scripts
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: |
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::npm ci --ignore-scripts ($dir)"
+            npm ci --ignore-scripts --prefix "$dir"
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/locks.txt"
+
+      - name: Vulnérabilités connues et signatures du registre (npm)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: |
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::npm audit ($dir)"
+            npm audit --audit-level=high --prefix "$dir"
+            npm audit signatures --prefix "$dir"
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/locks.txt"
+
+      - name: Installer OSV-Scanner (empreinte vérifiée)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: >-
+          scripts/ci/install-release.sh
+          "https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64"
+          160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b
+          - osv-scanner
+
+      - name: Vulnérabilités connues et paquets malveillants référencés (OSV)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: |
+          while IFS= read -r lock; do
+            echo "::group::osv-scanner ($lock)"
+            osv-scanner scan source --lockfile "$lock"
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/locks.txt"
+
+      - name: Installer Python
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Installer GuardDog (version et empreintes verrouillées)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: python -m pip install --disable-pip-version-check --require-hashes --requirement security/requirements/guarddog.txt
+
+      # Informatif tant que le premier lot de dépendances n'a pas été trié : GuardDog signale aussi
+      # des comportements légitimes (script d'installation d'esbuild, lecture de variables
+      # d'environnement...). Le passer en bloquant est noté dans docs/securite-code-et-ci.md.
+      - name: Heuristiques de paquets malveillants (GuardDog, informatif)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        continue-on-error: true
+        run: |
+          while IFS= read -r lock; do
+            pkg="$(dirname "$lock")/package.json"
+            echo "::group::guarddog ($pkg)"
+            guarddog npm verify "$pkg"
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/locks.txt"
+
+      - name: Vérifier si Snyk est configuré
+        id: snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          if [ -n "$SNYK_TOKEN" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT"; else echo "enabled=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Installer Snyk (empreinte vérifiée)
+        if: ${{ steps.detect.outputs.has_lock == 'true' && steps.snyk.outputs.enabled == 'true' }}
+        run: >-
+          scripts/ci/install-release.sh
+          "https://github.com/snyk/cli/releases/download/v1.1308.2/snyk-linux"
+          eafe77550e44b9905fdf6c3ab1f583059274ba0c74284c7e03749d793fe66e73
+          - snyk
+
+      - name: Analyse des dépendances (Snyk)
+        if: ${{ steps.detect.outputs.has_lock == 'true' && steps.snyk.outputs.enabled == 'true' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects --exclude=.claude,.agents --severity-threshold=high
+
+  sbom:
+    name: Inventaire des composants (SBOM)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer Syft (empreinte vérifiée)
+        run: >-
+          scripts/ci/install-release.sh
+          "https://github.com/anchore/syft/releases/download/v1.57.0/syft_1.57.0_linux_amd64.tar.gz"
+          9c077a7d43029b3b13e98a8db720661e700c4d58db6352153a06395ae4a2a704
+          syft syft
+
+      - name: Installer Grype (empreinte vérifiée)
+        run: >-
+          scripts/ci/install-release.sh
+          "https://github.com/anchore/grype/releases/download/v0.121.1/grype_0.121.1_linux_amd64.tar.gz"
+          bc3ea3f9e6fd56ac781c08c6c5e614271b79f438200757f6932085c19b0a4657
+          grype grype
+
+      - name: Produire le SBOM (CycloneDX)
+        run: >-
+          syft scan dir:.
+          --exclude './.claude/**' --exclude './.agents/**' --exclude './.git/**'
+          --output cyclonedx-json=releve.cdx.json
+
+      - name: Résumé du SBOM
+        run: |
+          {
+            echo "### SBOM"
+            echo
+            echo "Format : $(jq -r '.bomFormat + " " + .specVersion' releve.cdx.json) ; composants : $(jq '.components | length' releve.cdx.json)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bloquer les failles graves corrigeables
+        run: grype sbom:releve.cdx.json --fail-on high --only-fixed
+
+      - name: Conserver le SBOM
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-cyclonedx
+          path: releve.cdx.json
+          retention-days: 90
