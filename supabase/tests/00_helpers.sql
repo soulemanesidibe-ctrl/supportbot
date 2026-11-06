@@ -62,3 +62,8 @@ end $$;
 -- Code d'erreur d'une instruction exécutée en tant que superutilisateur (pour tester les garde-fous de la base).
 create or replace function test.err_admin(p_sql text) returns text language plpgsql as
 $$ begin execute p_sql; return null; exception when others then return sqlstate; end $$;
+
+-- Message d'erreur d'une instruction exécutée en tant que superutilisateur (null si elle réussit) : permet de vérifier
+-- que le refus vient bien de la bonne défense et pas d'une autre.
+create or replace function test.msg_admin(p_sql text) returns text language plpgsql as
+$$ begin execute p_sql; return null; exception when others then return sqlerrm; end $$;
