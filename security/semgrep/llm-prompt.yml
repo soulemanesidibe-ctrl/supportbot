@@ -1,0 +1,39 @@
+# M01, M07 : un prompt système est une constante écrite dans le code. definePrompt() est la seule façon d'en créer un :
+# réservée à llm/prompts.ts, et son texte doit être un littéral (pas d'interpolation, de concaténation ni d'appel).
+# Voir docs/securite-code-et-ci.md. Testé par llm-prompt.ts.
+rules:
+  - id: releve-define-prompt-outside-prompts
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      definePrompt() enregistre un prompt système. Il n'est appelé que dans supabase/functions/_shared/llm/prompts.ts :
+      ailleurs, un contenu externe pourrait devenir une instruction du modèle.
+    metadata:
+      threat: [M01, M07]
+      cwe: ["CWE-77", "CWE-1427"]
+      owasp: "LLM01:2025 Prompt Injection"
+    paths:
+      exclude:
+        - "**/_shared/llm/prompts.ts"
+        - "**/_shared/llm/prompt_registry.ts"
+    pattern-either:
+      - pattern: definePrompt(...)
+      - pattern: import {..., definePrompt, ...} from $SRC
+
+  - id: releve-define-prompt-dynamic-text
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Le texte d'un prompt système doit être un littéral : ni interpolation, ni concaténation, ni appel de fonction, ni variable.
+    metadata:
+      threat: [M01, M07]
+      cwe: ["CWE-77", "CWE-1427"]
+      owasp: "LLM01:2025 Prompt Injection"
+    pattern-either:
+      # gabarit AVEC interpolation (le motif « `...` » seul accepterait aussi ${...})
+      - pattern: "definePrompt($ID, $VER, `...${$X}...`)"
+      # variable, concaténation, appel : tout ce qui n'est pas un littéral
+      - patterns:
+          - pattern: definePrompt($ID, $VER, $TEXT)
+          - pattern-not: definePrompt($ID, $VER, "...")
+          - pattern-not: definePrompt($ID, $VER, `...`)
