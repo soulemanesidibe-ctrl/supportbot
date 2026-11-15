@@ -27,6 +27,11 @@ run_dir() { # $1 = libellé, $2 = glob
 }
 run_dir "banc d'essai" "$ROOT/supabase/tests/harness/*.sql"
 run_dir "migration"    "$ROOT/supabase/migrations/*.sql"
+# Le script de vérification livré au fondateur doit passer sur la base migrée, AVANT la graine (il exige une seule organisation).
+echo "-- script de vérification d'un projet (supabase/verify)"
+verif="$(psql_ -d releve_test -At -F ' | ' -f "$ROOT/supabase/verify/verifier-projet.sql")"
+if echo "$verif" | grep -E '\| f$' >/dev/null; then echo "$verif" | grep -E '\| f$'; echo "Script de vérification : une ligne est fausse sur la base migrée"; exit 1; fi
+echo "   ok   $(echo "$verif" | grep -c '| t$') contrôles automatiques vrais, 0 faux"
 run_dir "données de démonstration" "$ROOT/supabase/seed/*.sql"
 echo "== tests"
 fail=0
