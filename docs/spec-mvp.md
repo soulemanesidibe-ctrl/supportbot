@@ -237,7 +237,7 @@ Aucun jeton dans `localStorage` (CSP stricte, menace M15). Conception retenue :
 - le **widget est une page hébergée** par Relève (`/w/<organisation>`), que l'intranet du client ouvre dans un onglet ou une fenêtre. L'**intégration par iframe** est un P1 : les navigateurs bloquent de plus en plus les cookies tiers, ce qui la fragilise ;
 - une **fonction Pages** (même origine que le front) joue le rôle de « passerelle de session » : le jeton de rafraîchissement vit dans un cookie `__Host-` **HttpOnly**, `Secure`, `SameSite=Lax` ; le jeton d'accès (10 minutes) vit **en mémoire** du navigateur seulement ;
 - **salariés** : connexion par code à usage unique envoyé à leur adresse professionnelle, **uniquement si l'adresse figure dans la liste des salariés importée** du client, **vérifiée avant l'envoi du code** et non après ; la conversation seule n'authentifie jamais une action sur un compte (§ 9.3) ;
-- **techniciens et administrateurs** : e-mail, mot de passe et second facteur (TOTP) obligatoires ; « MFA récent » se lit dans la revendication `amr` du jeton (horodatage de la dernière vérification du second facteur, **à confirmer dans la documentation Supabase en J2**).
+- **techniciens et administrateurs** : e-mail, mot de passe et second facteur (TOTP) obligatoires ; « MFA récent » se lit dans la revendication `amr` du jeton (horodatage de la dernière vérification du second facteur ; **format confirmé le 15 novembre 2026** par la documentation Supabase, *JWT Claims Reference* et FAQ du guide *Multi-Factor Authentication* : tableau d'objets `{method, timestamp}`, méthode `totp`).
 
 ### 5.4 Arborescence du dépôt
 
@@ -279,12 +279,12 @@ Ces noms sont **ceux que les règles Semgrep de J0 imposent** (`docs/securite-co
 
 | Nom | Signature | Rôle |
 |---|---|---|
-| `AuthContext` | `{ userId, orgId, role, aal, mfaAt, requestId }` | Preuve (par le type) qu'une authentification et une appartenance ont été vérifiées pour **cette** requête |
+| `AuthContext` | `{ kind, userId, orgId, role, via, readOnly, frozen, activated, aal, mfaAt, requestId }` | Preuve, **par le type et à l'exécution**, qu'une authentification et une appartenance ont été vérifiées pour **cette** requête. Gelé, fabriqué par le seul `auth.ts` : un littéral, une copie ou un JSON n'en sont pas un. `via` : `member`, `partner` ou `support_access` (lecture seule) |
 | `requireUser(req)` | `Promise<AuthContext>` | Vérifie le JWT |
 | `requireOrgMember(req, orgId, roles?)` | `Promise<AuthContext>` | Vérifie le JWT, l'appartenance, le rôle, et pour une ESN la relation **et** l'assignation actives |
 | `requireRecentMfa(auth, maxAgeSeconds)` | `AuthContext` | Refuse si le second facteur est plus ancien que la limite (défaut : 600 s) |
-| `verifyWebhookSignature(req)` | `Promise<SourceContext>` | Signature HMAC d'une source d'alertes, horodatage anti-rejeu |
-| `requireCronSecret(req)` | `void` | Appels planifiés internes |
+| `verifyWebhookSignature(req)` | `Promise<AuthContext>` (`kind: "source"`) | Signature HMAC d'une source d'alertes, horodatage anti-rejeu. **Livrée en J4 (commit 4.5)**, avec le secret de la source lu dans Vault |
+| `requireCronSecret(req)` | `Promise<AuthContext>` (`kind: "cron"`) | Appels planifiés internes ; refus si le secret est absent ou de moins de 32 caractères |
 | `serviceClient(auth)` | `SupabaseClient` | **Seul** moyen d'obtenir un client `service_role` |
 | `log.info/warn/error(événement, champs)`, `redact(valeur)` | | Journalisation avec masquage |
 | `SYSTEM_PROMPT`, `getSystemPrompt()` | `string` | Prompt système **statique** versionné |
@@ -831,7 +831,7 @@ Un jalon est une série de commits suivie d'un arrêt pour votre validation. **C
 
 **J2 : base de données (livré)** (skills : `supabase`, `implementing-gdpr-data-protection-controls`, `testing-for-broken-access-control`, `implementing-aes-encryption-for-data-at-rest`, `securing-agentic-ai-tool-invocation`)
 
-Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par domaine (une migration d'une table à la fois n'aurait servi à rien : elles s'appliquent ensemble). **Chacune est appliquée par vous**, dans l'ordre des noms de fichier.
+Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par domaine, puis une 11e est venue avec J3 (une migration d'une table à la fois n'aurait servi à rien : elles s'appliquent ensemble). **Chacune est appliquée par vous**, dans l'ordre des noms de fichier.
 
 | # | Migration | Contenu |
 |---|---|---|
@@ -845,6 +845,7 @@ Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par
 | 8 | `20261106100800_automatisations_et_qualite` | Règles et exécutions, notes (insertion seule), portes de catégorie, mode ombre imposé par la base, retour arrière automatique, barres de passage |
 | 9 | `20261106100900_revendeur_et_usage` | Prix partenaire et marge (invisibles du client), rapports mensuels, usage du modèle |
 | 10 | `20261106101000_conservation` | Purge planifiable (conversations, charges d'alerte), expirations |
+| 11 | `20261106101100_contexte_de_requete` | **Jalon J3.** `resolve_access` (rôle et voie d'accès d'un utilisateur dans une organisation, règles de la base) ; acteur et identifiant de requête dans le journal d'audit pour les écritures des Edge Functions (en-têtes posés par `serviceClient`, honorés seulement pour le rôle `service_role`) |
 
 | # | Commit livré |
 |---|---|

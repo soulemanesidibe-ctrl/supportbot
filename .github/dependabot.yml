@@ -1,6 +1,6 @@
 # Mises à jour automatiques des actions GitHub (SHA épinglés) et des outils Python de la CI
-# (versions et empreintes verrouillées). Les dépendances npm de l'application seront ajoutées
-# avec le premier package-lock.json (docs/securite-code-et-ci.md).
+# (versions et empreintes verrouillées), et de l'exécutable Deno de la CI. Les dépendances npm de l'application seront
+# ajoutées avec le premier jalon applicatif (docs/securite-code-et-ci.md, B06).
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -18,6 +18,16 @@ updates:
 
   - package-ecosystem: pip
     directory: /security/requirements
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(security)"
+
+  - package-ecosystem: npm
+    directory: /security/tools/deno
     schedule:
       interval: weekly
       day: monday

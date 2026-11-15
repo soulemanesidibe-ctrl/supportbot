@@ -1,0 +1,42 @@
+# M23, M27 : l'AuthContext est la preuve qu'une authentification a eu lieu. Seul auth.ts en fabrique ; seul db.ts sait
+# interroger la base avant qu'un contexte n'existe. Voir docs/securite-code-et-ci.md. Testé par auth-context.ts.
+rules:
+  - id: releve-mint-context-outside-auth
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      mintContext() et createAccessResolver() fabriquent ou préparent la preuve d'authentification : ils sont réservés à
+      supabase/functions/_shared/auth.ts et auth_deps.ts. Une fonction obtient son AuthContext par requireUser,
+      requireOrgMember, verifyWebhookSignature ou requireCronSecret, jamais autrement.
+    metadata:
+      threat: [M23, M27]
+      cwe: ["CWE-287", "CWE-862"]
+      owasp: "A01:2021 Broken Access Control"
+    paths:
+      exclude:
+        - "**/_shared/auth.ts"
+        - "**/_shared/auth_deps.ts"
+        - "**/_shared/context.ts"
+        - "**/_shared/db.ts"
+    pattern-either:
+      - pattern: mintContext(...)
+      - pattern: createAccessResolver(...)
+      - pattern: import {..., mintContext, ...} from $SRC
+      - pattern: import {..., createAccessResolver, ...} from $SRC
+
+  - id: releve-auth-context-cast
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Convertir une valeur en AuthContext ("as AuthContext") contourne la preuve d'authentification : le type n'a plus de
+      sens et serviceClient() ne protège plus rien. Obtenez un AuthContext par une garde de auth.ts.
+    metadata:
+      threat: [M23, M27]
+      cwe: ["CWE-287"]
+      owasp: "A01:2021 Broken Access Control"
+    paths:
+      exclude:
+        - "**/_shared/context.ts"
+    pattern-either:
+      - pattern: $X as AuthContext
+      - pattern: $X as unknown as AuthContext

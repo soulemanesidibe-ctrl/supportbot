@@ -1,0 +1,1 @@
+{ "name": "releve-outils-deno", "private": true, "version": "0.0.0", "description": "Verrou de l'exécutable Deno utilisé en CI (Edge Functions)", "dependencies": { "deno": "2.9.6" } }
