@@ -370,5 +370,49 @@
     "20261106100200_acces_et_audit.sql"
    ]
   ]
+ },
+ {
+  "label": "un navigateur peut désigner l'acteur par en-tête (usurpation)",
+  "file": "20261106101100_contexte_de_requete.sql",
+  "expect": "ne peut PAS désigner un acteur",
+  "edits": [
+   [
+    "  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then return null; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "resolve_access ignore la suspension d'une organisation",
+  "file": "20261106101100_contexte_de_requete.sql",
+  "expect": "organisation suspendue",
+  "edits": [
+   [
+    "if o.id is null or o.state = 'suspended' then return; end if;",
+    "if o.id is null then return; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "accès d'assistance sans approbation du client (défense en profondeur : approbation ET fenêtre retirées)",
+  "file": "20261106101100_contexte_de_requete.sql",
+  "expect": "NON approuvé",
+  "edits": [
+   [
+    "where g.client_org_id = p_org and g.requested_by = p_user and g.approved_by is not null\n            and g.revoked_at is null and g.starts_at <= now() and g.ends_at > now())",
+    "where g.client_org_id = p_org and g.requested_by = p_user\n            and g.revoked_at is null)"
+   ]
+  ]
+ },
+ {
+  "label": "resolve_access appelable par le navigateur",
+  "file": "20261106101100_contexte_de_requete.sql",
+  "expect": "INTERDITE au navigateur",
+  "edits": [
+   [
+    "revoke all on function public.resolve_access(uuid, uuid) from public, anon, authenticated;\n",
+    "grant execute on function public.resolve_access(uuid, uuid) to authenticated, anon;\n"
+   ]
+  ]
  }
 ]

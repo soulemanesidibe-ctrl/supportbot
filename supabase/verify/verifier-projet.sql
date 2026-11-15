@@ -1,6 +1,6 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 10 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 11 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
--- Lecture : la colonne « ok » doit valoir true sur toutes les lignes ; une ligne false se copie-colle telle quelle à Claude.
+-- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
 with
 tables_public as (
@@ -52,6 +52,12 @@ checks(ordre, controle, attendu, trouve, ok) as (
   select 9, 'Le service peut lancer la purge', 'true',
          has_function_privilege('service_role', 'private.purge_expired()', 'execute')::text,
          has_function_privilege('service_role', 'private.purge_expired()', 'execute')
+  union all
+  select 9.5, 'Le navigateur ou l''anonyme peuvent appeler resolve_access (droits des autres)', 'false',
+         (has_function_privilege('authenticated', 'public.resolve_access(uuid, uuid)', 'execute')
+          or has_function_privilege('anon', 'public.resolve_access(uuid, uuid)', 'execute'))::text,
+         not (has_function_privilege('authenticated', 'public.resolve_access(uuid, uuid)', 'execute')
+              or has_function_privilege('anon', 'public.resolve_access(uuid, uuid)', 'execute'))
   union all
   select 10, 'Index vectoriel HNSW de la base de connaissance', '1',
          (select count(*)::text from pg_indexes where indexname = 'kb_chunks_embedding_hnsw'),

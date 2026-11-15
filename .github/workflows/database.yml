@@ -41,6 +41,9 @@ jobs:
       - name: Installer l'extension de recherche vectorielle (pgvector)
         run: sudo apt-get install --yes --no-install-recommends postgresql-16-pgvector
 
+      - name: Vérifier que le fichier d'application des migrations est à jour
+        run: scripts/build-migration-bundle.sh --check
+
       - name: Appliquer les migrations sur un PostgreSQL jetable et lancer les tests
         run: supabase/tests/run.sh
 
