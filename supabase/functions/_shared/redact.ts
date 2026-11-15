@@ -17,34 +17,51 @@ const SENSITIVE_KEY =
 // Exceptions : les COMPTEURS de jetons du modèle (tokens_in, completion_tokens...) ne sont pas des secrets.
 const TOKEN_COUNT_KEY = /^(prompt_|completion_|input_|output_|max_|total_)?tokens?(_in|_out|_count|_used)?$/i;
 
-const PATTERNS: Array<[RegExp, string | ((m: string, ...g: string[]) => string)]> = [
-  [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----|$)/g, MASK],
-  [/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, MASK], // JWT
-  [/\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi, `Bearer ${MASK}`],
-  [/\bsb_(secret|publishable)_[A-Za-z0-9_-]{8,}/g, MASK], // clés Supabase
-  [/\b(https?|postgres(?:ql)?):\/\/[^\s/:@]+:[^\s/@]+@/gi, (_m, p) => `${p}://${MASK}@`], // identifiants dans une URL
+type Kind = "secret" | "pii";
+const PATTERNS: Array<{ kind: Kind; re: RegExp; rep: string | ((m: string, ...g: string[]) => string) }> = [
+  { kind: "secret", re: /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----|$)/g, rep: MASK },
+  { kind: "secret", re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, rep: MASK }, // JWT
+  { kind: "secret", re: /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi, rep: `Bearer ${MASK}` },
+  { kind: "secret", re: /\bsb_(secret|publishable)_[A-Za-z0-9_-]{8,}/g, rep: MASK }, // clés Supabase
+  { kind: "secret", re: /\b(https?|postgres(?:ql)?):\/\/[^\s/:@]+:[^\s/@]+@/gi, rep: (_m, p) => `${p}://${MASK}@` }, // identifiants dans une URL
   // clé=valeur dans un texte ou une URL (?token=abc, password: abc, api_key = abc)
-  [
-    /\b(password|passwd|pwd|mot[ _-]?de[ _-]?passe|mdp|secret|token|api[_-]?key|apikey|client_secret)\b(\s*[:=]\s*|\s+(?:est|is|:)\s+)(["']?)[^\s"',;&]{3,}\3/gi,
-    (_m, k, sep) => `${k}${sep}${MASK}`,
-  ],
+  {
+    kind: "secret",
+    re: /\b(password|passwd|pwd|mot[ _-]?de[ _-]?passe|mdp|secret|token|api[_-]?key|apikey|client_secret)\b(\s*[:=]\s*|\s+(?:est|is|:)\s+)(["']?)[^\s"',;&]{3,}\3/gi,
+    rep: (_m, k, sep) => `${k}${sep}${MASK}`,
+  },
   // codes à usage unique (« mon code de vérification est 123456 ») ; on ne masque PAS un « code d'erreur », utile au diagnostic
-  [
-    /\b(code(?:\s+de)?\s+(?:vérification|verification|sécurité|securite|secours|temporaire|sms|reçu|recu)|verification code|security code|otp)\b(\s*(?:est|is|:|=)?\s*)\d[\d\s-]{2,12}\d/gi,
-    (_m, k, sep) => `${k}${sep}${MASK}`,
-  ],
+  {
+    kind: "secret",
+    re: /\b(code(?:\s+de)?\s+(?:vérification|verification|sécurité|securite|secours|temporaire|sms|reçu|recu)|verification code|security code|otp)\b(\s*(?:est|is|:|=)?\s*)\d[\d\s-]{2,12}\d/gi,
+    rep: (_m, k, sep) => `${k}${sep}${MASK}`,
+  },
   // « mon mot de passe est Azerty123 », « my password is hunter2 »
-  [/\b(mot de passe|password|mdp)\s+(?:actuel\s+|temporaire\s+)?(?:est|is)\s+\S+/gi, (_m, k) => `${k} ${MASK}`],
+  { kind: "secret", re: /\b(mot de passe|password|mdp)\s+(?:actuel\s+|temporaire\s+)?(?:est|is)\s+\S+/gi, rep: (_m, k) => `${k} ${MASK}` },
   // adresses e-mail : on garde la première lettre et le domaine (minimisation, RGPD), jamais l'adresse complète
-  [/\b([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g, (_m, a, d) => `${a}***@${d}`],
+  { kind: "pii", re: /\b([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g, rep: (_m, a, d) => `${a}***@${d}` },
   // numéros de téléphone français (06 12 34 56 78, +33 6 12 34 56 78, 0033612345678)
-  [/(?<![\d.])(?:\+33|0033|0)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}(?![\d.])/g, "[TÉLÉPHONE]"],
+  { kind: "pii", re: /(?<![\d.])(?:\+33|0033|0)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}(?![\d.])/g, rep: "[TÉLÉPHONE]" },
 ];
 
 export function redactText(input: string): string {
   let s = input.length > MAX_STRING * 4 ? input.slice(0, MAX_STRING * 4) : input;
-  for (const [re, rep] of PATTERNS) s = s.replace(re, rep as string);
+  for (const { re, rep } of PATTERNS) s = s.replace(re, rep as string);
   return s.length > MAX_STRING ? `${s.slice(0, MAX_STRING)}…[tronqué]` : s;
+}
+
+/** Vrai si le texte contient un SECRET reconnaissable (pas une simple adresse e-mail ou un numéro de téléphone). */
+export function containsSecret(input: string): boolean {
+  const s = input.length > MAX_STRING * 4 ? input.slice(0, MAX_STRING * 4) : input;
+  for (const { kind, re } of PATTERNS) {
+    if (kind !== "secret") continue;
+    re.lastIndex = 0;
+    if (re.test(s)) {
+      re.lastIndex = 0;
+      return true;
+    }
+  }
+  return false;
 }
 
 export function redact(value: unknown, depth = 0, seen: WeakSet<object> = new WeakSet()): unknown {

@@ -38,3 +38,8 @@ export function promptInfo(text: string): PromptInfo | null {
 export function isStaticPrompt(x: unknown): x is StaticPrompt {
   return typeof x === "string" && registry.has(x);
 }
+
+/** Textes de tous les prompts enregistrés : sert à repérer une fuite d'instructions dans une réponse. */
+export function registeredPromptTexts(): string[] {
+  return [...registry.keys()];
+}
