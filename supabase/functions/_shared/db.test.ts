@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { AuthDeps, requireCronSecret, requireOrgMember, requireUser } from "./auth.ts";
-import { createAccessResolver, DbDeps, serviceClient } from "./db.ts";
+import { createAccessResolver, DbDeps, pickKey, serviceClient } from "./db.ts";
 import { AppError } from "./errors.ts";
 
 const USER = "123e4567-e89b-12d3-a456-426614174000";
@@ -95,4 +95,16 @@ Deno.test("createAccessResolver : appelle resolve_access avec l'utilisateur et l
 Deno.test("createAccessResolver : une erreur de la base est une indisponibilité, jamais un accès accordé", async () => {
   const broken = fakeDeps({ createClient: (() => ({ rpc: () => Promise.resolve({ data: null, error: { message: "boom" } }) })) as never });
   await assert.rejects(createAccessResolver(broken.deps)(USER, ORG), (e: unknown) => (e as AppError).code === "service_unavailable");
+});
+
+Deno.test("pickKey : la nouvelle clé nommée d'abord, l'ancienne en repli, jamais une valeur inventée", () => {
+  assert.equal(pickKey('{"default":"sb_secret_nouvelle","autre":"x"}', "ancienne"), "sb_secret_nouvelle");
+  assert.equal(pickKey('{"default":"sb_secret_nouvelle","billing":"b"}', undefined, "billing"), "b");
+  assert.equal(pickKey(undefined, "ancienne"), "ancienne");
+  assert.equal(pickKey("pas du json", "ancienne"), "ancienne", "dictionnaire illisible : repli");
+  assert.equal(pickKey('{"autre":"x"}', "ancienne"), "ancienne", "nom absent : repli");
+  assert.equal(pickKey('{"default":42}', undefined), undefined, "valeur non textuelle : rien");
+  assert.equal(pickKey('["a"]', undefined), undefined);
+  assert.equal(pickKey(undefined, undefined), undefined);
+  assert.equal(pickKey("", ""), undefined);
 });

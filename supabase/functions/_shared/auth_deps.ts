@@ -1,7 +1,7 @@
 // Branchement réel des gardes sur Supabase (jeton, base). Séparé de auth.ts pour que la logique de décision se teste sans réseau.
 import { createClient } from "@supabase/supabase-js";
 import { AccessRow, AuthDeps, VerifiedToken } from "./auth.ts";
-import { createAccessResolver } from "./db.ts";
+import { createAccessResolver, pickKey } from "./db.ts";
 import { Errors } from "./errors.ts";
 
 function decodePayload(token: string): Record<string, unknown> {
@@ -12,7 +12,8 @@ function decodePayload(token: string): Record<string, unknown> {
 
 export function supabaseAuthDeps(): AuthDeps {
   const url = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  // Clé PUBLIQUE (faible privilège) : nouvelle clé « sb_publishable_... » d'abord, ancienne clé anon en repli.
+  const anonKey = pickKey(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS"), Deno.env.get("SUPABASE_ANON_KEY"));
   const resolver = createAccessResolver();
   return {
     async verifyToken(token: string): Promise<VerifiedToken> {

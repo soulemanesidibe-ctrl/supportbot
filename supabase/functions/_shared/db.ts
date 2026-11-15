@@ -16,11 +16,34 @@ export interface DbDeps {
   serviceKey: () => string | undefined;
 }
 
+/**
+ * Les clés « sb_secret_... » (nouvelle génération) arrivent dans SUPABASE_SECRET_KEYS, un dictionnaire JSON nommé ; les anciennes
+ * clés « service_role » dans SUPABASE_SERVICE_ROLE_KEY, qui sera retirée (documentation Supabase, migration vers les nouvelles clés,
+ * 15 novembre 2026). On lit la nouvelle d'abord, l'ancienne en repli ; jamais de valeur par défaut inventée.
+ */
+export function pickKey(dictionary: string | undefined, legacy: string | undefined, name = "default"): string | undefined {
+  if (dictionary) {
+    try {
+      const parsed: unknown = JSON.parse(dictionary);
+      const v = typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>)[name] : undefined;
+      if (typeof v === "string" && v.length > 0) return v;
+    } catch {
+      // dictionnaire illisible : on tente l'ancienne variable, sans journaliser la valeur
+    }
+  }
+  return legacy || undefined;
+}
+
 const realDeps: DbDeps = {
   createClient,
   url: () => Deno.env.get("SUPABASE_URL"),
-  // nosemgrep: releve-service-role-key-direct-use -- porte unique : cette lecture n'existe que dans db.ts, la clé ne sort jamais du module
-  serviceKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  serviceKey: () =>
+    pickKey(
+      // nosemgrep: releve-service-role-key-direct-use -- porte unique : cette lecture n'existe que dans db.ts, la clé ne sort jamais du module
+      Deno.env.get("SUPABASE_SECRET_KEYS"),
+      // nosemgrep: releve-service-role-key-direct-use -- porte unique : repli sur l'ancienne clé, lue seulement ici
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    ),
 };
 
 function build(headers: Record<string, string>, deps: DbDeps): SupabaseClient {

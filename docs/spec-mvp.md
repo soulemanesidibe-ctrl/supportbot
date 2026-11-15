@@ -228,6 +228,8 @@ Chaque fonction commence par **une** vérification d'authentification (conventio
 | `reports` | Rapport de passation, rapport mensuel à la marque de l'ESN | `requireOrgMember` |
 | `cron` | Expirations, silence des sources, purge, génération des rapports | `requireCronSecret` |
 
+**Clés et vérification du jeton (constaté le 15 novembre 2026 sur le projet réel et dans la documentation Supabase).** Le projet utilise les nouvelles clés (`sb_publishable_...`, `sb_secret_...`) ; les anciennes (`anon`, `service_role`) sont annoncées retirées début 2027. Les fonctions lisent donc `SUPABASE_SECRET_KEYS` et `SUPABASE_PUBLISHABLE_KEYS` (dictionnaires JSON, clé nommée `default`), avec repli sur les anciennes variables (`pickKey`, `_shared/db.ts`). Ces clés ne sont **pas des jetons JWT** : la vérification intégrée `verify_jwt` de la plateforme ne les comprend pas. Chaque fonction est donc déclarée avec `verify_jwt = false` dans `supabase/config.toml` et **fait elle-même sa vérification** (`requireUser`, `requireCronSecret`, signature de webhook), ce qu'elle faisait déjà. Deux points restent à confirmer **au premier déploiement réel** : que la clé secrète donne bien le rôle `service_role` à la base (l'acteur du journal d'audit en dépend, migration 11), et que le client envoie la clé dans l'en-tête `apikey` seulement.
+
 La **console lit en direct** avec le client Supabase (la RLS protège) et **écrit par les Edge Functions** pour tout ce qui est sensible (validation, délégation, relation, niveau d'autonomie). Le client Supabase du navigateur utilise la clé publique uniquement.
 
 ### 5.3 Session et jetons : décision technique à confirmer
