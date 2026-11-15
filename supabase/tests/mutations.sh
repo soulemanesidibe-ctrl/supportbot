@@ -41,7 +41,7 @@ for i, m in enumerate(muts, 1):
         for path, src in sources.items():
             open(path, 'w', encoding='utf-8').write(src)
         subprocess.run(['chmod', '-R', 'a+rwX', d])
-        r = subprocess.run(['bash', os.path.join(d, 'supabase/tests/run.sh')], capture_output=True, text=True)
+        r = subprocess.run(['bash', os.path.join(d, 'supabase/tests/run.sh')], capture_output=True, text=True, env={**os.environ, **m.get('env', {})})
         found = re.findall(r'ECHEC : (.*)', r.stdout + r.stderr)
         if r.returncode == 0:
             print(f"mutation {i:2d} ({m['label']}) : NON DÉTECTÉE ✘"); bad += 1

@@ -839,7 +839,7 @@ Un jalon est une série de commits suivie d'un arrêt pour votre validation. **C
 
 **J2 : base de données (livré)** (skills : `supabase`, `implementing-gdpr-data-protection-controls`, `testing-for-broken-access-control`, `implementing-aes-encryption-for-data-at-rest`, `securing-agentic-ai-tool-invocation`)
 
-Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par domaine, puis une 11e est venue avec J3 (une migration d'une table à la fois n'aurait servi à rien : elles s'appliquent ensemble). **Chacune est appliquée par vous**, dans l'ordre des noms de fichier.
+Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par domaine, puis une 11e et une 12e sont venues avec J3 (une migration d'une table à la fois n'aurait servi à rien : elles s'appliquent ensemble). **Chacune est appliquée par vous**, dans l'ordre des noms de fichier.
 
 | # | Migration | Contenu |
 |---|---|---|
@@ -854,6 +854,7 @@ Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par
 | 9 | `20261106100900_revendeur_et_usage` | Prix partenaire et marge (invisibles du client), rapports mensuels, usage du modèle |
 | 10 | `20261106101000_conservation` | Purge planifiable (conversations, charges d'alerte), expirations |
 | 11 | `20261106101100_contexte_de_requete` | **Jalon J3.** `resolve_access` (rôle et voie d'accès d'un utilisateur dans une organisation, règles de la base) ; acteur et identifiant de requête dans le journal d'audit pour les écritures des Edge Functions (en-têtes posés par `serviceClient`, honorés seulement pour le rôle `service_role`) |
+| 12 | `20261106101200_droits_explicites_du_service` | **Jalon J3.** Droits du service sur les tables, **explicites** : indispensables sur un projet où l'option « Automatically expose new tables » est désactivée (recommandée par Supabase, futur défaut des nouveaux projets) ; sans effet visible sur le projet actuel. Le journal d'audit reste en insertion seule |
 
 | # | Commit livré |
 |---|---|

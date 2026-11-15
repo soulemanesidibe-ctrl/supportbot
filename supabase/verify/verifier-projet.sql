@@ -1,4 +1,4 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 11 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 12 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
 -- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
@@ -16,6 +16,16 @@ checks(ordre, controle, attendu, trouve, ok) as (
   select 2, 'Tables SANS sécurité par ligne (RLS)', '0',
          (select count(*)::text from tables_public where not relrowsecurity),
          (select count(*) = 0 from tables_public where not relrowsecurity)
+  union all
+  select 2.5, 'Tables publiques (hors journal d''audit) SANS droits complets pour le service', '0',
+         (select count(*)::text from pg_class c join pg_namespace n on n.oid = c.relnamespace
+           where n.nspname = 'public' and c.relkind in ('r', 'p') and c.relname <> 'audit_logs'
+             and not (has_table_privilege('service_role', c.oid, 'select') and has_table_privilege('service_role', c.oid, 'insert')
+                      and has_table_privilege('service_role', c.oid, 'update') and has_table_privilege('service_role', c.oid, 'delete'))),
+         (select count(*) = 0 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+           where n.nspname = 'public' and c.relkind in ('r', 'p') and c.relname <> 'audit_logs'
+             and not (has_table_privilege('service_role', c.oid, 'select') and has_table_privilege('service_role', c.oid, 'insert')
+                      and has_table_privilege('service_role', c.oid, 'update') and has_table_privilege('service_role', c.oid, 'delete')))
   union all
   select 3, 'Droits du rôle anonyme sur les tables publiques', '0',
          (select count(*)::text from information_schema.role_table_grants where grantee = 'anon' and table_schema = 'public'),

@@ -414,5 +414,30 @@
     "grant execute on function public.resolve_access(uuid, uuid) to authenticated, anon;\n"
    ]
   ]
+ },
+ {
+  "label": "droits explicites du service oubliés (projet sans droits automatiques)",
+  "file": "20261106101200_droits_explicites_du_service.sql",
+  "expect": "AUCUNE table publique",
+  "env": {
+   "REVOKED_DEFAULTS": "1"
+  },
+  "edits": [
+   [
+    "grant select, insert, update, delete on all tables in schema public to service_role;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "le journal d'audit n'est plus remis en insertion seule par la migration 12",
+  "file": "20261106101200_droits_explicites_du_service.sql",
+  "expect": "journal d'audit reste en INSERTION seule",
+  "edits": [
+   [
+    "revoke all on public.audit_logs from service_role;\ngrant insert on public.audit_logs to service_role;\n",
+    ""
+   ]
+  ]
  }
 ]

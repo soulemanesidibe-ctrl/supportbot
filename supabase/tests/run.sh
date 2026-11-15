@@ -26,6 +26,10 @@ run_dir() { # $1 = libellé, $2 = glob
   for f in $2; do [ -e "$f" ] || continue; echo "-- $1 : $(basename "$f")"; psql_ -d releve_test -f "$f" >/dev/null; done
 }
 run_dir "banc d'essai" "$ROOT/supabase/tests/harness/*.sql"
+if [ -n "${REVOKED_DEFAULTS:-}" ]; then
+  echo "-- variante : droits automatiques sur les nouveaux objets RETIRÉS (projet où « Automatically expose new tables » est désactivé)"
+  psql_ -d releve_test -f "$ROOT/supabase/tests/variants/defaults_revoked.sql" >/dev/null
+fi
 run_dir "migration"    "$ROOT/supabase/migrations/*.sql"
 # Le script de vérification livré au fondateur doit passer sur la base migrée, AVANT la graine (il exige une seule organisation).
 # Un échec est noté ici mais ne coupe pas la suite : les tests nommés ci-dessous disent précisément ce qui est cassé.

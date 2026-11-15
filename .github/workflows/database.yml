@@ -47,6 +47,11 @@ jobs:
       - name: Appliquer les migrations sur un PostgreSQL jetable et lancer les tests
         run: supabase/tests/run.sh
 
+      - name: Rejouer sur un projet SANS droits automatiques (option « Automatically expose new tables » désactivée)
+        env:
+          REVOKED_DEFAULTS: "1"
+        run: supabase/tests/run.sh
+
   mutations:
     name: Test de mutation (chaque défense cassée doit être vue)
     # Plus long (environ 10 s par défense) : pas à chaque envoi de branche, mais avant toute fusion, chaque semaine et à la demande.
