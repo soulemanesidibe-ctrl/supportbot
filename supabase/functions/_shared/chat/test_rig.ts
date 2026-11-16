@@ -4,7 +4,9 @@ import { AuthContext } from "../context.ts";
 import { CompletionRequest, CompletionResult, EmbeddingResult, LlmError } from "../llm/types.ts";
 import { UsageRecord } from "../llm/usage.ts";
 import type { PrepareResult } from "../actions/prepare.ts";
-import type { ChatPorts, ChatStore, GateState, KbHit, MessageToStore, MirrorTicket, TicketToCreate } from "./types.ts";
+import type {
+  ChatPorts, ChatStore, GateState, KbHit, MessageToStore, MirrorTicket, TicketToCreate, WidgetContextRow, WidgetConversationRow, WidgetRequestRow,
+} from "./types.ts";
 
 export const DOC_A = "aaaaaaaa-0000-4000-8000-000000000001";
 export const DOC_B = "aaaaaaaa-0000-4000-8000-000000000002";
@@ -25,6 +27,8 @@ export interface Rig {
   audits: AuditEvent[];
   prepared: Array<{ conversationId: string; requested: string }>;
   mirrored: MirrorTicket[];
+  /** Appels au store du widget, dans l'ordre (nom et arguments hors contexte). */
+  widgetCalls: Array<{ fn: string; args: unknown[] }>;
   state: { gate: GateState | "throw"; hits: KbHit[]; messageCount: number; history: Array<{ role: "user" | "assistant"; content: string }> };
 }
 
@@ -41,6 +45,15 @@ export interface RigScript {
   failAudit?: boolean;
   prepare?: PrepareResult | Error;
   mirror?: Error;
+  /** État de la conversation ouverte (défaut « open ») et sa catégorie. */
+  convState?: string;
+  convCategory?: string | null;
+  widgetContext?: WidgetContextRow | null;
+  widgetRequests?: WidgetRequestRow[];
+  widgetConversation?: WidgetConversationRow | null;
+  /** Résultat des écritures conditionnelles du widget (défaut : la ligne a changé). */
+  resolveOk?: boolean;
+  rateOk?: boolean;
 }
 
 export function makeRig(script: RigScript = {}): Rig {
@@ -53,6 +66,7 @@ export function makeRig(script: RigScript = {}): Rig {
   const audits: AuditEvent[] = [];
   const prepared: Rig["prepared"] = [];
   const mirrored: MirrorTicket[] = [];
+  const widgetCalls: Rig["widgetCalls"] = [];
   const state: Rig["state"] = {
     gate: script.gate ?? "shadow",
     hits: script.hits ?? [{ documentId: DOC_A, title: "Imprimante hors ligne", text: "Vérifier l'alimentation et le réseau.", score: 0.8 }],
@@ -61,7 +75,10 @@ export function makeRig(script: RigScript = {}): Rig {
   };
   let n = 0;
   const store: ChatStore = {
-    openConversation: () => script.openError ? Promise.reject(script.openError) : Promise.resolve({ id: "conv-1", state: "open", category: null, messageCount: state.messageCount }),
+    openConversation: () =>
+      script.openError
+        ? Promise.reject(script.openError)
+        : Promise.resolve({ id: "conv-1", state: script.convState ?? "open", category: script.convCategory ?? null, messageCount: state.messageCount }),
     history: () => Promise.resolve(state.history),
     updateConversation: (_a, _id, patch) => { updates.push(patch as Record<string, unknown>); return Promise.resolve(); },
     addMessage: (_a, _id, m) => {
@@ -95,6 +112,13 @@ export function makeRig(script: RigScript = {}): Rig {
     },
     audit: (_a: AuthContext, ev: AuditEvent) => script.failAudit ? Promise.reject(new Error("audit indisponible")) : (audits.push(ev), Promise.resolve()),
     ticketing: { mirror: (_a, input) => { mirrored.push(input); return script.mirror ? Promise.reject(script.mirror) : Promise.resolve(); } },
+    widget: {
+      context: () => { widgetCalls.push({ fn: "context", args: [] }); return Promise.resolve(script.widgetContext === undefined ? null : script.widgetContext); },
+      requests: (_a, limit) => { widgetCalls.push({ fn: "requests", args: [limit] }); return Promise.resolve(script.widgetRequests ?? []); },
+      conversation: (_a, id) => { widgetCalls.push({ fn: "conversation", args: [id] }); return Promise.resolve(script.widgetConversation === undefined ? null : script.widgetConversation); },
+      resolve: (_a, id, resolution) => { widgetCalls.push({ fn: "resolve", args: [id, resolution] }); return Promise.resolve(script.resolveOk ?? true); },
+      rate: (_a, id, score) => { widgetCalls.push({ fn: "rate", args: [id, score] }); return Promise.resolve(script.rateOk ?? true); },
+    },
     actions: {
       prepare: (_a, input) => {
         prepared.push(input);
@@ -103,7 +127,7 @@ export function makeRig(script: RigScript = {}): Rig {
       },
     },
   };
-  return { ports, calls, messages, tickets, updates, usage, failures, audits, prepared, mirrored, state };
+  return { ports, calls, messages, tickets, updates, usage, failures, audits, prepared, mirrored, widgetCalls, state };
 }
 
 export const publicTexts = (r: { messages: ReadonlyArray<{ content: string }> }): string[] => r.messages.map((m) => m.content);

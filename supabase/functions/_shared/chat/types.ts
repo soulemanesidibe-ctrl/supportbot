@@ -64,12 +64,71 @@ export interface ChatStore {
   updateConversation(
     auth: AuthContext,
     conversationId: string,
-    patch: { category?: string; urgency?: "low" | "normal" | "high" | "urgent"; state?: "open" | "waiting_technician" | "waiting_user"; escalate?: boolean },
+    patch: {
+      category?: string;
+      urgency?: "low" | "normal" | "high" | "urgent";
+      state?: "open" | "waiting_technician" | "waiting_user";
+      escalate?: boolean;
+      /** Demande rouverte (une clôture antérieure ne compte plus comme « résolue ») : efface la résolution et sa date. */
+      reopen?: boolean;
+    },
   ): Promise<void>;
   addMessage(auth: AuthContext, conversationId: string, m: MessageToStore): Promise<{ id: string }>;
   gateState(auth: AuthContext, category: string): Promise<GateState>;
   searchKb(auth: AuthContext, embedding: readonly number[], limit: number, minScore: number): Promise<readonly KbHit[]>;
   createTicket(auth: AuthContext, t: TicketToCreate): Promise<{ id: string }>;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Widget du salarié : ce qu'il voit de SES demandes (fonctions SQL réservées au service, migration 17)
+// ---------------------------------------------------------------------------------------------------------------
+export interface WidgetContextRow {
+  readonly orgName: string;
+  readonly accent: string | null;
+  readonly firstName: string | null;
+  /** Fin de la relève en cours (créneaux enchaînés), ou null si l'équipe est là. */
+  readonly reliefUntil: string | null;
+  /** Incidents majeurs ou critiques en cours : jamais leur titre. */
+  readonly incidents: ReadonlyArray<{ readonly id: string; readonly category: string; readonly since: string }>;
+}
+
+export interface WidgetRequestRow {
+  readonly id: string;
+  readonly state: string;
+  readonly category: string | null;
+  readonly updatedAt: string;
+  readonly title: string | null;
+  readonly lastLine: string | null;
+}
+
+export interface WidgetMessageRow {
+  readonly id: string;
+  readonly role: "user" | "assistant" | "system" | "technician";
+  readonly content: string;
+  readonly at: string;
+  /** Prénom du technicien pour un message humain ; jamais son adresse. */
+  readonly author: string | null;
+}
+
+export interface WidgetConversationRow {
+  readonly id: string;
+  readonly state: string;
+  readonly category: string | null;
+  readonly satisfaction: number | null;
+  readonly resolution: string | null;
+  /** Messages PUBLICS seulement, dans l'ordre. */
+  readonly messages: readonly WidgetMessageRow[];
+}
+
+export interface WidgetStore {
+  context(auth: AuthContext): Promise<WidgetContextRow | null>;
+  requests(auth: AuthContext, limit: number): Promise<readonly WidgetRequestRow[]>;
+  /** null : la demande n'existe pas POUR CE SALARIÉ (celle d'un autre est introuvable, comme une inexistante). */
+  conversation(auth: AuthContext, conversationId: string): Promise<WidgetConversationRow | null>;
+  /** Clôture confirmée par le salarié, seulement depuis « waiting_user ». Faux si l'état a changé entre-temps. */
+  resolve(auth: AuthContext, conversationId: string, resolution: "ai_confirmed" | "human"): Promise<boolean>;
+  /** Note de satisfaction, seulement sur une demande résolue ou close. Faux sinon. */
+  rate(auth: AuthContext, conversationId: string, score: 1 | 2 | 3 | 4 | 5): Promise<boolean>;
 }
 
 export interface ChatPorts {
@@ -87,11 +146,15 @@ export interface ChatPorts {
   readonly actions: { prepare(auth: AuthContext, input: { conversationId: string; requested: RequestedAction }): Promise<PrepareResult> };
   /** Copie du ticket local vers GLPI. Une panne ne doit jamais empêcher un technicien de reprendre la conversation. */
   readonly ticketing: { mirror(auth: AuthContext, input: MirrorTicket): Promise<void> };
+  /** Lectures et gestes du salarié dans son widget. */
+  readonly widget: WidgetStore;
 }
 
 export interface ChatInput {
   readonly conversationId: string | null;
   readonly message: string;
+  /** « Parler à un technicien » : le message va directement à un humain, sans aucun appel au modèle. */
+  readonly direct?: boolean;
 }
 
 export interface PublicMessage {

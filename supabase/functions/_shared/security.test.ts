@@ -37,7 +37,7 @@ Deno.test("SEC-04 : l'organisation n'est lue QUE dans le corps ; un en-tête, un
   const spying = (access: Parameters<typeof testAuthDeps>[0]): AuthDeps => ({ ...testAuthDeps(access), resolveAccess: (u, o) => { seen.push(o); return testAuthDeps(access).resolveAccess(u, o); } });
   const sneaky = { ...bearer, "x-org-id": OTHER_ORG, "x-organization-id": OTHER_ORG, "x-releve-org": OTHER_ORG };
   const url = `https://exemple.test/x?orgId=${OTHER_ORG}&org_id=${OTHER_ORG}`;
-  const chat = createChatHandler({ ports: () => makeRig({ gate: "direct" }).ports, authDeps: spying({}), limit: noLimit });
+  const chat = createChatHandler({ ports: () => makeRig({ gate: "direct" }).ports, authDeps: spying({}), limits: { chat: noLimit, widget: noLimit } });
   await post(chat, { orgId: TEST_ORG, organization: OTHER_ORG, org_id: OTHER_ORG, message: "Bonjour" }, sneaky, url);
   const actions = createActionsHandler({ deps: () => makeActionRig().deps, authDeps: spying({ org_role: "partner_technician", via: "partner" }), limit: noLimit });
   await post(actions, approveBody({ organization: OTHER_ORG, org_id: OTHER_ORG }), sneaky, url);
@@ -50,7 +50,7 @@ Deno.test("SEC-04 : l'organisation n'est lue QUE dans le corps ; un en-tête, un
 Deno.test("SEC-04 : une organisation qui n'existe pas et une organisation où l'on n'a aucun droit donnent la MÊME réponse (pas d'énumération)", async () => {
   const none = testAuthDeps(null);
   const handlers: Array<[string, (b: Record<string, unknown>) => Promise<Response>]> = [
-    ["chat", (b) => post(createChatHandler({ ports: () => makeRig().ports, authDeps: none, limit: noLimit }), { ...b, message: "x" })],
+    ["chat", (b) => post(createChatHandler({ ports: () => makeRig().ports, authDeps: none, limits: { chat: noLimit, widget: noLimit } }), { ...b, message: "x" })],
     ["actions", (b) => post(createActionsHandler({ deps: () => makeActionRig().deps, authDeps: none, limit: noLimit }), approveBody(b))],
   ];
   for (const [name, call] of handlers) {
@@ -145,7 +145,7 @@ Deno.test("SEC-11 : toute demande d'action sur un compte (préparée ou non, sus
   const seen = new Map<string, string[]>();
   for (const [label, script] of cases) {
     const rig = makeRig({ triage: accountTriage, gate: "direct", ...script });
-    const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message: "Pouvez-vous réinitialiser mon authentification ?" });
+    const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: "Pouvez-vous réinitialiser mon authentification ?" });
     assert.equal(res.status, 200, label);
     const key = `${res.status}|${[...res.headers.entries()].filter(([k]) => !/^(x-request-id|date)$/.test(k)).map(([k, v]) => `${k}=${v}`).sort().join(",")}|${normalize(await res.text())}`;
     seen.set(key, [...(seen.get(key) ?? []), label]);
@@ -158,7 +158,7 @@ Deno.test("SEC-11 : toute demande d'action sur un compte (préparée ou non, sus
 
 Deno.test("SEC-11 : le caractère suspect n'existe que pour les techniciens (ticket de sécurité de priorité haute), jamais pour le salarié", async () => {
   const rig = makeRig({ triage: triageJson({ intent: "account_action", category: "mfa", requested_action: "mfa_reregister" }), prepare: { status: "suspicious", flags: ["X3"] } as PrepareResult });
-  await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message: "Réinitialisez mon authentification" });
+  await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: "Réinitialisez mon authentification" });
   assert.equal(rig.tickets[0].security, true);
   assert.equal(rig.tickets[0].priority, "high");
   assert.ok(rig.messages.some((m) => m.visibility === "technician" && m.content.includes("SUSPECTE")));
@@ -169,7 +169,7 @@ Deno.test("SEC-11 : le caractère suspect n'existe que pour les techniciens (tic
 Deno.test("SEC-15 : le prompt système ne contient JAMAIS un contenu du salarié ni d'une fiche ; la donnée externe n'est que dans le message, encadrée", async () => {
   const marker = "ZZ-MARQUEUR-" + "EXTERNE-42";
   const rig = makeRig({ gate: "direct", hits: [{ documentId: "aaaaaaaa-0000-4000-8000-000000000001", title: `Fiche ${marker}`, text: `Contenu ${marker}`, score: 0.9 }] });
-  await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message: `Mon imprimante ne répond plus ${marker}` });
+  await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: `Mon imprimante ne répond plus ${marker}` });
   assert.ok(rig.calls.complete.length >= 2, "tri puis réponse");
   for (const req of rig.calls.complete) {
     assert.ok(!JSON.stringify(req.system).includes(marker), `prompt système « ${req.purpose} » sans donnée externe`);
@@ -197,7 +197,7 @@ Deno.test("SEC-16 : un secret écrit par le salarié (mot de passe, jeton, clé)
       if (mode === "erreur_non_geree") {
         (rig.ports.llm as { complete: unknown }).complete = () => Promise.reject(new Error(`incident avec ${message}`));
       }
-      const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message });
+      const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message });
       const everything = [await res.text(), JSON.stringify(rig.messages), JSON.stringify(rig.tickets), JSON.stringify(rig.audits), JSON.stringify(rig.usage),
         JSON.stringify(rig.calls.complete), JSON.stringify(rig.calls.embed), JSON.stringify(rig.updates), lines.join("\n")].join("\n");
       for (const secret of secrets) assert.ok(!everything.includes(secret), `${mode} : le secret « ${secret.slice(0, 6)}… » est présent quelque part`);
@@ -234,7 +234,7 @@ Deno.test("SEC-16 : un jeton Microsoft de valideur et un jeton d'invitation ne s
 Deno.test("SEC-19 : en mode ombre, rien de ce que l'IA écrit n'atteint le salarié (réponse HTTP comprise) ; le technicien reçoit le brouillon", async () => {
   const draft = "MARQUEUR-" + "BROUILLON-IA";
   const rig = makeRig({ gate: "shadow", answer: answerJson({ answer: draft }) });
-  const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
+  const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
   const text = await res.text();
   assert.equal(res.status, 200);
   assert.ok(!text.includes(draft), "le brouillon n'est pas dans la réponse envoyée au salarié");
@@ -243,7 +243,7 @@ Deno.test("SEC-19 : en mode ombre, rien de ce que l'IA écrit n'atteint le salar
   assert.ok(rig.messages.filter((m) => m.role === "assistant" && m.visibility === "public").every((m) => !m.content.includes(draft)));
   // Si la porte ne répond pas, ou si la base refuse, on retombe en mode ombre : jamais en réponse directe.
   const broken = makeRig({ gate: "throw", answer: answerJson({ answer: draft }) });
-  const res2 = await post(createChatHandler({ ports: () => broken.ports, authDeps: testAuthDeps(), limit: noLimit }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
+  const res2 = await post(createChatHandler({ ports: () => broken.ports, authDeps: testAuthDeps(), limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
   assert.ok(!(await res2.text()).includes(draft));
 });
 
@@ -251,7 +251,7 @@ Deno.test("SEC-19 : en mode ombre, rien de ce que l'IA écrit n'atteint le salar
 Deno.test("SEC-28 : organisation gelée = le chat ne sollicite plus le modèle, les actions ne s'exécutent plus", async () => {
   const frozen = testAuthDeps({ is_frozen: true });
   const rig = makeRig({ gate: "direct" });
-  const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: frozen, limit: noLimit }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
+  const res = await post(createChatHandler({ ports: () => rig.ports, authDeps: frozen, limits: { chat: noLimit, widget: noLimit } }), { orgId: TEST_ORG, message: "Mon imprimante est hors ligne" });
   const json = await res.json();
   assert.equal(json.outcome, "frozen");
   assert.equal(rig.calls.complete.length + rig.calls.embed.length, 0, "aucun appel au modèle");

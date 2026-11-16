@@ -23,6 +23,7 @@ Deno.test("règles figées (valeurs en dur) : 12 messages par minute et par sala
   assert.deepEqual(BUCKETS.chat, [{ scope: "user", windowSeconds: 60, limit: 12 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
   assert.deepEqual(BUCKETS.actions, [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
   assert.deepEqual(BUCKETS.admin, [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
+  assert.deepEqual(BUCKETS.widget, [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 1200 }]);
 });
 
 Deno.test("clés : composées à partir du contexte vérifié (personne, organisation, fonction), jamais d'une donnée de la requête", async () => {
@@ -88,7 +89,7 @@ const post = (h: (r: Request) => Promise<Response>, body: Record<string, unknown
 
 Deno.test("SEC-24 chat : au-delà de la limite, 429 avec Retry-After, AVANT tout travail (ni message enregistré ni appel au modèle)", async () => {
   const rig = makeRig({ gate: "direct" });
-  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: blocked });
+  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limits: { chat: blocked, widget: blocked } });
   const res = await post(h, { orgId: TEST_ORG, message: "Bonjour" });
   assert.equal(res.status, 429);
   assert.equal(res.headers.get("retry-after"), "50");
@@ -115,13 +116,13 @@ Deno.test("SEC-24 admin : au-delà de la limite, 429 AVANT toute écriture et m�
 Deno.test("SEC-24 : sans jeton valide ou sans droit dans l'organisation, le limiteur n'est PAS sollicité (pas de compteur pour un inconnu)", async () => {
   let asked = 0;
   const counting = () => { asked++; return Promise.resolve(); };
-  const chat = createChatHandler({ ports: () => makeRig().ports, authDeps: testAuthDeps(null), limit: counting });
+  const chat = createChatHandler({ ports: () => makeRig().ports, authDeps: testAuthDeps(null), limits: { chat: counting, widget: counting } });
   assert.equal((await post(chat, { orgId: TEST_ORG, message: "x" })).status, 403);
   assert.equal((await post(chat, { orgId: TEST_ORG, message: "x" }, { "content-type": "application/json" })).status, 401);
   const admin = adminRig({}, [], counting);
   await admin.call("org.freeze", {}, { access: null });
   assert.equal(asked, 0);
-  const ok = createChatHandler({ ports: () => makeRig({ gate: "direct" }).ports, authDeps: testAuthDeps(), limit: counting });
+  const ok = createChatHandler({ ports: () => makeRig({ gate: "direct" }).ports, authDeps: testAuthDeps(), limits: { chat: counting, widget: counting } });
   assert.equal((await post(ok, { orgId: TEST_ORG, message: "Bonjour" })).status, 200);
   assert.equal(asked, 1, "sollicité une fois, après l'authentification");
 });

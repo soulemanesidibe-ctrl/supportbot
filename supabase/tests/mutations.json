@@ -1246,5 +1246,115 @@
     ""
    ]
   ]
+ },
+ {
+  "label": "widget : l'aperçu d'une demande lit aussi les messages réservés aux techniciens",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "demandes : titre = son premier message",
+  "edits": [
+   [
+    "                      where m.conversation_id = c.id and m.org_id = p_org and m.visibility = 'public'\n",
+    "                      where m.conversation_id = c.id and m.org_id = p_org\n"
+   ]
+  ]
+ },
+ {
+  "label": "widget : la conversation montre le mode ombre et les notes internes",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "conversation : messages PUBLICS seulement",
+  "edits": [
+   [
+    "             where x.conversation_id = c.id and x.org_id = p_org and x.visibility = 'public'\n",
+    "             where x.conversation_id = c.id and x.org_id = p_org\n"
+   ]
+  ]
+ },
+ {
+  "label": "widget : la conversation d'un autre salarié est lisible",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "conversation : celle d'un AUTRE salarié",
+  "edits": [
+   [
+    "  where c.id = p_conversation and c.org_id = p_org and c.requester_user_id = p_user and private._member",
+    "  where c.id = p_conversation and c.org_id = p_org and private._member"
+   ]
+  ]
+ },
+ {
+  "label": "widget : un code part vers une adresse inactive de l'annuaire",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "code : refusé (null) pour une adresse inconnue, inactive",
+  "edits": [
+   [
+    "where d.org_id = v_org.id and d.email = v_email and d.active) then return null; end if;",
+    "where d.org_id = v_org.id and d.email = v_email) then return null; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "widget : un code part vers une personne du personnel (contournement du second facteur)",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "code : refusé pour une personne qui a un rôle du personnel",
+  "edits": [
+   [
+    "where lower(u.email) = v_email and (m.role <> 'end_user' or m.status <> 'active')) then return null; end if;",
+    "where lower(u.email) = v_email and m.status <> 'active') then return null; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "widget : une ligne d'annuaire liée à un autre compte est reprise",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "rattachement : une ligne déjà liée à un AUTRE compte",
+  "edits": [
+   [
+    "  if v_dir.id is null or (v_dir.linked_user_id is not null and v_dir.linked_user_id <> p_user) then return null; end if;",
+    "  if v_dir.id is null then return null; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "widget : un salarié désactivé dans l'annuaire garde son accès",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "départ : désactivé dans l'annuaire",
+  "edits": [
+   [
+    "(tg_op = 'DELETE' or (old.active and not new.active))",
+    "(tg_op = 'DELETE')"
+   ]
+  ]
+ },
+ {
+  "label": "widget : les incidents mineurs (avertissements) sont montrés au salarié",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "contexte : incidents MAJEURS ou CRITIQUES",
+  "edits": [
+   [
+    " and x.severity in ('major', 'critical')",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "widget : un client non activé a un écran de connexion",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "organisation publique : un client pas encore activé",
+  "edits": [
+   [
+    "and o.type = 'client' and o.activated_at is not null and",
+    "and o.type = 'client' and"
+   ]
+  ]
+ },
+ {
+  "label": "widget : fonctions appelables par le navigateur",
+  "file": "20261106101700_widget_salarie.sql",
+  "expect": "droits : ni le navigateur",
+  "edits": [
+   [
+    "  public.widget_context(uuid, uuid), public.widget_requests(uuid, uuid, int), public.widget_conversation(uuid, uuid, uuid)\n  from public, anon, authenticated;",
+    "  public.widget_context(uuid, uuid), public.widget_requests(uuid, uuid, int), public.widget_conversation(uuid, uuid, uuid)\n  from anon;"
+   ]
+  ]
  }
 ]

@@ -50,7 +50,7 @@ async function history(auth: AuthContext, conversationId: string, limit: number,
 async function updateConversation(
   auth: AuthContext,
   conversationId: string,
-  patch: { category?: string; urgency?: "low" | "normal" | "high" | "urgent"; state?: "open" | "waiting_technician" | "waiting_user"; escalate?: boolean },
+  patch: { category?: string; urgency?: "low" | "normal" | "high" | "urgent"; state?: "open" | "waiting_technician" | "waiting_user"; escalate?: boolean; reopen?: boolean },
   deps?: DbDeps,
 ): Promise<void> {
   const org = orgOf(auth);
@@ -59,6 +59,7 @@ async function updateConversation(
   if (patch.urgency !== undefined) row.urgency = patch.urgency;
   if (patch.state !== undefined) row.state = patch.state;
   if (patch.escalate) row.escalated_at = new Date().toISOString();
+  if (patch.reopen) { row.resolution = null; row.resolved_at = null; }
   if (Object.keys(row).length === 0) return;
   const { error } = await serviceClient(auth, deps).from("conversations").update(row).eq("id", conversationId).eq("org_id", org)
     .eq("requester_user_id", auth.userId);

@@ -11,6 +11,7 @@ import { LlmGateway } from "../llm/gateway.ts";
 import { MistralProvider, mistralConfigFromEnv } from "../llm/mistral.ts";
 import { recordLlmCall, recordLlmFailure } from "../llm/usage.ts";
 import { supabaseChatStore } from "./store.ts";
+import { supabaseWidgetStore } from "./widget_store.ts";
 import type { ChatPorts } from "./types.ts";
 
 let gateway: LlmGateway | undefined;
@@ -26,6 +27,7 @@ export function defaultChatPorts(): ChatPorts {
       embed: (texts, priority) => llmGateway().embed(texts, priority),
     },
     store: supabaseChatStore(),
+    widget: supabaseWidgetStore(),
     usage: {
       call: (auth, rec) => recordLlmCall(auth, rec),
       failure: (auth, purpose, kind) => recordLlmFailure(auth, purpose, kind),

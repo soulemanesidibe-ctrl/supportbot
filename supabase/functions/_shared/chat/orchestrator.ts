@@ -1,7 +1,8 @@
 // Traitement d'UN message du salarié (docs/spec-mvp.md § 10.1). Ordre, et pourquoi :
 //   1. contrôles de droits (déjà faits par requireOrgMember ; on revérifie le contexte) ;
 //   2. message normalisé (caractères cachés retirés, taille bornée) puis MASQUÉ avant tout stockage ou envoi (règle n° 2) ;
-//   3. le message du salarié est enregistré d'abord : même si tout le reste échoue, un technicien le verra ;
+//   3. le message du salarié est enregistré d'abord : même si tout le reste échoue, un technicien le verra ; si un technicien a
+//      déjà la main, ou si le salarié a choisi « Parler à un technicien », l'IA s'arrête là (aucun appel au modèle) ;
 //   4. arrêt d'urgence : aucun appel au modèle ;
 //   5. tri par le modèle léger : catégorie, intention, urgence, indicateur de manipulation ;
 //   6. manipulation (modèle OU indices déterministes) : réponse neutre, ticket de sécurité, aucun appel de réponse ;
@@ -22,6 +23,7 @@ import { Answer, parseAnswer, parseTriage, Triage } from "../llm/schemas.ts";
 import { CompletionResult, LlmError } from "../llm/types.ts";
 import { sanitizeExternal, wrapExternal } from "../llm/wrap.ts";
 import { CATEGORY_LABELS, TEXTS } from "./texts.ts";
+import { handOff } from "./widget.ts";
 import type { PrepareResult } from "../actions/prepare.ts";
 import type { ChatInput, ChatOutcome, ChatPorts, ChatResult, GateState, KbHit, PublicMessage } from "./types.ts";
 
@@ -84,6 +86,14 @@ export async function handleChatMessage(auth: AuthContext, input: ChatInput, por
   };
 
   try {
+    // ---- 3 bis. un technicien a la main : l'IA se tait, le message lui est destiné (il le voit dans sa file).
+    if (conv.state === "waiting_technician") return await finish("escalated", conv.category, { reason: "chez_un_technicien" });
+    // ---- 3 ter. « Parler à un technicien » : le message va directement à un humain, sans aucun appel au modèle.
+    if (input.direct === true) {
+      out.push(...await handOff(auth, ports, conv, { notice: TEXTS.direct, reason: "demande_directe", body: clean }));
+      return await finish("escalated", conv.category, { reason: "demande_directe" });
+    }
+
     // ---- 4. arrêt d'urgence
     if (auth.frozen) {
       await say(TEXTS.frozen);

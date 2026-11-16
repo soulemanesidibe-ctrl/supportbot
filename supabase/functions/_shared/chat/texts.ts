@@ -16,6 +16,15 @@ export const TEXTS = {
   suspect: "Je ne peux pas traiter cette demande ici. Un technicien va vous contacter.",
   /** Arrêt d'urgence de l'organisation. */
   frozen: "Le support automatique est momentanément suspendu pour votre organisation. Un technicien va prendre le relais.",
+  /** Le salarié a demandé un technicien (« Parler à un technicien ») sur une demande en cours. */
+  humanRequested:
+    "Votre demande est transmise à un technicien, avec ce qui a déjà été vérifié : vous n'aurez pas à répéter. Il vous répondra ici.",
+  /** Le salarié a écrit directement à un technicien : l'IA ne traite pas ce message. */
+  direct:
+    "Votre message est transmis directement à un technicien, qui vous répondra ici. Relève, l'assistant IA du support, ne répond pas à cette demande.",
+  /** « Non, toujours pas » après une réponse de l'IA : un humain reprend. */
+  notWorked:
+    "C'est noté : la solution proposée n'a pas suffi. Votre demande passe à un technicien, avec ce qui a déjà été essayé. Il vous répondra ici.",
 } as const;
 
 export const CATEGORY_LABELS: Readonly<Record<string, string>> = {

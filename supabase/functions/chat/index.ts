@@ -7,4 +7,4 @@ import { registerConnectors } from "../_shared/connectors/register.ts";
 
 registerConnectors();
 
-Deno.serve(createChatHandler({ ports: defaultChatPorts, limit: limiterFor("chat") }));
+Deno.serve(createChatHandler({ ports: defaultChatPorts, limits: { chat: limiterFor("chat"), widget: limiterFor("widget") } }));

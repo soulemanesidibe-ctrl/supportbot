@@ -13,6 +13,8 @@ export interface RateRule { readonly scope: "user" | "org" | "source"; readonly 
 export const BUCKETS = {
   /** Messages d'un salarié : une personne n'écrit pas plus de 12 messages par minute ; l'organisation, 120. */
   chat: [{ scope: "user", windowSeconds: 60, limit: 12 }, { scope: "org", windowSeconds: 60, limit: 120 }],
+  /** Lectures et gestes du widget salarié (contexte, liste, lecture, transfert, confirmation, note) : sans appel au modèle. */
+  widget: [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 1200 }],
   /** Validations, refus, reprises d'un technicien. */
   actions: [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }],
   /** Opérations d'administration (et acceptation d'une invitation, sans organisation : seule la règle « personne » s'applique). */

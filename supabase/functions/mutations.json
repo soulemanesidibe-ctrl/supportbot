@@ -2811,5 +2811,207 @@
     "    .eq(\"key\", a.key).maybeSingle();"
    ]
   ]
+ },
+ {
+  "label": "auth : un rôle du personnel passe sans second facteur (SEC-33)",
+  "file": "_shared/auth.ts",
+  "expect": "SEC-33 tout rôle autre que salarié",
+  "edits": [
+   [
+    "  if (role !== \"end_user\" && user.aal !== \"aal2\") throw Errors.mfaRequired();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : l'IA reprend la parole alors qu'un technicien a la main",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "si un technicien a déjà la main",
+  "edits": [
+   [
+    "    if (conv.state === \"waiting_technician\") return await finish(\"escalated\", conv.category, { reason: \"chez_un_technicien\" });\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : « Parler à un technicien » passe quand même par le modèle",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "message direct : remis à un technicien SANS appel au modèle",
+  "edits": [
+   [
+    "    if (input.direct === true) {",
+    "    if (input.direct === \"jamais\") {"
+   ]
+  ]
+ },
+ {
+  "label": "widget : le message direct n'est plus masqué avant la copie GLPI",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "message direct : remis à un technicien SANS appel au modèle",
+  "edits": [
+   [
+    "{ notice: TEXTS.direct, reason: \"demande_directe\", body: clean }",
+    "{ notice: TEXTS.direct, reason: \"demande_directe\", body: raw }"
+   ]
+  ]
+ },
+ {
+  "label": "widget : l'escalade agit avant d'écrire le journal",
+  "file": "_shared/chat/widget.ts",
+  "expect": "journal indisponible = rien ne change",
+  "edits": [
+   [
+    "  await ports.audit(auth, { event: \"chat.handoff\", actorKind: \"user\", subjectType: \"conversation\", subjectId: conv.id, details: { reason: opts.reason } });\n",
+    ""
+   ],
+   [
+    "  return [{ id, role: \"notice\", content: opts.notice }];",
+    "  await ports.audit(auth, { event: \"chat.handoff\", actorKind: \"user\", subjectType: \"conversation\", subjectId: conv.id, details: { reason: opts.reason } });\n  return [{ id, role: \"notice\", content: opts.notice }];"
+   ]
+  ]
+ },
+ {
+  "label": "widget : escalade non idempotente (double ticket)",
+  "file": "_shared/chat/widget.ts",
+  "expect": "widget escalade : idempotente",
+  "edits": [
+   [
+    "  if (conv.state === \"waiting_technician\") return { ok: true as const };\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "widget : une demande rouverte garde sa résolution",
+  "file": "_shared/chat/widget.ts",
+  "expect": "une demande résolue est ROUVERTE",
+  "edits": [
+   [
+    "    reopen: conv.state === \"resolved\" || conv.state === \"closed\",",
+    "    reopen: false,"
+   ]
+  ]
+ },
+ {
+  "label": "widget : « résolue par Relève » comptée même quand un technicien a répondu",
+  "file": "_shared/chat/widget.ts",
+  "expect": "confirmation « oui » : résolue PAR RELÈVE",
+  "edits": [
+   [
+    "  const resolution = last.role === \"technician\" ? \"human\" : \"ai_confirmed\";",
+    "  const resolution = \"ai_confirmed\" as const;"
+   ]
+  ]
+ },
+ {
+  "label": "widget : confirmation acceptée dans n'importe quel état",
+  "file": "_shared/chat/widget.ts",
+  "expect": "confirmation « oui » : résolue PAR RELÈVE",
+  "edits": [
+   [
+    "  if (c.state !== \"waiting_user\" || last === null) throw",
+    "  if (last === null) throw"
+   ]
+  ]
+ },
+ {
+  "label": "widget : note acceptée hors de 1 à 5",
+  "file": "_shared/chat/widget.ts",
+  "expect": "note : entier de 1 à 5",
+  "edits": [
+   [
+    "score < 1 || score > 5) throw Errors.badRequest(\"Note invalide.\");",
+    "score < 0 || score > 10) throw Errors.badRequest(\"Note invalide.\");"
+   ]
+  ]
+ },
+ {
+  "label": "widget : un état inconnu est montré tel quel",
+  "file": "_shared/chat/widget.ts",
+  "expect": "widget liste : titre = premiers mots",
+  "edits": [
+   [
+    "  return STATUSES.includes(state as RequestStatus) ? (state as RequestStatus) : \"open\";",
+    "  return state as RequestStatus;"
+   ]
+  ]
+ },
+ {
+  "label": "widget : la carte « action sur le compte » dépend d'autre chose que du message fixe",
+  "file": "_shared/chat/widget.ts",
+  "expect": "SEC-11 widget",
+  "edits": [
+   [
+    "      && c.messages.some((m) => m.role === \"system\" && m.content === TEXTS.accountAction),",
+    "      && c.category === \"mfa\" && c.messages.length > 99,"
+   ]
+  ]
+ },
+ {
+  "label": "widget : un technicien (ou tout rôle) fait les gestes du salarié",
+  "file": "_shared/chat/widget.ts",
+  "expect": "un accès d'assistance (lecture seule) ou un autre rôle",
+  "edits": [
+   [
+    "auth.userId === null || auth.role !== \"end_user\") throw Errors.forbidden();\n  if (auth.readOnly)",
+    "auth.userId === null) throw Errors.forbidden();\n  if (auth.readOnly)"
+   ]
+  ]
+ },
+ {
+  "label": "widget store : la clôture n'est plus conditionnée à « attend le salarié »",
+  "file": "_shared/chat/widget_store.ts",
+  "expect": "clôture et note sont CONDITIONNELLES",
+  "edits": [
+   [
+    ".eq(\"requester_user_id\", user).eq(\"state\", \"waiting_user\")",
+    ".eq(\"requester_user_id\", user)"
+   ]
+  ]
+ },
+ {
+  "label": "widget store : la note n'est plus bornée au demandeur",
+  "file": "_shared/chat/widget_store.ts",
+  "expect": "clôture et note sont CONDITIONNELLES",
+  "edits": [
+   [
+    ".eq(\"id\", conversationId).eq(\"org_id\", org).eq(\"requester_user_id\", user).in(\"state\", [\"resolved\", \"closed\"])",
+    ".eq(\"id\", conversationId).eq(\"org_id\", org).in(\"state\", [\"resolved\", \"closed\"])"
+   ]
+  ]
+ },
+ {
+  "label": "widget store : l'auteur d'un message non technicien est repris (usurpation d'un prénom)",
+  "file": "_shared/chat/widget_store.ts",
+  "expect": "forme inattendue ou erreur de la base",
+  "edits": [
+   [
+    "author: m.role === \"technician\" ? str(m.author) : null",
+    "author: str(m.author)"
+   ]
+  ]
+ },
+ {
+  "label": "porte chat : les lectures du widget consomment le débit des messages",
+  "file": "_shared/chat/handler.ts",
+  "expect": "lectures et gestes comptent sur le débit",
+  "edits": [
+   [
+    "await (op === \"send\" ? opts.limits.chat : opts.limits.widget)(auth);",
+    "await opts.limits.chat(auth);"
+   ]
+  ]
+ },
+ {
+  "label": "porte chat : opération inconnue acceptée (prototype)",
+  "file": "_shared/chat/handler.ts",
+  "expect": "opération inconnue",
+  "edits": [
+   [
+    "if (typeof op !== \"string\" || !OPS.includes(op)) throw Errors.badRequest(\"Opération inconnue.\");",
+    "if (typeof op !== \"string\") throw Errors.badRequest(\"Opération inconnue.\");"
+   ]
+  ]
  }
 ]
