@@ -445,8 +445,8 @@
   "expect": "validation : une action qui n'attend plus",
   "edits": [
    [
-    "  if (action.status !== \"pending_approval\") throw Errors.conflict(\"Cette action n'attend plus de validation.\");\n  // M12",
-    "  // M12"
+    "  if (action.status !== \"pending_approval\") throw Errors.conflict(\"Cette action n'attend plus de validation.\");\n  // I8 :",
+    "  // I8 :"
    ]
   ]
  },
@@ -552,7 +552,7 @@
  {
   "label": "orchestrateur : une demande d'action jugée suspecte n'est plus traitée comme telle",
   "file": "_shared/chat/orchestrator.ts",
-  "expect": "règles de risque X1 à X4",
+  "expect": "règles de risque X2 à X4",
   "edits": [
    [
     "      if (prepared?.status === \"suspicious\") {",
