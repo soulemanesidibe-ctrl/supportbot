@@ -63,7 +63,7 @@ export function errorResponse(err: unknown, requestId: string): Response {
   const app = err instanceof AppError ? err : null;
   if (!app) log.error("erreur_non_geree", { requestId, erreur: err });
   const e = app ?? Errors.internal();
-  const headers = new Headers({ "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+  const headers = new Headers({ "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" });
   if (e.retryAfterSeconds !== undefined) headers.set("retry-after", String(Math.ceil(e.retryAfterSeconds)));
   return new Response(JSON.stringify({ error: { code: e.code, message: e.message, requestId } }), {
     status: e.status,

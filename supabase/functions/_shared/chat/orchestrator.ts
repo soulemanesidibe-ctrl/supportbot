@@ -173,7 +173,10 @@ export async function handleChatMessage(auth: AuthContext, input: ChatInput, por
         }
       }
       if (prepared?.status === "suspicious") {
-        return await handover(category, "high", "suspect", TEXTS.suspect, { reason: "demande_suspecte", flags: prepared.flags, intent: triage.intent }, {
+        // SEC-11 (M02) : le salarié reçoit EXACTEMENT la même réponse que pour toute demande d'action sur un compte (même texte, même résultat).
+        // Le caractère suspect n'apparaît que dans le ticket de sécurité, que seuls les techniciens voient : sinon la réponse
+        // renseignerait quelqu'un qui détient une session volée sur l'état du compte (MFA récente, échecs de connexion, répétition).
+        return await handover(category, "high", "account_action", TEXTS.accountAction, { reason: "demande_suspecte", flags: prepared.flags, intent: triage.intent }, {
           security: true,
           technicianNote: `Demande d'action sur un compte jugée SUSPECTE par les règles de risque (${prepared.flags.join(", ")}). Aucune action préparée.`,
         });

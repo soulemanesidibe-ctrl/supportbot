@@ -37,5 +37,6 @@ Deno.test("readJsonBody : un corps trop gros est refusé, même sans Content-Len
 Deno.test("jsonResponse : jamais de mise en cache, identifiant de requête renvoyé", () => {
   const r = jsonResponse(200, { ok: true }, "req-12345678");
   assert.equal(r.headers.get("cache-control"), "no-store");
+  assert.equal(r.headers.get("x-content-type-options"), "nosniff");
   assert.equal(r.headers.get("x-request-id"), "req-12345678");
 });

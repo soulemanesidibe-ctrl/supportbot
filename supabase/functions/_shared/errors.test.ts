@@ -5,6 +5,7 @@ Deno.test("errorResponse : une erreur applicative donne son statut, son code et 
   const res = errorResponse(Errors.forbidden(), "req-12345678");
   assert.equal(res.status, 403);
   assert.equal(res.headers.get("cache-control"), "no-store");
+  assert.equal(res.headers.get("x-content-type-options"), "nosniff");
   assert.deepEqual(await res.json(), { error: { code: "forbidden", message: "Accès refusé.", requestId: "req-12345678" } });
 });
 

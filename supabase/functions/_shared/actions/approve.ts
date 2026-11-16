@@ -36,6 +36,9 @@ export async function approveAction(auth: AuthContext, input: ApproveInput, deps
   const action = await deps.store.load(auth, input.actionId);
   if (!action || action.org_id !== auth.orgId) throw Errors.notFound();
   if (action.status !== "pending_approval") throw Errors.conflict("Cette action n'attend plus de validation.");
+  // I8 : une demande que personne n'a validée dans le délai ne se valide plus (la base la refuse aussi) ; on ne l'approuve pas pour échouer ensuite.
+  const nowSeconds = deps.nowSeconds ? deps.nowSeconds() : Math.floor(Date.now() / 1000);
+  if (!(Date.parse(action.expires_at) > nowSeconds * 1000)) throw Errors.conflict("Cette demande a expiré : une nouvelle demande est nécessaire.");
   // M12 : le valideur doit avoir vu l'empreinte actuelle. Si l'action a changé depuis son affichage, on refuse.
   if (input.seenHash !== action.params_hash) throw Errors.conflict("L'action a changé depuis votre affichage : relisez-la avant de valider.");
   // Contrôle du jeton et du connecteur AVANT d'approuver : pas d'approbation laissée sans suite.

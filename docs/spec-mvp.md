@@ -813,34 +813,34 @@ Aucune fonctionnalité n'est « finie » sans ses tests de sécurité. Chaque li
 | SEC-01 | Deux clients d'une même ESN ne se voient pas ; l'ESN voit les deux (assignés) | M03 | J2, J6 |
 | SEC-02 | Un technicien non assigné, à assignation expirée, ou dont la relation est révoquée, ne voit **rien** | M28, R3, R4 | J2, J6 |
 | SEC-03 | Le super administrateur ne voit rien sans accès d'assistance actif ; expiré = rien ; jamais en écriture | M30, R5 | J2, J6 |
-| SEC-04 | Changer l'organisation dans le corps, un en-tête ou le jeton ne donne aucun accès | M27, R1 | J3, J6 |
-| SEC-05 | Élévation de rôle par invitation : rôle supérieur, réutilisation, expiration, adresse différente | M29, R6 | J2, J6 |
-| SEC-06 | Délégation : auto-délégation, sans MFA récent, plus de 30 jours, hors périmètre, expirée, révoquée entre validation et exécution | M09, I1 à I12 | J2, J3, J6 |
-| SEC-07 | Auto-validation impossible (demandeur ou cible = valideur) | I2 | J3, J6 |
-| SEC-08 | Modifier l'action après validation est refusé (empreinte) | M12 | J3 |
-| SEC-09 | Double clic, relance, arrêt en cours d'exécution : au plus une exécution, jamais de rejeu automatique | M13 | J3 |
-| SEC-10 | Sans valideur dans le délai, rien ne s'exécute et l'utilisateur est prévenu | I8 | J3 |
-| SEC-11 | Les règles X1 à X5 refusent dans le chat avec une réponse identique que le compte existe ou non | M02 | J3, J6 |
-| SEC-12 | La validation est impossible côté serveur sans vérification d'identité enregistrée | M02 | J3 |
+| SEC-04 | Changer l'organisation dans le corps, un en-tête ou le jeton ne donne aucun accès | M27, R1 | **fait J3** |
+| SEC-05 | Élévation de rôle par invitation : rôle supérieur, réutilisation, expiration, adresse différente | M29, R6 | J2, **fait J3**, J6 |
+| SEC-06 | Délégation : auto-délégation, sans MFA récent, plus de 30 jours, hors périmètre, expirée, révoquée entre validation et exécution | M09, I1 à I12 | J2, **fait J3**, J6 |
+| SEC-07 | Auto-validation impossible (demandeur ou cible = valideur) | I2 | **fait J3** |
+| SEC-08 | Modifier l'action après validation est refusé (empreinte) | M12 | **fait J3** |
+| SEC-09 | Double clic, relance, arrêt en cours d'exécution : au plus une exécution, jamais de rejeu automatique | M13 | **fait J3** |
+| SEC-10 | Sans valideur dans le délai, rien ne s'exécute et l'utilisateur est prévenu | I8 | J3 **partiel** : rien ne s'exécute (fait) ; la notification de l'utilisateur attend J4/J5 (B14) |
+| SEC-11 | Les règles X1 à X5 refusent dans le chat avec une réponse identique que le compte existe ou non | M02 | **fait J3** (réponse strictement identique), J6 |
+| SEC-12 | La validation est impossible côté serveur sans vérification d'identité enregistrée | M02 | **fait J3** |
 | SEC-13 | 20 tentatives d'injection (message, ticket, fiche, alerte, nom de fichier) échouent toutes | M01 | J6 |
 | SEC-14 | Le prompt système n'est pas divulgué | M07 | J6 |
-| SEC-15 | Aucun contenu externe dans le prompt système | M01 | **fait** (Semgrep), J3 |
-| SEC-16 | Aucun secret dans un journal : règle statique **et** test d'exécution qui injecte un secret et fouille journaux et audit | M04 | **fait** (Semgrep), J3 |
+| SEC-15 | Aucun contenu externe dans le prompt système | M01 | **fait** (Semgrep), **fait J3** (test de bout en bout) |
+| SEC-16 | Aucun secret dans un journal : règle statique **et** test d'exécution qui injecte un secret et fouille journaux et audit | M04 | **fait** (Semgrep), **fait J3** (test de bout en bout) |
 | SEC-17 | Webhook : signature fausse, rejeu, corps trop gros, source inconnue ou désactivée | M16 | J4 |
 | SEC-18 | Une alerte contenant une instruction n'a aucun effet | M01, M35 | J4, J6 |
-| SEC-19 | Mode ombre : aucune réponse de l'IA n'atteint le salarié tant que la catégorie n'est pas `direct` (RLS **et** fonction d'envoi) | M36 | J3, J6 |
-| SEC-20 | Une note « Dangereuse » remet la catégorie en `advice_only` | M36 | J3 |
+| SEC-19 | Mode ombre : aucune réponse de l'IA n'atteint le salarié tant que la catégorie n'est pas `direct` (RLS **et** fonction d'envoi) | M36 | **fait J3**, J6 |
+| SEC-20 | Une note « Dangereuse » remet la catégorie en `advice_only` | M36 | **fait J3** |
 | SEC-21 | Le prix partenaire et la marge sont invisibles du client (tables, vues, rapports, exports) | M37 | J2, J5 |
 | SEC-22 | Marque blanche : logo piégé assaini, expéditeur non vérifié refusé | M38 | J5 |
 | SEC-23 | En-têtes, CSP et CORS du widget (audit et test) ; aucun jeton dans `localStorage` | M15 | J5 |
-| SEC-24 | Limitation de débit et file d'attente tiennent sous charge ; repli « je transmets à un technicien » | M10 | J3 |
+| SEC-24 | Limitation de débit et file d'attente tiennent sous charge ; repli « je transmets à un technicien » | M10 | **fait J3** |
 | SEC-25 | Aucune donnée réelle de pilote dans le dépôt | M34 | **fait** |
 | SEC-26 | Tableaux de bord et exports : pas de contenu de conversation hors des clients assignés | M33 | J5, J6 |
 | SEC-27 | `audit_logs` : modification et suppression refusées, même pour `service_role` | M18 | J2 |
-| SEC-28 | Organisation gelée : aucune action, demandes en attente annulées | § 9.7 | J3 |
-| SEC-29 | Création de client par l'ESN : MFA, plafond, notification, rattachement sans accord refusé | M31 | J2, J3 |
-| SEC-30 | Avant activation par l'administrateur du client : aucune action de niveau 1, connexion Microsoft 365 refusée | § 1 | J3, J4 |
-| SEC-31 | Niveau 1 refusé sur un connecteur non qualifié `test` ou `production` | M22 | J3, J4 |
+| SEC-28 | Organisation gelée : aucune action, demandes en attente annulées | § 9.7 | **fait J3** |
+| SEC-29 | Création de client par l'ESN : MFA, plafond, notification, rattachement sans accord refusé | M31 | **fait J3**, J2 |
+| SEC-30 | Avant activation par l'administrateur du client : aucune action de niveau 1, connexion Microsoft 365 refusée | § 1 | **fait J3**, J4 |
+| SEC-31 | Niveau 1 refusé sur un connecteur non qualifié `test` ou `production` | M22 | **fait J3**, J4 |
 | SEC-32 | Flux OAuth Microsoft : PKCE, état, portée minimale, consentement vérifié | M05 | J4 |
 
 ## 15. Indicateurs de succès

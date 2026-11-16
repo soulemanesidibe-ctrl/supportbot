@@ -116,10 +116,10 @@ Deno.test("action sur un compte : refus de préparer (niveau 0, compte à privil
   }
 });
 
-Deno.test("action sur un compte : règles de risque X1 à X4 (« suspecte ») = réponse neutre identique et ticket de sécurité", async () => {
+Deno.test("action sur un compte : règles de risque X2 à X4 (« suspecte ») = MÊME réponse qu'une demande ordinaire, ticket de sécurité pour les techniciens", async () => {
   const { rig, result } = await run({ triage: accountTriage, prepare: { status: "suspicious", flags: ["X2", "X3"] } }, ACCOUNT_MSG);
-  assert.equal(result.outcome, "suspect");
-  assert.deepEqual(publicTexts(result), [TEXTS.suspect]);
+  assert.equal(result.outcome, "account_action");
+  assert.deepEqual(publicTexts(result), [TEXTS.accountAction]);
   assert.equal(rig.tickets[0].security, true);
   assert.deepEqual(rig.tickets[0].diagnostic.flags, ["X2", "X3"]);
 });

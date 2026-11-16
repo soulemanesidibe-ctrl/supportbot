@@ -1168,5 +1168,71 @@
     "  if (!isAuthContext(auth)) throw Errors.forbidden();\n  const headers: Record<string, string> = { \"x-releve-request-id\""
    ]
   ]
+ },
+ {
+  "label": "chat : une demande suspecte reçoit une réponse différente d'une demande ordinaire (oracle sur l'état du compte)",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "SEC-11 : toute demande",
+  "edits": [
+   [
+    "\"high\", \"account_action\", TEXTS.accountAction, { reason: \"demande_suspecte\"",
+    "\"high\", \"suspect\", TEXTS.suspect, { reason: \"demande_suspecte\""
+   ]
+  ]
+ },
+ {
+  "label": "actions : une demande expirée est encore approuvée",
+  "file": "_shared/actions/approve.ts",
+  "expect": "SEC-10",
+  "edits": [
+   [
+    "  if (!(Date.parse(action.expires_at) > nowSeconds * 1000)) throw Errors.conflict(\"Cette demande a expiré : une nouvelle demande est nécessaire.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "chat : le message du salarié est conservé et envoyé au modèle sans masquage des secrets",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "SEC-16 : un secret écrit par le salarié",
+  "edits": [
+   [
+    "  const clean = redactText(raw);",
+    "  const clean = raw;"
+   ]
+  ]
+ },
+ {
+  "label": "chat : le mode ombre est ignoré (réponse directe pour toute catégorie)",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "SEC-19",
+  "edits": [
+   [
+    "    if (gate === \"direct\") {",
+    "    if (gate !== \"jamais\") {"
+   ]
+  ]
+ },
+ {
+  "label": "chat : l'arrêt d'urgence n'est plus honoré par le chat",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "SEC-28",
+  "edits": [
+   [
+    "    if (auth.frozen) {",
+    "    if (false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "actions : la validation n'exige plus de méthode de vérification d'identité",
+  "file": "_shared/actions/approve.ts",
+  "expect": "SEC-12",
+  "edits": [
+   [
+    "  if (typeof input.identityMethod !== \"string\" || !IDENTITY_METHODS.includes(input.identityMethod as IdentityMethod)) {\n    throw Errors.badRequest(\"Méthode de vérification d'identité invalide.\");\n  }\n",
+    ""
+   ]
+  ]
  }
 ]

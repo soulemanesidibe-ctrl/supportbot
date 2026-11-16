@@ -40,6 +40,6 @@ export async function readJsonBody(req: Request, maxBytes: number): Promise<Reco
 export function jsonResponse(status: number, body: unknown, requestId: string): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-request-id": requestId },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", "x-request-id": requestId },
   });
 }
