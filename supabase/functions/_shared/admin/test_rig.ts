@@ -52,7 +52,8 @@ export function recordingStore(over: Partial<Record<keyof AdminStore, (...a: unk
 export interface Who {
   /** null = personne sans accès (403). */
   access?: Partial<AccessRow> | null;
-  /** Ancienneté du second facteur en secondes ; null = connexion sans second facteur. */
+  /** Ancienneté du second facteur en secondes. null : vérifié à l'ouverture de session, il y a une heure (aal2, pas « récent ») ;
+   *  négatif : session SANS second facteur (aal1, connexion par code : boîte mail compromise). */
   mfaAge?: number | null;
   email?: string | null;
 }
@@ -62,8 +63,8 @@ export function authDepsFor(who: Who = {}, seenOrgs: string[] = []): AuthDeps {
   return {
     verifyToken: () => Promise.resolve({
       userId: TEST_USER,
-      aal: mfaAge === null ? "aal1" : "aal2",
-      amr: mfaAge === null ? [{ method: "password", timestamp: NOW_S - 5 }] : [{ method: "totp", timestamp: NOW_S - mfaAge }],
+      aal: mfaAge !== null && mfaAge < 0 ? "aal1" : "aal2",
+      amr: mfaAge !== null && mfaAge < 0 ? [{ method: "otp", timestamp: NOW_S - 5 }] : [{ method: "totp", timestamp: NOW_S - (mfaAge ?? 3600) }],
       email: who.email === undefined ? "personne@client.test" : who.email,
     }),
     resolveAccess: (_u, orgId) => {

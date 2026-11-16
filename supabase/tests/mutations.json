@@ -1198,5 +1198,53 @@
     "     and o.state <> 'suspended'\n"
    ]
   ]
+ },
+ {
+  "label": "second facteur : la fonction de contrôle accepte une session sans second facteur",
+  "file": "20261106101600_second_facteur_obligatoire.sql",
+  "expect": "SEC-33 la fonction de contrôle lit bien aal2",
+  "edits": [
+   [
+    "$$ select coalesce(auth.jwt() ->> 'aal', '') = 'aal2' $$;",
+    "$$ select coalesce(auth.jwt() ->> 'aal', '') in ('aal1', 'aal2') $$;"
+   ]
+  ]
+ },
+ {
+  "label": "second facteur : une table oubliée (messages)",
+  "file": "20261106101600_second_facteur_obligatoire.sql",
+  "expect": "Tables sous RLS SANS la politique",
+  "edits": [
+   [
+    "and c.relrowsecurity\n           order by c.relname loop",
+    "and c.relrowsecurity and c.relname <> 'messages'\n           order by c.relname loop"
+   ]
+  ]
+ },
+ {
+  "label": "second facteur : politique permissive au lieu de restrictive (elle élargirait au lieu de restreindre)",
+  "file": "20261106101600_second_facteur_obligatoire.sql",
+  "expect": "Tables sous RLS SANS la politique",
+  "edits": [
+   [
+    "as restrictive for all to authenticated",
+    "as permissive for all to authenticated"
+   ]
+  ]
+ },
+ {
+  "label": "second facteur : lecture seule couverte, écritures oubliées",
+  "file": "20261106101600_second_facteur_obligatoire.sql",
+  "expect": "SEC-33 chaque table de public sous RLS a sa politique restrictive",
+  "edits": [
+   [
+    "as restrictive for all to authenticated",
+    "as restrictive for select to authenticated"
+   ],
+   [
+    "with check ((select private.session_has_second_factor()))",
+    ""
+   ]
+  ]
  }
 ]

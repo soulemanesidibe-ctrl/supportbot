@@ -59,7 +59,7 @@ Deno.test("T12 : connecteur inconnu ou d'une autre organisation = 404 ; jeton re
   }
 });
 
-Deno.test("T12 : délier son compte est toujours possible (même en arrêt d'urgence, sans second facteur) ; seulement le sien", async () => {
+Deno.test("T12 : délier son compte est toujours possible (même en arrêt d'urgence, sans nouvelle vérification) ; seulement le sien", async () => {
   const r = rig();
   assert.equal((await r.call("microsoft.unlink", VALID_BODY["microsoft.unlink"], { access: { org_role: "org_technician", is_frozen: true }, mfaAge: null })).status, 200);
   assert.deepEqual(r.calls.map((c) => c.method), ["unlinkMicrosoftIdentity"]);

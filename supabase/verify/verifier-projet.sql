@@ -1,4 +1,4 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 15 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 16 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
 -- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
@@ -26,6 +26,14 @@ checks(ordre, controle, attendu, trouve, ok) as (
            where n.nspname = 'public' and c.relkind in ('r', 'p') and c.relname <> 'audit_logs'
              and not (has_table_privilege('service_role', c.oid, 'select') and has_table_privilege('service_role', c.oid, 'insert')
                       and has_table_privilege('service_role', c.oid, 'update') and has_table_privilege('service_role', c.oid, 'delete')))
+  union all
+  select 2.7, 'Tables sous RLS SANS la politique « second facteur obligatoire » (migration 16)', '0',
+         (select count(*)::text from tables_public t where t.relrowsecurity
+            and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = t.relname
+                              and p.policyname = t.relname || '_second_facteur' and p.permissive = 'RESTRICTIVE')),
+         (select count(*) = 0 from tables_public t where t.relrowsecurity
+            and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = t.relname
+                              and p.policyname = t.relname || '_second_facteur' and p.permissive = 'RESTRICTIVE'))
   union all
   select 3, 'Droits du rôle anonyme sur les tables publiques', '0',
          (select count(*)::text from information_schema.role_table_grants where grantee = 'anon' and table_schema = 'public'),

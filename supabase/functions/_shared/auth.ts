@@ -136,6 +136,9 @@ export async function requireOrgMember(
   if (!ORG_ROLES.includes(access.org_role as OrgRole) || !VIAS.includes(access.via as AccessVia)) throw Errors.forbidden();
   const role = access.org_role as OrgRole;
   if (roles && !roles.includes(role)) throw Errors.forbidden();
+  // SEC-33 : seul le salarié travaille sans second facteur (connexion par code). Pour tout autre rôle, une session aal1 est ce
+  // qu'obtiendrait quelqu'un qui lit sa boîte mail : refusée ici comme dans la base (migration 16).
+  if (role !== "end_user" && user.aal !== "aal2") throw Errors.mfaRequired();
   return mintContext({
     kind: "user",
     userId: user.userId,

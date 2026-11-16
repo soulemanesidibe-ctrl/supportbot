@@ -132,14 +132,14 @@ Deno.test("SEC-28 arrêt d'urgence : seules les opérations qui RESTREINT l'acc�
   assert.equal((await r.call("category.set_state", { category: "password", state: "advice_only", reason: "Retour au conseil seul après incident" }, { access: { is_frozen: true } })).status, 200);
 });
 
-Deno.test("second facteur : exigé pour les opérations qui ouvrent ou créent ; absent, ancien (11 min) ou futur = refus ; 5 minutes = accepté", async () => {
+Deno.test("second facteur : exigé RÉCENT pour les opérations qui ouvrent ou créent ; d'ouverture de session (1 h) ou ancien (11 min) = refus ; 5 minutes = accepté", async () => {
   for (const op of ORG_OPS) {
     const role = EXPECTED[op].roles[0];
     const needs = EXPECTED[op].mfa;
     const body = bodyFor(op, role);
     const needsFor = (b: Record<string, unknown>) =>
       needs === true || (needs === "si_niveau_1" && b.level === 1) || (needs === "si_direct" && b.state === "direct") || (needs === "si_actif" && b.state === "active");
-    for (const [label, mfaAge, ok] of [["sans", null, false], ["ancien", 660, false], ["récent", 300, true]] as const) {
+    for (const [label, mfaAge, ok] of [["d'ouverture de session", null, false], ["ancien", 660, false], ["récent", 300, true]] as const) {
       const r = rig();
       const res = await r.call(op, body, { access: { org_role: role, via: "member" }, mfaAge });
       const expectOk = ok || !needsFor(body);
@@ -147,12 +147,23 @@ Deno.test("second facteur : exigé pour les opérations qui ouvrent ou créent ;
       if (!expectOk) { assert.equal(res.code, "mfa_required", op); assert.equal(r.calls.length, 0, op); }
     }
   }
-  // Les formes qui RESTREINT ne l'exigent pas : niveau 0, catégorie fermée, gel, révocations.
+  // Les formes qui RESTREIGNENT n'exigent pas de second facteur RÉCENT : niveau 0, catégorie fermée, gel, révocations.
   const r = rig();
   assert.equal((await r.call("autonomy.set", { category: "accounts", level: 0 }, { mfaAge: null })).status, 200);
   assert.equal((await r.call("category.set_state", { category: "password", state: "shadow", reason: "Retour au conseil seul après incident" }, { mfaAge: null })).status, 200);
-  assert.equal((await r.call("org.freeze", {}, { mfaAge: null })).status, 200, "geler ne demande aucun second facteur : l'urgence prime");
-  assert.equal((await r.call("org.unfreeze", {}, { mfaAge: null })).status, 403, "dégeler en demande un");
+  assert.equal((await r.call("org.freeze", {}, { mfaAge: null })).status, 200, "geler ne demande pas de nouvelle vérification : l'urgence prime");
+  assert.equal((await r.call("org.unfreeze", {}, { mfaAge: null })).status, 403, "dégeler en demande une");
+});
+
+Deno.test("SEC-33 : une session SANS second facteur (connexion par code) ne fait AUCUNE opération d'organisation, même celles qui restreignent", async () => {
+  for (const op of ORG_OPS) {
+    const role = EXPECTED[op].roles[0];
+    const r = rig();
+    const res = await r.call(op, bodyFor(op, role), { access: { org_role: role, via: "member" }, mfaAge: -1 });
+    assert.equal(res.status, 403, op);
+    assert.equal(res.code, "mfa_required", op);
+    assert.equal(r.calls.length, 0, op);
+  }
 });
 
 Deno.test("audit AVANT d'agir : journal indisponible = 503 et rien n'est fait ; sinon une ligne « admin.<op> » sans paramètre ni jeton", async () => {

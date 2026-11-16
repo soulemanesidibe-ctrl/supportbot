@@ -8,16 +8,19 @@ $$ begin
   raise notice 'ok   %', p_name;
 end $$;
 
--- Se connecter comme un utilisateur de l'API (rôle authenticated + jeton). p_mfa_age : ancienneté du second facteur en
--- secondes, null = connexion sans second facteur.
+-- Se connecter comme un utilisateur de l'API (rôle authenticated + jeton). p_mfa_age : ancienneté du second facteur en secondes.
+--   null (défaut) : session ordinaire d'un membre du personnel, second facteur vérifié il y a une heure (aal2, pas « récent ») ;
+--   négatif       : session SANS second facteur (aal1, connexion par code) : salarié, ou boîte mail d'un technicien compromise ;
+--   positif ou 0  : second facteur vérifié il y a p_mfa_age secondes.
+-- (Depuis la migration 16, une session aal1 ne lit plus rien directement : voir 93_second_facteur.sql.)
 create or replace function test.claims(p_user uuid, p_mfa_age int default null) returns text language sql as
 $$ select jsonb_build_object('sub', p_user, 'role', 'authenticated',
-     'aal', case when p_mfa_age is null then 'aal1' else 'aal2' end,
-     'amr', case when p_mfa_age is null
-        then jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', extract(epoch from now())::bigint))
+     'aal', case when p_mfa_age < 0 then 'aal1' else 'aal2' end,
+     'amr', case when p_mfa_age < 0
+        then jsonb_build_array(jsonb_build_object('method', 'otp', 'timestamp', extract(epoch from now())::bigint))
         else jsonb_build_array(
-          jsonb_build_object('method', 'password', 'timestamp', extract(epoch from now())::bigint - p_mfa_age - 5),
-          jsonb_build_object('method', 'totp', 'timestamp', extract(epoch from now())::bigint - p_mfa_age)) end)::text $$;
+          jsonb_build_object('method', 'password', 'timestamp', extract(epoch from now())::bigint - coalesce(p_mfa_age, 3600) - 5),
+          jsonb_build_object('method', 'totp', 'timestamp', extract(epoch from now())::bigint - coalesce(p_mfa_age, 3600))) end)::text $$;
 
 -- Nombre de lignes visibles par cet utilisateur pour cette requête (qui doit renvoyer un entier).
 create or replace function test.q(p_user uuid, p_sql text, p_mfa_age int default null) returns bigint language plpgsql as

@@ -54,7 +54,7 @@ Deno.test("fail : chaque refus connu de la base devient une erreur publique FIXE
   assert.equal(fail(undefined).code, "service_unavailable");
 });
 
-Deno.test("appels SQL : acteur, organisation et second facteur viennent du CONTEXTE vérifié ; sans second facteur, rien n'est appelé", async () => {
+Deno.test("appels SQL : acteur, organisation et second facteur viennent du CONTEXTE vérifié ; sans horodatage de second facteur, rien n'est appelé", async () => {
   const auth = await makeAuth({ org_role: "partner_admin", via: "member" });
   const { s, ops } = store(() => ok({ client_org_id: "c", relationship_id: "r", invitation_id: "i", cancelled_actions: 3, assignments: 1 }));
   await s.createClient(auth, { name: "Client G", slug: "client-g", adminEmail: "a@g.test", tokenHash: "h".repeat(64) });
@@ -66,10 +66,10 @@ Deno.test("appels SQL : acteur, organisation et second facteur viennent du CONTE
   assert.deepEqual(ops[2].args, { p_actor: TEST_USER, p_org: TEST_ORG, p_frozen: true });
   assert.equal(freeze.cancelledActions, 3);
 
-  const noMfa = await requireOrgMember(testRequest(), TEST_ORG, undefined, { ...testAuthDeps({ org_role: "partner_admin" }), verifyToken: () => Promise.resolve({ userId: TEST_USER, aal: "aal1", amr: [] }) });
+  const noMfa = await requireOrgMember(testRequest(), TEST_ORG, undefined, { ...testAuthDeps({ org_role: "partner_admin" }), verifyToken: () => Promise.resolve({ userId: TEST_USER, aal: "aal2", amr: [] }) }); // jeton aal2 sans horodatage de second facteur lisible
   const other = store(() => ok({}));
   assert.equal(await codeOf(other.s.createClient(noMfa, { name: "x", slug: "xx", adminEmail: "a@g.test", tokenHash: "h".repeat(64) })), "mfa_required");
-  assert.equal(other.ops.length, 0, "aucun appel SQL sans second facteur");
+  assert.equal(other.ops.length, 0, "aucun appel SQL sans horodatage de second facteur");
 });
 
 Deno.test("appel SQL : un résultat inattendu de la base est une panne (503), jamais un succès deviné", async () => {
@@ -177,12 +177,12 @@ Deno.test("autonomie : le niveau 1 porte l'auteur et le second facteur ; le nive
   assert.equal(one.level, 1); assert.equal(one.set_by, TEST_USER); assert.equal(one.mfa_verified_at, MFA_ISO); assert.equal(one.org_id, TEST_ORG);
   assert.equal(zero.level, 0); assert.equal(zero.mfa_verified_at, null);
   assert.deepEqual(ops[0].options, { onConflict: "org_id,category" });
-  const noMfa = await requireOrgMember(testRequest(), TEST_ORG, undefined, { ...testAuthDeps({ org_role: "org_admin" }), verifyToken: () => Promise.resolve({ userId: TEST_USER, aal: "aal1", amr: [] }) });
+  const noMfa = await requireOrgMember(testRequest(), TEST_ORG, undefined, { ...testAuthDeps({ org_role: "org_admin" }), verifyToken: () => Promise.resolve({ userId: TEST_USER, aal: "aal2", amr: [] }) }); // jeton aal2 sans horodatage de second facteur lisible
   const other = store(() => ok());
   assert.equal(await codeOf(other.s.setAutonomy(noMfa, { category: "accounts", level: 1 })), "mfa_required");
   assert.equal(other.ops.length, 0);
   await other.s.setAutonomy(noMfa, { category: "accounts", level: 0 });
-  assert.equal(other.ops.length, 1, "revenir au niveau 0 ne demande pas de second facteur");
+  assert.equal(other.ops.length, 1, "revenir au niveau 0 ne demande pas de nouvelle vérification");
 });
 
 Deno.test("accès d'assistance : l'approbation relit la demande DE CE CLIENT, puis écrit conditionnellement ; la fenêtre vient de la durée demandée", async () => {

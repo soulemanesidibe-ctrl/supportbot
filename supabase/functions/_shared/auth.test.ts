@@ -95,6 +95,20 @@ Deno.test("requireOrgMember : une réponse inattendue de la base est refusée (�
   }
 });
 
+Deno.test("requireOrgMember : SEC-33 tout rôle autre que salarié exige une session avec second facteur", async () => {
+  const aal1: Partial<AuthDeps> = { verifyToken: () => Promise.resolve({ userId: USER, aal: "aal1" as const, amr: [{ method: "otp", timestamp: NOW - 30 }] }) };
+  for (const role of ["partner_technician", "org_technician", "org_admin", "partner_admin", "partner_manager", "org_viewer", "auditor", "super_admin", "platform_support"]) {
+    assert.equal(await code(requireOrgMember(req(), ORG, undefined, deps({ ...aal1, resolveAccess: () => Promise.resolve(access({ org_role: role })) }))), "mfa_required", role);
+  }
+  // Le salarié, lui, se connecte par code : aal1 suffit.
+  const employee = await requireOrgMember(req(), ORG, ["end_user"], deps({ ...aal1, resolveAccess: () => Promise.resolve(access({ org_role: "end_user", via: "member" })) }));
+  assert.equal(employee.role, "end_user");
+  assert.equal(employee.aal, "aal1");
+  // Un jeton sans « aal » lisible compte comme aal1.
+  const noAal: Partial<AuthDeps> = { verifyToken: () => Promise.resolve({ userId: USER, aal: undefined as unknown as "aal1", amr: [] }) };
+  assert.equal(await code(requireOrgMember(req(), ORG, undefined, deps(noAal))), "mfa_required");
+});
+
 Deno.test("requireOrgMember : la liste de rôles autorisés est appliquée", async () => {
   assert.equal(await code(requireOrgMember(req(), ORG, ["org_admin"], deps())), "forbidden");
   const ctx = await requireOrgMember(req(), ORG, ["org_admin", "partner_technician"], deps());
