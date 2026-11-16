@@ -576,7 +576,7 @@ Règles **déterministes**, évaluées par le code (jamais par le modèle) sur `
 | X4 | **2 demandes** de réinitialisation sur la même cible en 24 h | Suspecte |
 | X5 | La cible n'est pas l'utilisateur authentifié de la conversation (« pour mon collègue ») | Refus : la politique `self_only` l'interdit |
 
-**Effet d'une demande suspecte :** l'agent répond d'une façon neutre (« je ne peux pas traiter cette demande ici, un technicien va vous contacter »), sans dire quelle règle a joué ; un ticket de sécurité de priorité haute est créé avec le contexte ; l'astreinte est prévenue ; l'événement est audité. La réponse est identique que le compte existe ou non.
+**Effet d'une demande suspecte :** l'agent répond d'une façon neutre (« je ne peux pas traiter cette demande ici, un technicien va vous contacter »), sans dire quelle règle a joué ; un ticket de sécurité de priorité haute est créé avec le contexte ; l'astreinte est prévenue ; l'événement est audité. La réponse est identique que le compte existe ou non. **Décision du fondateur (16 novembre 2026, J3) :** pour ne donner **aucun indice** sur l'état du compte (MFA récente, échecs de connexion, répétition), le salarié reçoit **exactement la même réponse** (même texte, même résultat) pour toute demande d'action sur un compte, qu'elle soit ordinaire ou jugée suspecte ; le message neutre ci-dessus reste réservé à la détection de manipulation du modèle. Le caractère suspect n'existe que dans le ticket de sécurité (priorité haute) visible des techniciens. Test SEC-11.
 
 ### 9.5 Chaîne de valideurs et suppléance
 
