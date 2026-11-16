@@ -7,8 +7,17 @@ import { Errors } from "../errors.ts";
 import { AdminDeps, APPROVABLE_PARTNER_ROLES, APPROVAL_CATEGORIES, ENVIRONMENTS, GATE_STATES, INVITABLE, SUPPORT_CATEGORIES } from "./types.ts";
 import { bool, Body, email, int, listOf, oneOf, optionalText, slug, text, uuid } from "./input.ts";
 import { hashToken, isTokenShape } from "./token.ts";
+import { baseOf, ConnectorHttpError } from "../connectors/http.ts";
 
 const DAY_MS = 86_400_000;
+
+/** Jeton ou secret saisi par un administrateur : 8 à 200 caractères, sans espace ni caractère de contrôle. */
+function secretText(b: Body, key: string): string {
+  const v = b[key];
+  if (typeof v !== "string" || v.length < 8 || v.length > 200 || /\s/.test(v)) throw Errors.badRequest(`Champ « ${key} » invalide.`);
+  for (const ch of v) if ((ch.codePointAt(0) as number) < 0x21 || ch === "\u007f") throw Errors.badRequest(`Champ « ${key} » invalide.`);
+  return v;
+}
 const ALL_INVITABLE_ROLES = ["partner_admin", "partner_manager", "partner_technician", "org_admin", "org_technician", "org_viewer", "auditor"] as const;
 
 export interface AdminOp<I = unknown> {
@@ -232,6 +241,44 @@ export const ADMIN_OPS: ReadonlyMap<string, AdminOp<unknown>> = new Map<string, 
     async run(auth, i: { connectorId: string; environment: typeof ENVIRONMENTS[number] }, deps) {
       await deps.store.qualifyConnector(auth, i);
       return { environment: i.environment };
+    },
+  })],
+
+  // ---------------------------------------------------------------- connexion d'un serveur GLPI (l'ESN peut la préparer avant l'activation du client)
+  ["connector.create_glpi", defineOp({
+    // Les jetons arrivent dans CETTE requête, vont directement dans le coffre et ne sont ni journalisés ni renvoyés ni stockés en configuration.
+    scope: "org", roles: ["org_admin", "partner_admin"], via: "any", mfa: true, allowWhenFrozen: false,
+    parse: (b) => ({
+      name: text(b, "name", 2, 80), baseUrl: text(b, "baseUrl", 8, 300),
+      userToken: secretText(b, "userToken"), appToken: b.appToken === undefined || b.appToken === null || b.appToken === "" ? null : secretText(b, "appToken"),
+    }),
+    async run(auth, i: { name: string; baseUrl: string; userToken: string; appToken: string | null }, deps) {
+      let base: string;
+      try {
+        base = baseOf(i.baseUrl, deps.allowedHostSuffixes);
+      } catch (e) {
+        if (e instanceof ConnectorHttpError) throw Errors.badRequest("Adresse du serveur refusée : https, nom de domaine public, port 443, domaine autorisé.");
+        throw e;
+      }
+      const { connectorId } = await deps.store.createConnector(auth, { type: "glpi", name: i.name, baseUrl: base });
+      try {
+        await deps.secrets.set(auth, connectorId, JSON.stringify(i.appToken === null ? { user_token: i.userToken } : { user_token: i.userToken, app_token: i.appToken }));
+      } catch {
+        await deps.store.setConnectorStatus(auth, connectorId, { status: "error", error: "secret" }).catch(() => {});
+        throw Errors.unavailable();
+      }
+      const h = await deps.connectors.health(auth, connectorId).catch(() => ({ ok: false, detail: "unavailable" }));
+      await deps.store.setConnectorStatus(auth, connectorId, { status: h.ok ? "ok" : "error", error: h.ok ? null : String(h.detail ?? "unavailable").slice(0, 40) });
+      return { connectorId, status: h.ok ? "ok" : "error", detail: h.ok ? null : h.detail ?? "unavailable" };
+    },
+  })],
+  ["connector.test", defineOp({
+    scope: "org", roles: ["org_admin", "partner_admin"], via: "any", mfa: false, allowWhenFrozen: false,
+    parse: (b) => ({ connectorId: uuid(b, "connectorId") }),
+    async run(auth, i: { connectorId: string }, deps) {
+      const h = await deps.connectors.health(auth, i.connectorId);
+      await deps.store.setConnectorStatus(auth, i.connectorId, { status: h.ok ? "ok" : "error", error: h.ok ? null : String(h.detail ?? "unavailable").slice(0, 40) });
+      return { status: h.ok ? "ok" : "error", detail: h.ok ? null : h.detail ?? "unavailable" };
     },
   })],
 ]);

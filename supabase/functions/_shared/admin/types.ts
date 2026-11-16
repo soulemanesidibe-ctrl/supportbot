@@ -1,6 +1,7 @@
 // Types de la fonction `admin` : liste FERMÉE d'opérations, magasin d'accès à la base (remplaçable dans les tests).
 import { AuthContext, OrgRole } from "../context.ts";
 import type { DbDeps } from "../db.ts";
+import type { SecretPort } from "../connectors/secrets.ts";
 
 /** Catégories d'action soumises à validation (niveau d'autonomie, délégations) : celles de private.approval_categories(). */
 export const APPROVAL_CATEGORIES = ["accounts", "mailboxes", "licenses", "scripts", "tickets"] as const;
@@ -49,6 +50,8 @@ export interface AdminStore {
   createDelegation(auth: AuthContext, a: { delegatorId: string; delegateId: string; categories: readonly ApprovalCategory[]; days: number }): Promise<{ delegationId: string }>;
   revokeDelegation(auth: AuthContext, a: { delegationId: string; ownOnly: boolean }): Promise<void>;
   qualifyConnector(auth: AuthContext, a: { connectorId: string; environment: typeof ENVIRONMENTS[number] }): Promise<void>;
+  createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string }): Promise<{ connectorId: string }>;
+  setConnectorStatus(auth: AuthContext, connectorId: string, a: { status: "ok" | "error"; error: string | null }): Promise<void>;
 }
 
 export interface AdminDeps {
@@ -58,4 +61,10 @@ export interface AdminDeps {
   nowMs(): number;
   /** Accès à la base pour le journal d'audit (remplaçable dans les tests). */
   db?: DbDeps;
+  /** Coffre des secrets de connecteur (les jetons d'un nouveau connecteur y vont, jamais en configuration). */
+  secrets: SecretPort;
+  /** Test de connexion d'un connecteur de l'organisation. */
+  connectors: { health(auth: AuthContext, connectorId: string): Promise<{ ok: boolean; detail?: string }> };
+  /** Domaines autorisés pour les serveurs de connecteurs (liste blanche facultative). */
+  allowedHostSuffixes: readonly string[];
 }

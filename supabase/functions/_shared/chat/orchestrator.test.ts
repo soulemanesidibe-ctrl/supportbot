@@ -263,3 +263,22 @@ Deno.test("urgence : « critical » devient « urgent » côté conversation et 
   assert.ok(rig.updates.some((u) => u.urgency === "urgent"));
   assert.equal(rig.tickets[0].priority, "urgent");
 });
+
+Deno.test("ticket : une fois créé localement, il est COPIÉ vers l'outil de ticketing avec le message masqué ; un ticket de sécurité est étiqueté", async () => {
+  const { rig, result } = await run({ triage: triageJson({ intent: "account_action", category: "mfa", requested_action: "mfa_reregister" }), prepare: { status: "suspicious", flags: ["X3"] } }, "Mon mot de passe est Tr0ub4dor&3xyz, réinitialisez mon authentification");
+  assert.equal(result.outcome, "account_action");
+  assert.equal(rig.mirrored.length, 1);
+  assert.equal(rig.mirrored[0].ticketId, "ticket-1");
+  assert.ok(rig.mirrored[0].title.startsWith("[SÉCURITÉ] "));
+  assert.ok(!rig.mirrored[0].body.includes("Tr0ub4dor"), "le message copié vers GLPI est masqué");
+  assert.equal(rig.mirrored[0].security, true);
+  assert.equal(rig.mirrored[0].priority, "high");
+});
+
+Deno.test("ticket : une panne de la copie n'empêche NI le ticket local NI la réponse au salarié", async () => {
+  const { rig, result } = await run({ triage: triageJson({ intent: "account_action", category: "mfa" }), mirror: new Error("GLPI muet") }, ACCOUNT_MSG);
+  assert.equal(result.outcome, "account_action");
+  assert.equal(rig.tickets.length, 1);
+  assert.deepEqual(publicTexts(result), [TEXTS.accountAction]);
+  assert.equal(rig.mirrored.length, 1, "la copie a bien été tentée");
+});

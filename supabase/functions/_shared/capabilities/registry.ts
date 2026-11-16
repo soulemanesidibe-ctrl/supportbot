@@ -49,3 +49,20 @@ export async function connectorFor(auth: AuthContext, name: CapabilityName, deps
   }
   throw Errors.unavailable();
 }
+
+/** Connecteur d'identifiant donné, de l'organisation du contexte (jamais d'une autre) : pour tester une connexion que l'on vient de créer. */
+export async function connectorById(auth: AuthContext, connectorId: string, deps?: DbDeps): Promise<Connector> {
+  if (auth.orgId === null) throw Errors.forbidden();
+  const { data, error } = await serviceClient(auth, deps)
+    .from("connectors")
+    .select("id, org_id, type, name, environment, status, config, tenant_id, vault_secret_id")
+    .eq("id", connectorId)
+    .eq("org_id", auth.orgId)
+    .maybeSingle();
+  if (error) throw Errors.unavailable();
+  const row = data as ConnectorRow | null;
+  if (!row || row.org_id !== auth.orgId) throw Errors.notFound();
+  const factory = factories.get(row.type);
+  if (!factory) throw Errors.unavailable();
+  return factory(row, auth);
+}

@@ -3,5 +3,8 @@
 import { createChatHandler } from "../_shared/chat/handler.ts";
 import { defaultChatPorts } from "../_shared/chat/ports.ts";
 import { limiterFor } from "../_shared/ratelimit.ts";
+import { registerConnectors } from "../_shared/connectors/register.ts";
+
+registerConnectors();
 
 Deno.serve(createChatHandler({ ports: defaultChatPorts, limit: limiterFor("chat") }));

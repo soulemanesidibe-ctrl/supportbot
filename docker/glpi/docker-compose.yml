@@ -1,0 +1,31 @@
+# GLPI de DÉVELOPPEMENT, en local, pour essayer le connecteur sur son poste. Ce n'est PAS l'instance de démonstration : les fonctions
+# Supabase tournent dans le cloud et ne peuvent pas joindre un GLPI installé sur un poste (voir docs/07-integrations.md).
+# Fichier d'après la documentation officielle du projet GLPI :
+#   https://help.glpi-project.org/tutorials/fr/procedures/running_glpi_on_docker
+# Utilisation :   cp .env.example .env   puis   docker compose up -d   puis ouvrir http://localhost:8080
+# Aucune donnée réelle : GLPI de test, comptes de test. Ne jamais exposer ce port sur Internet.
+name: glpi-dev
+services:
+  glpi:
+    image: "glpi/glpi:latest"
+    restart: "unless-stopped"
+    volumes:
+      - glpi_data:/var/glpi
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "127.0.0.1:8080:80"   # accessible depuis ce poste seulement
+  db:
+    image: "mysql:8.4"
+    restart: "unless-stopped"
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ${GLPI_DB_NAME}
+      MYSQL_USER: ${GLPI_DB_USER}
+      MYSQL_PASSWORD: ${GLPI_DB_PASSWORD}
+volumes:
+  glpi_data:
+  db_data:

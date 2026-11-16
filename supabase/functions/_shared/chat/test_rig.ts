@@ -4,7 +4,7 @@ import { AuthContext } from "../context.ts";
 import { CompletionRequest, CompletionResult, EmbeddingResult, LlmError } from "../llm/types.ts";
 import { UsageRecord } from "../llm/usage.ts";
 import type { PrepareResult } from "../actions/prepare.ts";
-import type { ChatPorts, ChatStore, GateState, KbHit, MessageToStore, TicketToCreate } from "./types.ts";
+import type { ChatPorts, ChatStore, GateState, KbHit, MessageToStore, MirrorTicket, TicketToCreate } from "./types.ts";
 
 export const DOC_A = "aaaaaaaa-0000-4000-8000-000000000001";
 export const DOC_B = "aaaaaaaa-0000-4000-8000-000000000002";
@@ -24,6 +24,7 @@ export interface Rig {
   failures: Array<{ purpose: string; kind: string }>;
   audits: AuditEvent[];
   prepared: Array<{ conversationId: string; requested: string }>;
+  mirrored: MirrorTicket[];
   state: { gate: GateState | "throw"; hits: KbHit[]; messageCount: number; history: Array<{ role: "user" | "assistant"; content: string }> };
 }
 
@@ -39,6 +40,7 @@ export interface RigScript {
   failAssistantPublic?: boolean;
   failAudit?: boolean;
   prepare?: PrepareResult | Error;
+  mirror?: Error;
 }
 
 export function makeRig(script: RigScript = {}): Rig {
@@ -50,6 +52,7 @@ export function makeRig(script: RigScript = {}): Rig {
   const failures: Rig["failures"] = [];
   const audits: AuditEvent[] = [];
   const prepared: Rig["prepared"] = [];
+  const mirrored: MirrorTicket[] = [];
   const state: Rig["state"] = {
     gate: script.gate ?? "shadow",
     hits: script.hits ?? [{ documentId: DOC_A, title: "Imprimante hors ligne", text: "Vérifier l'alimentation et le réseau.", score: 0.8 }],
@@ -91,6 +94,7 @@ export function makeRig(script: RigScript = {}): Rig {
       failure: (_a, purpose, kind) => { failures.push({ purpose, kind }); return Promise.resolve(); },
     },
     audit: (_a: AuthContext, ev: AuditEvent) => script.failAudit ? Promise.reject(new Error("audit indisponible")) : (audits.push(ev), Promise.resolve()),
+    ticketing: { mirror: (_a, input) => { mirrored.push(input); return script.mirror ? Promise.reject(script.mirror) : Promise.resolve(); } },
     actions: {
       prepare: (_a, input) => {
         prepared.push(input);
@@ -99,7 +103,7 @@ export function makeRig(script: RigScript = {}): Rig {
       },
     },
   };
-  return { ports, calls, messages, tickets, updates, usage, failures, audits, prepared, state };
+  return { ports, calls, messages, tickets, updates, usage, failures, audits, prepared, mirrored, state };
 }
 
 export const publicTexts = (r: { messages: ReadonlyArray<{ content: string }> }): string[] => r.messages.map((m) => m.content);

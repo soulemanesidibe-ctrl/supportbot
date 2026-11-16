@@ -6,6 +6,7 @@ import { supabaseActionStore } from "../actions/store.ts";
 import { auditEvent } from "../audit.ts";
 import { callCapability } from "../capabilities/call.ts";
 import { connectorFor } from "../capabilities/registry.ts";
+import { mirrorTicket } from "./mirror.ts";
 import { LlmGateway } from "../llm/gateway.ts";
 import { MistralProvider, mistralConfigFromEnv } from "../llm/mistral.ts";
 import { recordLlmCall, recordLlmFailure } from "../llm/usage.ts";
@@ -30,6 +31,14 @@ export function defaultChatPorts(): ChatPorts {
       failure: (auth, purpose, kind) => recordLlmFailure(auth, purpose, kind),
     },
     audit: (auth, ev) => auditEvent(auth, ev),
+    ticketing: {
+      mirror: (auth, input) =>
+        mirrorTicket(auth, input, {
+          // Aucun connecteur de ticketing actif : ce n'est pas une erreur, le ticket local suffit.
+          connectorFor: (a) => connectorFor(a, "ticket.create").catch(() => null),
+          requesterOf: async (a, conversationId) => (await supabaseActionStore().directoryUserFor(a, conversationId))?.email ?? null,
+        }),
+    },
     actions: {
       prepare: (auth, input) =>
         prepareAction(auth, input, {

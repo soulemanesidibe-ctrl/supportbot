@@ -1234,5 +1234,412 @@
     ""
    ]
   ]
+ },
+ {
+  "label": "connecteurs : http n'est plus exigé (une adresse en clair est acceptée)",
+  "file": "_shared/connectors/http.ts",
+  "expect": "adresse d'un connecteur",
+  "edits": [
+   [
+    "u.protocol !== \"https:\" || ",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : n'importe quel port est accepté",
+  "file": "_shared/connectors/http.ts",
+  "expect": "adresse d'un connecteur",
+  "edits": [
+   [
+    "(u.port !== \"\" && u.port !== \"443\") || ",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : une adresse IP écrite en clair est acceptée (SSRF)",
+  "file": "_shared/connectors/http.ts",
+  "expect": "adresse d'un connecteur",
+  "edits": [
+   [
+    "host === \"localhost\" || looksLikeIp(host)",
+    "host === \"localhost\""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : des identifiants dans l'adresse sont acceptés",
+  "file": "_shared/connectors/http.ts",
+  "expect": "adresse d'un connecteur",
+  "edits": [
+   [
+    "u.username || u.password || ",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : les noms internes (.internal, .local...) sont acceptés",
+  "file": "_shared/connectors/http.ts",
+  "expect": "adresse d'un connecteur",
+  "edits": [
+   [
+    "  if (FORBIDDEN_SUFFIXES.some((s) => host.endsWith(s))) throw new ConnectorHttpError(\"config\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : la liste blanche de domaines n'est plus appliquée",
+  "file": "_shared/connectors/http.ts",
+  "expect": "liste blanche de suffixes",
+  "edits": [
+   [
+    "  if (allowedSuffixes.length > 0 && !allowedSuffixes.some(",
+    "  if (false as boolean && !allowedSuffixes.some("
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : les redirections sont suivies (le jeton peut partir ailleurs)",
+  "file": "_shared/connectors/http.ts",
+  "expect": "requestJson : ne suit JAMAIS",
+  "edits": [
+   [
+    "redirect: \"manual\"",
+    "redirect: \"follow\""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : une redirection n'est plus refusée",
+  "file": "_shared/connectors/http.ts",
+  "expect": "requestJson : ne suit JAMAIS",
+  "edits": [
+   [
+    "  if (res.status >= 300 && res.status < 400) { await res.body?.cancel().catch(() => {}); throw new ConnectorHttpError(\"rejected\", res.status); }\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : la taille des réponses n'est plus bornée",
+  "file": "_shared/connectors/http.ts",
+  "expect": "statuts d'erreur typés, corps borné",
+  "edits": [
+   [
+    "if (total > MAX_BODY_BYTES) {",
+    "if (total > MAX_BODY_BYTES * 1000) {"
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : l'adresse d'une requête n'est plus revalidée",
+  "file": "_shared/connectors/http.ts",
+  "expect": "requestJson : ne suit JAMAIS",
+  "edits": [
+   [
+    "  validateConnectorUrl(url, opts.allowedSuffixes ?? [], 2000); // adresse de requête : plus longue qu'une adresse de configuration (paramètres de recherche)\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : un GET peut porter un corps",
+  "file": "_shared/connectors/http.ts",
+  "expect": "un GET ne porte jamais de corps",
+  "edits": [
+   [
+    "    if (init.method === \"GET\") throw new ConnectorHttpError(\"config\"); // GLPI et la plupart des API refusent un corps sur GET\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connecteurs : les cookies sont envoyés",
+  "file": "_shared/connectors/http.ts",
+  "expect": "requestJson : ne suit JAMAIS",
+  "edits": [
+   [
+    "credentials: \"omit\"",
+    "credentials: \"include\""
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : une référence de ticket peut contenir un chemin (détournement)",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "n'est QUE des chiffres",
+  "edits": [
+   [
+    "const DIGITS = /^\\d{1,10}$/;",
+    "const DIGITS = /^[\\w./?-]{1,40}$/;"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : les balises d'un texte salarié ne sont plus neutralisées (XSS stocké)",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "création d'un ticket : champs envoyés",
+  "edits": [
+   [
+    "  return s.replace(/</g, \"‹\").replace(/>/g, \"›\").slice(0, max);",
+    "  return s.slice(0, max);"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : un suivi est public par défaut",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "un suivi est PRIVÉ par défaut",
+  "edits": [
+   [
+    "const isPrivate = p.internal === false ? 0 : 1;",
+    "const isPrivate = p.internal === true ? 1 : 0;"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : la session n'est jamais fermée",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "session ouverte avec le jeton",
+  "edits": [
+   [
+    "      await requestJson(`${this.api}/killSession`, { method: \"GET\", headers }, this.deps.http).catch(() => {});\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : mauvais type de lien (« parent de » au lieu de « fils de »)",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "création avec un ticket parent",
+  "edits": [
+   [
+    "export const GLPI_LINK_SON_OF = 3;",
+    "export const GLPI_LINK_SON_OF = 4;"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : « résolu » enverrait « fermé »",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "changement de statut",
+  "edits": [
+   [
+    "{ solved: GLPI_STATUS.solved, closed: GLPI_STATUS.closed, pending: GLPI_STATUS.pending }",
+    "{ solved: GLPI_STATUS.closed, closed: GLPI_STATUS.closed, pending: GLPI_STATUS.pending }"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : l'urgence « haute » est mal convertie",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "création d'un ticket : champs envoyés",
+  "edits": [
+   [
+    "const URGENCY = { low: 2, normal: 3, high: 4, urgent: 5 } as const;",
+    "const URGENCY = { low: 2, normal: 3, high: 2, urgent: 5 } as const;"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : le ticket parent n'est plus validé avant la session",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "création avec un ticket parent",
+  "edits": [
+   [
+    "        if (p.parentRef) ref(p.parentRef);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : la requête de recherche n'est plus neutralisée",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "recherche : critères encodés",
+  "edits": [
+   [
+    "const q = neutralize(p.query, 200).trim();",
+    "const q = String(p.query ?? \"\").trim();"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : un jeton avec des espaces est accepté",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "erreurs : authentification refusée",
+  "edits": [
+   [
+    "if (typeof u !== \"string\" || u.length < 8 || u.length > 200 || /\\s/.test(u)) throw new ConnectorHttpError(\"config\");",
+    "if (typeof u !== \"string\" || u.length < 8 || u.length > 200) throw new ConnectorHttpError(\"config\");"
+   ]
+  ]
+ },
+ {
+  "label": "GLPI : le format du jeton de session n'est plus contrôlé",
+  "file": "_shared/connectors/glpi.ts",
+  "expect": "erreurs : authentification refusée",
+  "edits": [
+   [
+    "if (typeof session !== \"string\" || !SESSION.test(session)) throw new ConnectorHttpError(\"bad_response\");",
+    "if (typeof session !== \"string\") throw new ConnectorHttpError(\"bad_response\");"
+   ]
+  ]
+ },
+ {
+  "label": "registre : le connecteur de démonstration est actif par défaut en production",
+  "file": "_shared/connectors/register.ts",
+  "expect": "registre : le connecteur GLPI est disponible",
+  "edits": [
+   [
+    "Deno.env.get(\"RELEVE_ALLOW_DEMO_CONNECTOR\") === \"1\"",
+    "Deno.env.get(\"RELEVE_ALLOW_DEMO_CONNECTOR\") !== \"0\""
+   ]
+  ]
+ },
+ {
+  "label": "registre : connectorById n'est plus filtré par organisation",
+  "file": "_shared/capabilities/registry.ts",
+  "expect": "connectorById",
+  "edits": [
+   [
+    "    .eq(\"id\", connectorId)\n    .eq(\"org_id\", auth.orgId)\n    .maybeSingle();",
+    "    .eq(\"id\", connectorId)\n    .maybeSingle();"
+   ]
+  ]
+ },
+ {
+  "label": "registre : connectorById accepte une ligne d'une autre organisation",
+  "file": "_shared/capabilities/registry.ts",
+  "expect": "connectorById",
+  "edits": [
+   [
+    "  if (!row || row.org_id !== auth.orgId) throw Errors.notFound();\n  const factory = factories.get(row.type);\n  if (!factory) throw Errors.unavailable();\n  return factory(row, auth);",
+    "  if (!row) throw Errors.notFound();\n  const factory = factories.get(row.type);\n  if (!factory) throw Errors.unavailable();\n  return factory(row, auth);"
+   ]
+  ]
+ },
+ {
+  "label": "copie de ticket : la lecture n'est plus filtrée par organisation",
+  "file": "_shared/chat/mirror.ts",
+  "expect": "copie : crée le ticket",
+  "edits": [
+   [
+    ".eq(\"id\", t.ticketId).eq(\"org_id\", auth.orgId).maybeSingle();",
+    ".eq(\"id\", t.ticketId).maybeSingle();"
+   ]
+  ]
+ },
+ {
+  "label": "copie de ticket : un ticket déjà copié est recopié",
+  "file": "_shared/chat/mirror.ts",
+  "expect": "copie : idempotente",
+  "edits": [
+   [
+    "if (!row || row.external_ref) return;",
+    "if (!row) return;"
+   ]
+  ]
+ },
+ {
+  "label": "copie de ticket : l'écriture de la référence n'est plus conditionnelle",
+  "file": "_shared/chat/mirror.ts",
+  "expect": "copie : crée le ticket",
+  "edits": [
+   [
+    ".eq(\"id\", t.ticketId).eq(\"org_id\", auth.orgId).is(\"external_ref\", null);",
+    ".eq(\"id\", t.ticketId).eq(\"org_id\", auth.orgId);"
+   ]
+  ]
+ },
+ {
+  "label": "copie de ticket : sans connecteur, on continue",
+  "file": "_shared/chat/mirror.ts",
+  "expect": "copie : idempotente",
+  "edits": [
+   [
+    "  if (!connector) return;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin GLPI : l'adresse du serveur n'est plus validée (SSRF)",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SSRF",
+  "edits": [
+   [
+    "        base = baseOf(i.baseUrl, deps.allowedHostSuffixes);",
+    "        base = i.baseUrl;"
+   ]
+  ]
+ },
+ {
+  "label": "admin GLPI : un test de connexion échoué marque quand même « ok »",
+  "file": "_shared/admin/ops.ts",
+  "expect": "test de connexion échoué",
+  "edits": [
+   [
+    "await deps.store.setConnectorStatus(auth, connectorId, { status: h.ok ? \"ok\" : \"error\", error:",
+    "await deps.store.setConnectorStatus(auth, connectorId, { status: \"ok\", error:"
+   ]
+  ]
+ },
+ {
+  "label": "admin GLPI : un salarié peut connecter un serveur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "rôles : pour chaque opération",
+  "edits": [
+   [
+    "scope: \"org\", roles: [\"org_admin\", \"partner_admin\"], via: \"any\", mfa: true, allowWhenFrozen: false,\n    parse: (b) => ({\n      name: text(b, \"name\", 2, 80), baseUrl",
+    "scope: \"org\", roles: [\"org_admin\", \"partner_admin\", \"end_user\"], via: \"any\", mfa: true, allowWhenFrozen: false,\n    parse: (b) => ({\n      name: text(b, \"name\", 2, 80), baseUrl"
+   ]
+  ]
+ },
+ {
+  "label": "admin GLPI : un jeton avec des espaces est accepté",
+  "file": "_shared/admin/ops.ts",
+  "expect": "jetons : 8 à 200",
+  "edits": [
+   [
+    "v.length > 200 || /\\s/.test(v)) throw Errors.badRequest",
+    "v.length > 200) throw Errors.badRequest"
+   ]
+  ]
+ },
+ {
+  "label": "chat : le ticket n'est plus copié vers l'outil de ticketing",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "ticket : une fois créé localement",
+  "edits": [
+   [
+    "        await ports.ticketing.mirror(auth, {",
+    "        void ({"
+   ]
+  ]
+ },
+ {
+  "label": "chat : une panne de la copie fait échouer la conversation",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "une panne de la copie",
+  "edits": [
+   [
+    "        log.warn(\"copie_ticket_en_echec\", { erreur: e });",
+    "        throw e;"
+   ]
+  ]
+ },
+ {
+  "label": "chat : le message copié vers GLPI n'est pas masqué",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "ticket : une fois créé localement",
+  "edits": [
+   [
+    "          body: clean, security: opts.security === true, diagnostic,",
+    "          body: raw, security: opts.security === true, diagnostic,"
+   ]
+  ]
  }
 ]

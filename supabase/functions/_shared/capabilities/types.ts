@@ -174,7 +174,7 @@ export interface InvocationContext {
   /** Qui agit. L'agent n'a jamais de jeton d'administration. */
   readonly actor:
     | { kind: "agent"; conversationId: string }
-    | { kind: "system"; reason: "cron" | "webhook" | "automation" }
+    | { kind: "system"; reason: "cron" | "webhook" | "automation" | "admin" }
     | { kind: "human"; userId: string; delegatedToken: string; viaDelegationId?: string };
   readonly actionRequestId?: string;
   readonly idempotencyKey?: string;

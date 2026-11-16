@@ -1,0 +1,19 @@
+# M16/M26 : tout appel sortant d'une fonction passe par UN client (connectors/http.ts) qui refuse les adresses internes, les redirections,
+# les délais et les corps démesurés. Un appel direct à fetch() les contourne. Les tests ne sont pas concernés (ils injectent un faux fetch).
+# Testé par outbound-http.ts. Voir docs/securite-code-et-ci.md et docs/revue-securite-j3.md (R3-11).
+rules:
+  - id: releve-direct-fetch
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Appel direct à fetch() : il contourne la validation des adresses (SSRF), l'interdiction des redirections, le délai et la taille
+      maximale. Utilisez requestJson() de supabase/functions/_shared/connectors/http.ts, ou injectez la fonction fetch dans votre classe
+      (comme MistralProvider) pour les tests.
+    metadata:
+      threat: [M16, M26]
+      cwe: ["CWE-918"]
+      owasp: "A10:2021 Server-Side Request Forgery"
+    pattern-either:
+      - pattern: fetch(...)
+      - pattern: globalThis.fetch(...)
+      - pattern: window.fetch(...)

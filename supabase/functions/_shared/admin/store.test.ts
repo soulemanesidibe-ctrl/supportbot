@@ -233,3 +233,25 @@ Deno.test("contexte sans organisation : toute écriture d'organisation est refus
   assert.equal(await codeOf(s.setCategoryState(bare, { category: "password", state: "shadow", reason: null, override: false })), "forbidden");
   assert.equal(ops.length, 0);
 });
+
+Deno.test("connecteurs : création = adresse seule en configuration, statut « brouillon », organisation du contexte ; doublon de nom = conflit sans texte de base", async () => {
+  const auth = await makeAuth({ org_role: "org_admin" });
+  const { s, ops } = store(() => ({ data: { id: "conn-1" }, error: null }));
+  assert.deepEqual(await s.createConnector(auth, { type: "glpi", name: "GLPI", baseUrl: "https://glpi.exemple.fr" }), { connectorId: "conn-1" });
+  assert.deepEqual(ops[0].payload, { org_id: TEST_ORG, type: "glpi", name: "GLPI", status: "draft", config: { base_url: "https://glpi.exemple.fr" } });
+  const dup = store(() => ({ data: null, error: { code: "23505", message: "duplicate key value violates unique constraint connectors_org_id_name_key" } }));
+  const e = await dup.s.createConnector(auth, { type: "glpi", name: "GLPI", baseUrl: "https://glpi.exemple.fr" }).catch((x: AppError) => x);
+  assert.equal((e as AppError).code, "conflict");
+  assert.ok(!/constraint|connectors_org/.test((e as AppError).message));
+});
+
+Deno.test("connecteurs : le statut est écrit pour l'organisation du contexte seulement ; zéro ligne = introuvable", async () => {
+  const auth = await makeAuth({ org_role: "org_admin" });
+  const { s, ops } = store(() => ok());
+  await s.setConnectorStatus(auth, OTHER, { status: "error", error: "auth" });
+  assert.ok(has(ops[0], "eq", "id", OTHER) && has(ops[0], "eq", "org_id", TEST_ORG));
+  const p = ops[0].payload as Record<string, unknown>;
+  assert.equal(p.status, "error"); assert.equal(p.last_error, "auth");
+  assert.deepEqual(Object.keys(p).sort(), ["last_error", "last_sync_at", "status"]);
+  assert.equal(await codeOf(store(() => ok([])).s.setConnectorStatus(auth, OTHER, { status: "ok", error: null })), "not_found");
+});

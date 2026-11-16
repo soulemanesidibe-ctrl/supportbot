@@ -6,7 +6,7 @@
   "lock": true,
   "tasks": {
     "check": "deno check --frozen \"_shared/**/*.ts\" \"chat/*.ts\" \"cron/*.ts\" \"actions/*.ts\" \"admin/*.ts\"",
-    "test": "deno test --frozen --no-prompt --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET"
+    "test": "deno test --frozen --no-prompt --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES"
   },
   "lint": { "rules": { "tags": ["recommended"] } },
   "fmt": { "lineWidth": 120, "indentWidth": 2, "singleQuote": false }

@@ -111,14 +111,25 @@ export async function handleChatMessage(auth: AuthContext, input: ChatInput, por
       }
       if (opts.technicianNote) await ports.store.addMessage(auth, conv.id, { role: "notice", visibility: "technician", content: opts.technicianNote });
       const snippet = clean.replace(/\s+/g, " ").slice(0, 100);
-      await ports.store.createTicket(auth, {
+      const ticketTitle = `${CATEGORY_LABELS[category] ?? "Demande"} : ${snippet}`;
+      const ticketPriority = opts.security ? "high" : urgency;
+      const { id: ticketId } = await ports.store.createTicket(auth, {
         conversationId: conv.id,
-        title: `${CATEGORY_LABELS[category] ?? "Demande"} : ${snippet}`,
+        title: ticketTitle,
         category,
-        priority: opts.security ? "high" : urgency,
+        priority: ticketPriority,
         diagnostic,
         security: opts.security === true,
       });
+      // Copie vers l'outil de ticketing de l'organisation : BEST-EFFORT. Le ticket local existe déjà, un technicien le voit quoi qu'il arrive.
+      try {
+        await ports.ticketing.mirror(auth, {
+          ticketId, conversationId: conv.id, title: opts.security ? `[SÉCURITÉ] ${ticketTitle}` : ticketTitle, category, priority: ticketPriority,
+          body: clean, security: opts.security === true, diagnostic,
+        });
+      } catch (e) {
+        log.warn("copie_ticket_en_echec", { erreur: e });
+      }
       await ports.store.updateConversation(auth, conv.id, { state: "waiting_technician", escalate: true });
       await say(publicText);
       return await finish(outcome, category, { reason: diagnostic.reason });

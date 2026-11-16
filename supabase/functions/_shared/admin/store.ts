@@ -245,6 +245,24 @@ async function qualifyConnector(auth: AuthContext, a: { connectorId: string; env
   touched(data, Errors.notFound());
 }
 
+async function createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string }, deps?: DbDeps) {
+  // La configuration ne contient QUE l'adresse du serveur : la base refuse tout nom de clé qui ressemble à un secret.
+  const { data, error } = await serviceClient(auth, deps).from("connectors").insert({
+    org_id: orgOf(auth), type: a.type, name: a.name, status: "draft", config: { base_url: a.baseUrl },
+  }).select("id").single();
+  if (error && (error as Row).code === "23505") throw Errors.conflict("Un connecteur porte déjà ce nom.");
+  if (error || !data) throw error ? fail(error) : Errors.unavailable();
+  return { connectorId: (data as Row).id as string };
+}
+
+async function setConnectorStatus(auth: AuthContext, connectorId: string, a: { status: "ok" | "error"; error: string | null }, deps?: DbDeps): Promise<void> {
+  const { data, error } = await serviceClient(auth, deps).from("connectors")
+    .update({ status: a.status, last_error: a.error, last_sync_at: nowIso() })
+    .eq("id", connectorId).eq("org_id", orgOf(auth)).select("id");
+  if (error) throw fail(error);
+  touched(data, Errors.notFound());
+}
+
 export function supabaseAdminStore(deps?: DbDeps): AdminStore {
   return {
     createClient: (auth, a) => createClient(auth, a, deps),
@@ -266,5 +284,7 @@ export function supabaseAdminStore(deps?: DbDeps): AdminStore {
     createDelegation: (auth, a) => createDelegation(auth, a, deps),
     revokeDelegation: (auth, a) => revokeDelegation(auth, a, deps),
     qualifyConnector: (auth, a) => qualifyConnector(auth, a, deps),
+    createConnector: (auth, a) => createConnector(auth, a, deps),
+    setConnectorStatus: (auth, id, a) => setConnectorStatus(auth, id, a, deps),
   };
 }

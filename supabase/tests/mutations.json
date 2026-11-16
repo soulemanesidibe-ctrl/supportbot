@@ -692,5 +692,126 @@
     "revoke all on public.rate_limits from public, anon;\ngrant select on public.rate_limits to authenticated;"
    ]
   ]
+ },
+ {
+  "label": "secret de connecteur : la lecture ne vérifie plus l'organisation",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "secret : IDOR",
+  "edits": [
+   [
+    "create function public.connector_secret_get(p_org uuid, p_connector uuid) returns text\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.org_id = p_org and c.status <> 'disabled') then",
+    "create function public.connector_secret_get(p_org uuid, p_connector uuid) returns text\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.status <> 'disabled') then"
+   ]
+  ]
+ },
+ {
+  "label": "secret de connecteur : l'écriture accepte un connecteur désactivé",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "secret : un connecteur désactivé",
+  "edits": [
+   [
+    "create function public.connector_secret_set(p_org uuid, p_connector uuid, p_secret text) returns boolean\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.org_id = p_org and c.status <> 'disabled') then",
+    "create function public.connector_secret_set(p_org uuid, p_connector uuid, p_secret text) returns boolean\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.org_id = p_org) then"
+   ]
+  ]
+ },
+ {
+  "label": "secret de connecteur : l'écriture ne vérifie plus l'organisation",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "secret : IDOR",
+  "edits": [
+   [
+    "create function public.connector_secret_set(p_org uuid, p_connector uuid, p_secret text) returns boolean\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.org_id = p_org and c.status <> 'disabled') then",
+    "create function public.connector_secret_set(p_org uuid, p_connector uuid, p_secret text) returns boolean\nlanguage plpgsql security definer set search_path = '' as\n$$\nbegin\n  if not exists (select 1 from public.connectors c where c.id = p_connector and c.status <> 'disabled') then"
+   ]
+  ]
+ },
+ {
+  "label": "secret d'une source d'alertes : l'écriture ne vérifie plus l'organisation",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "webhook : IDOR",
+  "edits": [
+   [
+    "  if not exists (select 1 from public.alert_sources a where a.id = p_source and a.org_id = p_org) then",
+    "  if not exists (select 1 from public.alert_sources a where a.id = p_source) then"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : une source désactivée est encore servie",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "webhook : source inconnue, sans secret ou désactivée",
+  "edits": [
+   [
+    "  select * into a from public.alert_sources where id = p_source and status = 'active' and vault_secret_id is not null;",
+    "  select * into a from public.alert_sources where id = p_source and vault_secret_id is not null;"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : une source sans secret est servie",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "webhook : source inconnue, sans secret ou désactivée",
+  "edits": [
+   [
+    "  select * into a from public.alert_sources where id = p_source and status = 'active' and vault_secret_id is not null;",
+    "  select * into a from public.alert_sources where id = p_source and status = 'active';"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'organisation suspendue n'est plus contrôlée",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "webhook : organisation suspendue",
+  "edits": [
+   [
+    "  if not exists (select 1 from public.organizations o where o.id = a.org_id and o.state <> 'suspended') then return null; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "rejeu : une livraison déjà vue est acceptée",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "rejeu : la MÊME livraison",
+  "edits": [
+   [
+    "  return v_n = 1;",
+    "  return true;"
+   ]
+  ]
+ },
+ {
+  "label": "rejeu : une empreinte mal formée est acceptée par la fonction",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "rejeu : une empreinte mal formée",
+  "edits": [
+   [
+    "  if p_digest is null or p_digest !~ '^[0-9a-f]{64}$' then raise exception 'Empreinte invalide'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "webhook : un utilisateur connecté peut chercher la source d'un webhook (et son secret)",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "droits : un utilisateur connecté ne peut appeler AUCUNE",
+  "edits": [
+   [
+    "revoke all on function public.alert_source_for_webhook(uuid) from public, anon, authenticated;",
+    "revoke all on function public.alert_source_for_webhook(uuid) from public, anon;"
+   ]
+  ]
+ },
+ {
+  "label": "rejeu : la table des livraisons est lisible par les utilisateurs",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "droits : la table des livraisons",
+  "edits": [
+   [
+    "revoke all on public.webhook_deliveries from public, anon, authenticated;",
+    "revoke all on public.webhook_deliveries from public, anon;\ngrant select on public.webhook_deliveries to authenticated;"
+   ]
+  ]
  }
 ]

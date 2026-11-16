@@ -44,6 +44,19 @@ export interface TicketToCreate {
   readonly security: boolean;
 }
 
+/** Copie d'un ticket local vers l'outil de ticketing de l'organisation (GLPI) : facultative, jamais bloquante. */
+export interface MirrorTicket {
+  readonly ticketId: string;
+  readonly conversationId: string;
+  readonly title: string;
+  readonly category: string;
+  readonly priority: "low" | "normal" | "high" | "urgent";
+  /** Message du salarié, DÉJÀ masqué (secrets, données personnelles) : jamais le message brut. */
+  readonly body: string;
+  readonly security: boolean;
+  readonly diagnostic: Record<string, unknown>;
+}
+
 export interface ChatStore {
   /** Crée la conversation, ou charge celle de CET utilisateur dans CETTE organisation ; toute autre = introuvable. */
   openConversation(auth: AuthContext, conversationId: string | null): Promise<ConversationRow>;
@@ -72,6 +85,8 @@ export interface ChatPorts {
   readonly audit: (auth: AuthContext, ev: AuditEvent) => Promise<void>;
   /** Préparation d'une action sur un compte : l'IA ne fait que préparer une demande que des humains valideront. */
   readonly actions: { prepare(auth: AuthContext, input: { conversationId: string; requested: RequestedAction }): Promise<PrepareResult> };
+  /** Copie du ticket local vers GLPI. Une panne ne doit jamais empêcher un technicien de reprendre la conversation. */
+  readonly ticketing: { mirror(auth: AuthContext, input: MirrorTicket): Promise<void> };
 }
 
 export interface ChatInput {

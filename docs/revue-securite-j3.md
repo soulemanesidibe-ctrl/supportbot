@@ -55,7 +55,7 @@ Une seule dépendance d'exécution (`@supabase/supabase-js`, version exacte, `de
 | R3-08 | À vérifier | Trois points ne se vérifient que sur un projet déployé : le rôle `service_role` vu par la base avec les clés `sb_secret_…`, l'en-tête `apikey`, le format réel de `amr`. | **Au premier déploiement, guidé** (premier critère de l'étape). |
 | R3-09 | À traiter | Aucune notification : le super administrateur à la création d'un client, l'utilisateur dont la demande n'a pas été validée dans le délai (SEC-10, seconde moitié). La trace d'audit existe. | **Ouvert, J4 et J5** (B14). |
 | R3-10 | À traiter | La signature du jeton Microsoft du valideur n'est pas revérifiée côté Relève (le locataire, l'identifiant d'objet et l'expiration le sont ; Microsoft Graph refuse un jeton falsifié). | **Ouvert, J4** (B12). |
-| R3-11 | À traiter | Connecteurs (GLPI) : l'adresse d'un serveur fournie par un client est une porte vers des requêtes sortantes (SSRF). | **J4** : hôtes publics seulement, redirections refusées, liste des ports ; même règle que celle déjà appliquée à Mistral. |
+| R3-11 | À traiter | Connecteurs (GLPI) : l'adresse d'un serveur fournie par un client est une porte vers des requêtes sortantes (SSRF). | **Largement traité en J4** : client sortant unique (`connectors/http.ts`), règle Semgrep contre tout appel direct à `fetch`. **Reste** : un nom de domaine qui se résout vers une adresse privée n'est détecté que par la liste blanche `CONNECTOR_ALLOWED_HOST_SUFFIXES`, **à renseigner pour le pilote**. |
 | R3-12 | Info | Valeurs de limitation, seuils X1 à X4, plafond de 10 clients : provisoires. | À calibrer avec le pilote. |
 
 ## 7. Ce que cette revue ne couvre pas

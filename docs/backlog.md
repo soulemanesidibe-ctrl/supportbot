@@ -20,6 +20,8 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B15 | Édition des chaînes de valideurs (`approval_policies`) par l'administrateur du client : la table et son verrou existent, aucune opération de la fonction `admin` ne les écrit ; les chaînes de la démonstration viennent de la graine | J3.9 | J5, avec l'écran « Valideurs » |
 | B16 | Import des salariés par fichier (`directory_users`) et envoi des invitations par e-mail | J3.9 | J5 |
 | B17 | Révocation d'une invitation en attente par celui qui l'a émise (aujourd'hui elle expire seule au bout de 7 jours) | J3.9 | J5 |
+| B18 | GLPI : retrouver le demandeur dans GLPI par son e-mail (aujourd'hui le demandeur est écrit dans le corps du ticket) et renseigner la catégorie ITIL ; à faire après le contrôle de contrat sur une instance réelle | J4.1 | Après le premier essai réel |
+| B19 | Contrôle de contrat GLPI sur l'instance d'essai : statuts, lien « fils de », suivi, colonnes de recherche, activation de l'API, version (10 ou 11 : l'API v2 de GLPI 11 est une alternative) | J4.1 | Au démarrage de l'essai GLPI Cloud (45 jours : pas avant) |
 | B07 | Publier le rapport Semgrep dans l'onglet « Code scanning » de GitHub (gratuit sur un dépôt public) : demande un job séparé avec `security-events: write` pour garder les permissions minimales | J0 | Avant J6 |
 
 ## Plan des jalons à jour (6 novembre 2026)
