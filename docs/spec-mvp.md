@@ -23,6 +23,8 @@
 | Revendeur | Remise par paliers de 25, 30 et 35 % (seuils à fixer) ; aucun engagement pendant les pilotes puis 12 mois ; marque blanche sans mention (Relève reste nommé comme sous-traitant) ; kit de vente hors démo | Fondateur, 6 nov. |
 | Qualité | Mode ombre, notation par les techniciens, barres de passage chiffrées avant toute réponse directe ou action élargie (§ 10) | Fondateur, 6 nov. |
 | Données | Jamais de donnée réelle dans le dépôt (public). Jeu synthétique dans le dépôt, jeu réel dans un stockage privé | Fondateur, 6 nov. |
+| Demande d'action sur un compte | Le salarié reçoit la **même réponse**, que la demande soit jugée suspecte ou non ; le soupçon n'existe que dans le ticket de sécurité vu des techniciens (§ 9.4, SEC-11) | Fondateur, 16 nov. |
+| Messages d'incident | Le message fixe « un incident est en cours » (et celui de fin d'incident) part **directement** au salarié, même si sa catégorie est en mode ombre : c'est un gabarit écrit par nous, pas une réponse de l'IA, et il ne part que sur une alerte confirmée et au moins deux demandes de la même catégorie (§ 12) | Fondateur, 16 nov. |
 
 ## 2. Problème, objectifs, non-objectifs
 
