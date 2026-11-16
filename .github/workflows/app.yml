@@ -1,0 +1,62 @@
+# Application (app/) : types, analyse, tests unitaires, construction, et preuve qu'aucune donnée de démonstration n'entre dans
+# le paquet de production. Dépendances installées SANS scripts (menace M06) depuis le verrou package-lock.json.
+name: Application
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "app/**"
+      - ".github/workflows/app.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/app.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: application-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Types, analyse, tests et construction
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Installer les dépendances (verrou figé, aucun script exécuté)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Vérifier les types
+        run: npm run typecheck
+
+      - name: Analyse du code
+        run: npm run lint
+
+      - name: Tests unitaires
+        run: npm test
+
+      - name: Construire le paquet de production
+        run: npm run build
+
+      - name: Aucune donnée de démonstration en production
+        run: npm run check:no-demo

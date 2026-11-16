@@ -1,6 +1,6 @@
 # Mises à jour automatiques des actions GitHub (SHA épinglés) et des outils Python de la CI
-# (versions et empreintes verrouillées), et de l'exécutable Deno de la CI. Les dépendances npm de l'application seront
-# ajoutées avec le premier jalon applicatif (docs/securite-code-et-ci.md, B06).
+# (versions et empreintes verrouillées), de l'exécutable Deno de la CI, et des dépendances npm de l'application (app/, J5).
+# Délai de 7 jours avant toute nouvelle version (paquet compromis repéré et retiré entre-temps).
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -35,3 +35,18 @@ updates:
       default-days: 7
     commit-message:
       prefix: "chore(security)"
+
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(app)"
+    groups:
+      app-dev:
+        dependency-type: development
+      app-prod:
+        dependency-type: production

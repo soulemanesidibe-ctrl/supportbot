@@ -1,0 +1,202 @@
+/* Système de design « Signal » de Relève (direction B, docs/04-marque-et-DA.md). Source de vérité des couleurs : les jetons
+   --c-* ci-dessous, en thème sombre (console, back-office) et clair (widget salarié). Aucun hex brut dans un composant. */
+@import "tailwindcss";
+
+/* Polices auto-hébergées (Geist, licence SIL OFL 1.1, fonts/OFL-Geist.txt) : aucune requête vers un service tiers, CSP « font-src 'self' ». */
+@font-face {
+  font-family: "Geist";
+  src: url("./fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------- jetons, thème sombre (défaut de la console) */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #0e0f11;
+  --c-surface: #17181b;
+  --c-surface-2: #1f2125;
+  --c-surface-3: #26282d;
+  --c-border: #26282d;
+  --c-border-strong: #34373d;
+  --c-text: #edeef0;
+  --c-text-soft: #9a9ea6;
+  --c-signal: #3ddc97;
+  --c-on-signal: #0e0f11;
+  --c-relief: #f2b33d;
+  --c-on-relief: #0e0f11;
+  --c-danger: #f0605a;
+  --c-on-danger: #0e0f11;
+  /* Action principale : aplat vert signal en sombre. */
+  --c-primary: #3ddc97;
+  --c-on-primary: #0e0f11;
+  --c-primary-hover: #5ae4a8;
+  /* Teintes de fond des états (jamais seules : toujours doublées d'un libellé ou d'une icône). */
+  --c-signal-soft: color-mix(in oklab, #3ddc97 14%, transparent);
+  --c-relief-soft: color-mix(in oklab, #f2b33d 16%, transparent);
+  --c-danger-soft: color-mix(in oklab, #f0605a 14%, transparent);
+  --c-signal-ink: #3ddc97;
+  --c-relief-ink: #f2b33d;
+  --c-danger-ink: #f48a85;
+  --c-focus: #3ddc97;
+  --c-mark-dot: #3ddc97;
+  --c-scrim: rgb(5 6 8 / 0.72);
+  --c-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+/* ---------------------------------------------------------------- jetons, thème clair (défaut du widget) */
+[data-theme="light"] {
+  color-scheme: light;
+  --c-bg: #f4f5f6;
+  --c-surface: #ffffff;
+  --c-surface-2: #eceef0;
+  --c-surface-3: #e2e5e8;
+  --c-border: #dcdfe3;
+  --c-border-strong: #c3c8cf;
+  --c-text: #0e0f11;
+  --c-text-soft: #4a4f57;
+  /* En clair, le vert sert au texte et aux liens dans sa version foncée ; l'aplat #3DDC97 ne porte que du texte foncé. */
+  --c-signal: #138a5a;
+  --c-on-signal: #ffffff;
+  --c-relief: #f2b33d;
+  --c-on-relief: #0e0f11;
+  --c-danger: #c93b36;
+  --c-on-danger: #ffffff;
+  --c-primary: #0e0f11;
+  --c-on-primary: #ffffff;
+  --c-primary-hover: #26282d;
+  --c-signal-soft: color-mix(in oklab, #3ddc97 22%, #ffffff);
+  --c-relief-soft: color-mix(in oklab, #f2b33d 24%, #ffffff);
+  --c-danger-soft: color-mix(in oklab, #c93b36 12%, #ffffff);
+  --c-signal-ink: #0d6b45;
+  --c-relief-ink: #7a5208;
+  --c-danger-ink: #a52e2a;
+  --c-focus: #138a5a;
+  /* Le point de la marque reste le vert signal vif : c'est un aplat, pas du texte. */
+  --c-mark-dot: #3ddc97;
+  --c-scrim: rgb(14 15 17 / 0.45);
+  --c-shadow: 0 1px 2px rgb(14 15 17 / 0.06), 0 8px 24px rgb(14 15 17 / 0.08);
+}
+
+/* Correspondance avec les classes Tailwind (bg-surface, text-soft, border-border...). */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-text: var(--c-text);
+  --color-soft: var(--c-text-soft);
+  --color-signal: var(--c-signal);
+  --color-on-signal: var(--c-on-signal);
+  --color-relief: var(--c-relief);
+  --color-on-relief: var(--c-on-relief);
+  --color-danger: var(--c-danger);
+  --color-on-danger: var(--c-on-danger);
+  --color-primary: var(--c-primary);
+  --color-on-primary: var(--c-on-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-signal-soft: var(--c-signal-soft);
+  --color-relief-soft: var(--c-relief-soft);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-signal-ink: var(--c-signal-ink);
+  --color-relief-ink: var(--c-relief-ink);
+  --color-danger-ink: var(--c-danger-ink);
+  --color-focus: var(--c-focus);
+  --color-mark-dot: var(--c-mark-dot);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius-card: 12px;
+  --radius-control: 10px;
+  --shadow-lift: var(--c-shadow);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------------------------------------------------------- base */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background: var(--c-bg);
+    color: var(--c-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--c-bg);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--c-signal) 32%, transparent);
+    color: var(--c-text);
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  a {
+    color: var(--c-signal);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  input,
+  textarea {
+    caret-color: var(--c-signal);
+  }
+  /* Barres de défilement aux couleurs du thème. */
+  * {
+    scrollbar-color: var(--c-border-strong) transparent;
+    scrollbar-width: thin;
+  }
+  .num,
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Indicateur de frappe de l'assistant : trois points qui respirent (opacité seulement). */
+@keyframes releve-typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+@utility typing-dot {
+  animation: releve-typing 1.2s var(--ease-out-expo) infinite;
+}

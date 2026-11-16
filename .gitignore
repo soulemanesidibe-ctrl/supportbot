@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Aucun secret : active seulement les données fictives du mode démo (app/src/lib/api/index.tsx).
+!app/.env.demo
 .dev.vars
 *.pem
 *.key
@@ -59,3 +61,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 *.log
+
+# Application (front)
+app/node_modules/
+app/dist/
+app/node_modules/.tmp/
