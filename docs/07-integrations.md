@@ -28,7 +28,7 @@ Décision du fondateur : **tout ce qui peut entrer dans le pilote y entre**. Pou
 
 | Outil | API | Pilote | Comment on le teste |
 |---|---|---|---|
-| **GLPI** | REST (v1, et API v2 dans GLPI 11) | **Lot A** | Docker local |
+| **GLPI** | REST (v1, et API v2 dans GLPI 11) | **Lot A** | Instance de test **hébergée** (GLPI Cloud, essai de 45 jours, sans carte bancaire, région Europe), car les Edge Functions tournent dans le cloud et ne peuvent pas joindre un GLPI installé sur un poste ; Docker local pour le développement du connecteur |
 | **Jira Service Management** | REST Cloud, bien documentée | **Lot A** | Offre gratuite Atlassian |
 | **iTop** (Combodo, français) | REST/JSON | **Lot A** | Docker local (open source) |
 | **TeamsWork Ticketing As A Service** (utilisé par un pilote) | « Ticketing API » annoncée par l'éditeur, non documentée publiquement ; édition UE disponible | **Lot B** | Demander la documentation à l'éditeur via le pilote ; en attendant, passerelle Power Automate (webhook HTTP) |
@@ -37,7 +37,7 @@ Décision du fondateur : **tout ce qui peut entrer dans le pilote y entre**. Pou
 
 ### Microsoft 365, Entra ID, Active Directory
 
-**Tenant de test : celui de la société du fondateur.** Créer des comptes de test dédiés, jamais agir sur de vrais comptes de collaborateurs pendant le développement.
+**Tenant de test : un tenant Entra ID gratuit DÉDIÉ, distinct de celui de la société du fondateur** (décision du 16 novembre 2026, risque M22 : un test ne peut pas toucher un vrai collaborateur). Le programme gratuit Microsoft 365 Developer est réservé aux abonnés Visual Studio et à certains programmes partenaires ([page du programme](https://developer.microsoft.com/en-us/microsoft-365/dev-program)) : on n'en dépend pas. Nos quatre actions portent sur les comptes Entra, une licence Microsoft 365 complète n'est pas nécessaire ; l'historique des connexions par l'API peut demander une licence Premium P1 (essai de 30 jours, à activer seulement au moment de le tester). Créer des comptes de test dédiés. **L'identifiant et le domaine du tenant ne vont jamais dans le dépôt** (public) : ils se saisissent dans la configuration du connecteur, en base.
 
 | Cible | Moyen | Pilote |
 |---|---|---|
