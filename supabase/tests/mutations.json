@@ -439,5 +439,258 @@
     ""
    ]
   ]
+ },
+ {
+  "label": "création de client : le second facteur n'est plus exigé",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-29 création : sans second facteur",
+  "edits": [
+   [
+    "  if p_mfa_at is null or p_mfa_at < now() - interval '10 minutes' or p_mfa_at > now() + interval '1 minute' then\n    raise exception 'Un second facteur de moins de 10 minutes est exigé'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "création de client : n'importe qui peut créer (rôle non vérifié)",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-29 création : un technicien de l'ESN",
+  "edits": [
+   [
+    "  if not private._member(p_actor, p_partner_org, array['partner_admin']) then\n    raise exception 'Seul un administrateur de l''ESN peut créer un client'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "création de client : le plafond n'est plus contrôlé",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-29 création : au plafond de clients",
+  "edits": [
+   [
+    "  if v_count >= v_cap then raise exception 'Plafond de clients atteint (%)', v_cap; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "création de client : une ESN gelée peut encore créer",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "création : une ESN gelée ne crée plus",
+  "edits": [
+   [
+    "  if v_partner.frozen_at is not null then raise exception 'Organisation gelée : aucune création'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "création de client : la relation naît « proposée » au lieu d'active",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "création : la relation est créée ACTIVE",
+  "edits": [
+   [
+    "values (p_partner_org, v_client, 'active', array['partner_admin', 'partner_technician'], true,",
+    "values (p_partner_org, v_client, 'proposed', array['partner_admin', 'partner_technician'], true,"
+   ]
+  ]
+ },
+ {
+  "label": "création de client : la relation approuve aussi le rôle manager",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "création : la relation est créée ACTIVE",
+  "edits": [
+   [
+    "array['partner_admin', 'partner_technician'], true, p_actor,",
+    "array['partner_admin', 'partner_manager', 'partner_technician'], true, p_actor,"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : l'adresse e-mail n'est plus comparée",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : une autre adresse e-mail",
+  "edits": [
+   [
+    " or i.email is distinct from lower(coalesce(p_email, ''))",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "invitation : un jeton déjà utilisé reste valable",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : à usage unique",
+  "edits": [
+   [
+    "if i.id is null or i.used_at is not null or i.expires_at <= now()",
+    "if i.id is null or i.expires_at <= now()"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : une invitation expirée reste valable",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : expirée",
+  "edits": [
+   [
+    "or i.used_at is not null or i.expires_at <= now() or",
+    "or i.used_at is not null or"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : l'organisation suspendue n'est plus contrôlée",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : organisation suspendue",
+  "edits": [
+   [
+    "\n     or not exists (select 1 from public.organizations o where o.id = i.org_id and o.state <> 'suspended') then",
+    "\n     then"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : un membre actif peut changer de rôle par invitation",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : déjà membre actif",
+  "edits": [
+   [
+    "      where public.memberships.status in ('invited', 'removed', 'suspended');",
+    "      ;"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : l'invitation n'est jamais marquée utilisée",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "M29 invitation : à usage unique",
+  "edits": [
+   [
+    "  update public.invitations set used_at = now(), used_by = p_user where id = i.id;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "gel : n'importe qui peut geler",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-28 gel : l'administrateur d'un AUTRE client",
+  "edits": [
+   [
+    "  if not v_allowed then raise exception 'Droits insuffisants pour cette organisation'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "gel : l'ESN peut aussi dégeler un client",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-28 dégel : l'administrateur de l'ESN NE PEUT PAS",
+  "edits": [
+   [
+    "    or (p_frozen and o.type = 'client' and private._partner_can_access(p_actor, p_org, 'partner_admin'));",
+    "    or (o.type = 'client' and private._partner_can_access(p_actor, p_org, 'partner_admin'));"
+   ]
+  ]
+ },
+ {
+  "label": "gel : les demandes en attente ne sont plus annulées",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-28 gel : l'administrateur du client gèle",
+  "edits": [
+   [
+    "    update public.action_requests set status = 'cancelled', reason = 'Arrêt d''urgence de l''organisation'\n      where org_id = p_org and status in ('pending_approval', 'approved');\n    get diagnostics v_cancelled = row_count;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "gel : un second gel écrase le premier",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "SEC-28 gel : geler deux fois conserve",
+  "edits": [
+   [
+    "frozen_at = coalesce(frozen_at, now()), frozen_by = coalesce(frozen_by, p_actor)",
+    "frozen_at = now(), frozen_by = p_actor"
+   ]
+  ]
+ },
+ {
+  "label": "départ : un administrateur peut se retirer lui-même",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "R7 départ : on ne se retire pas soi-même",
+  "edits": [
+   [
+    "  if p_actor = p_user then raise exception 'On ne se retire pas soi-même'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "départ : n'importe qui peut retirer un technicien",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "R7 départ : un technicien ne peut pas retirer",
+  "edits": [
+   [
+    "  if not private._member(p_actor, p_partner_org, array['partner_admin']) then\n    raise exception 'Seul un administrateur de l''ESN peut retirer un technicien'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "départ : on peut retirer quelqu'un d'une autre organisation",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "R7 départ : on ne retire pas quelqu'un d'une autre",
+  "edits": [
+   [
+    "  if not exists (select 1 from public.memberships m where m.user_id = p_user and m.org_id = p_partner_org\n                   and m.role in ('partner_technician', 'partner_manager') and m.status = 'active') then\n    raise exception 'Ce technicien n''appartient pas à l''ESN'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "débit : la limite est dépassée d'un appel",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "débit : les trois premiers appels passent",
+  "edits": [
+   [
+    "  return v_hits <= p_limit;",
+    "  return v_hits <= p_limit + 1;"
+   ]
+  ]
+ },
+ {
+  "label": "débit : les bornes de la clé ne sont plus contrôlées",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "débit : une clé vide, trop longue",
+  "edits": [
+   [
+    "  if p_key is null or char_length(p_key) not between 1 and 200 or p_window_seconds not between 1 and 86400 or p_limit not between 1 and 100000 then\n    raise exception 'Paramètres de limitation invalides'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "débit : un utilisateur connecté peut appeler la fonction",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "droits : un utilisateur connecté ne peut appeler AUCUNE",
+  "edits": [
+   [
+    "revoke all on function public.rate_limit_hit(text, int, int) from public, anon, authenticated;",
+    "revoke all on function public.rate_limit_hit(text, int, int) from public, anon;"
+   ]
+  ]
+ },
+ {
+  "label": "débit : la table des compteurs est lisible par les utilisateurs",
+  "file": "20261106101300_administration_et_debit.sql",
+  "expect": "droits : la table des compteurs n'est lisible",
+  "edits": [
+   [
+    "revoke all on public.rate_limits from public, anon, authenticated;",
+    "revoke all on public.rate_limits from public, anon;\ngrant select on public.rate_limits to authenticated;"
+   ]
+  ]
  }
 ]
