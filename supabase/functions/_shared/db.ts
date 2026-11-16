@@ -87,7 +87,7 @@ export async function acceptInvitationRpc(
 
 /**
  * Porte ÉTROITE du limiteur de débit : incrémente un compteur (fonction SQL `rate_limit_hit`) pour une personne authentifiée, avec ou sans
- * organisation (une personne qui accepte une invitation n'en a pas). Elle ne lit ni n'écrit rien d'autre ; la clé est composée par le
+ * organisation (une personne qui accepte une invitation n'en a pas), ou pour une source d'alertes signée. Elle ne lit ni n'écrit rien d'autre ; la clé est composée par le
  * limiteur à partir du contexte vérifié, jamais par une requête.
  */
 export async function rateLimitRpc(
@@ -95,11 +95,42 @@ export async function rateLimitRpc(
   a: { key: string; windowSeconds: number; limit: number },
   deps: DbDeps = realDeps,
 ): Promise<{ data: unknown; error: unknown }> {
-  if (!isAuthContext(auth) || auth.kind !== "user" || auth.userId === null) throw Errors.forbidden();
-  const headers: Record<string, string> = { "x-releve-request-id": auth.requestId, "x-releve-actor": auth.userId };
+  if (!isAuthContext(auth)) throw Errors.forbidden();
+  // Une personne authentifiée, ou une source d'alertes dont la signature a été vérifiée (avec son organisation).
+  const person = auth.kind === "user" && auth.userId !== null;
+  const source = auth.kind === "source" && auth.sourceId !== null && auth.orgId !== null;
+  if (!person && !source) throw Errors.forbidden();
+  const headers: Record<string, string> = { "x-releve-request-id": auth.requestId };
+  if (auth.userId) headers["x-releve-actor"] = auth.userId;
   if (auth.orgId) headers["x-releve-org"] = auth.orgId;
   return await build(headers, deps).rpc("rate_limit_hit", { p_key: a.key, p_window_seconds: a.windowSeconds, p_limit: a.limit });
 }
+
+/**
+ * RÉSERVÉ à auth_deps.ts (garde du webhook) : retrouve la source désignée dans l'adresse AVANT de savoir qui appelle, pour vérifier la
+ * signature. La fonction SQL ne rend quelque chose que pour une source active, avec secret, d'une organisation non suspendue. Le secret
+ * rendu ne sort pas de la garde (auth.ts), qui ne le renvoie jamais à l'appelant.
+ */
+export function createWebhookSourceResolver(deps: DbDeps = realDeps): (sourceId: string) => Promise<WebhookSourceRow | null> {
+  return async (sourceId) => {
+    const { data, error } = await build({}, deps).rpc("alert_source_for_webhook", { p_source: sourceId });
+    if (error) throw Errors.unavailable();
+    if (data === null || data === undefined) return null;
+    if (typeof data !== "object" || Array.isArray(data)) throw Errors.unavailable();
+    const r = data as Record<string, unknown>;
+    if (typeof r.org_id !== "string" || typeof r.secret !== "string") return null;
+    return {
+      orgId: r.org_id,
+      secret: r.secret,
+      severityMap: r.severity_map,
+      fieldMapping: r.field_mapping,
+      frozen: r.frozen === true,
+      activated: r.activated === true,
+    };
+  };
+}
+
+export interface WebhookSourceRow { orgId: string; secret: string; severityMap: unknown; fieldMapping: unknown; frozen: boolean; activated: boolean }
 
 /** RÉSERVÉ à auth.ts : résout le rôle d'un utilisateur DÉJÀ authentifié (jeton vérifié) dans une organisation. */
 export function createAccessResolver(deps: DbDeps = realDeps): (userId: string, orgId: string) => Promise<AccessRow | null> {

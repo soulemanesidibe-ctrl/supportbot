@@ -65,6 +65,13 @@ select test.expect('webhook : une source active avec secret est retrouvée (orga
   and (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') ->> 'org_id') = pg_temp.o('client-alpha')::text
   and (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') ->> 'secret') = repeat('s', 40)
   and (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') -> 'severity_map' ->> 'CRITICAL') = 'critical');
+update public.organizations set frozen_at = now() where slug = 'client-alpha';
+select test.expect('webhook : l''état de l''organisation accompagne la source (arrêt d''urgence, activation), pour le contexte de la requête',
+  (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') ->> 'frozen')::boolean
+  and (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') ->> 'activated')::boolean);
+update public.organizations set frozen_at = null where slug = 'client-alpha';
+select test.expect('webhook : organisation active : non gelée',
+  not (public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d1') ->> 'frozen')::boolean);
 select test.expect('webhook : source inconnue, sans secret ou désactivée : MÊME résultat vide (rien à distinguer)',
   public.alert_source_for_webhook(gen_random_uuid()) is null
   and public.alert_source_for_webhook('00000000-0000-4000-8000-0000000000d2') is null

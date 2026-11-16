@@ -11,7 +11,7 @@
 //   - organisation gelée (arrêt d'urgence) : plus rien ; accès d'assistance (lecture seule) : aucune écriture.
 // Le résultat d'une capacité est une DONNÉE EXTERNE (texte de ticket, d'alerte...) : l'orchestrateur le passe au modèle par wrapExternal.
 import { auditEvent } from "../audit.ts";
-import { assertCanWrite, assertNotFrozen, AuthContext } from "../context.ts";
+import { assertCanWrite, assertNotFrozen, AuthContext, isAuthContext } from "../context.ts";
 import { DbDeps } from "../db.ts";
 import { Errors } from "../errors.ts";
 import { log } from "../log.ts";
@@ -135,6 +135,75 @@ export async function callCapability<N extends AutonomousCapability>(
       subjectType: "conversation",
       subjectId: scope.conversationId,
       details: { capability: name, connector: connector.id, outcome: "error" },
+    }, deps.db).catch(() => {});
+    throw Errors.unavailable();
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Porte des AUTOMATISATIONS (moteur de règles, spec § 12) : aucune personne derrière, donc une liste FERMÉE et courte.
+// Seules des écritures de ticketing sans cible humaine : créer le ticket parent d'un incident, y rattacher les tickets enfants.
+// Jamais une action sur un compte, jamais une capacité « approval_required » (celles-là passent par une action_request validée).
+// ---------------------------------------------------------------------------------------------------------------
+export const SYSTEM_CAPABILITIES = ["ticket.create", "ticket.link_parent"] as const;
+export type SystemCapability = (typeof SYSTEM_CAPABILITIES)[number];
+
+/** Refuse par défaut. Lève une erreur ; ne renvoie rien. */
+export function assertSystemCapabilityAllowed(
+  name: string,
+  auth: AuthContext,
+  params: unknown,
+  overrides: ClassOverrides = {},
+): asserts name is SystemCapability {
+  if (typeof name !== "string" || !(SYSTEM_CAPABILITIES as readonly string[]).includes(name) || !Object.hasOwn(CAPABILITIES, name)) {
+    throw Errors.forbidden();
+  }
+  // Une tâche planifiée limitée à une organisation, ou une source d'alertes signée : jamais une personne, jamais sans organisation.
+  if (!isAuthContext(auth) || (auth.kind !== "cron" && auth.kind !== "source") || auth.orgId === null) throw Errors.forbidden();
+  assertNotFrozen(auth);
+  const cap = name as CapabilityName;
+  const meta = CAPABILITIES[cap];
+  if (!meta.demo || effectiveClass(cap, overrides) !== "autonomous" || targetPolicyOf(meta) !== "none") throw Errors.forbidden();
+  if (!isPlainParams(params)) throw Errors.badRequest("Paramètres invalides.");
+}
+
+export async function callSystemCapability<N extends SystemCapability>(
+  auth: AuthContext,
+  name: N,
+  params: CapabilityIO[N]["params"],
+  subject: { readonly type: "incident"; readonly id: string },
+  deps: CallDeps,
+): Promise<CapabilityIO[N]["result"]> {
+  const overrides = deps.overrides ? await deps.overrides(auth) : {};
+  assertSystemCapabilityAllowed(name, auth, params, overrides);
+  const connector = await deps.connectorFor(auth, name);
+  if (!connector.capabilities().has(name)) throw Errors.unavailable();
+  const ctx: InvocationContext = {
+    orgId: auth.orgId as string,
+    connectorId: connector.id,
+    requestId: auth.requestId,
+    actor: { kind: "system", reason: "automation" },
+  };
+  try {
+    // nosemgrep: releve-capability-invoked-outside-gate -- porte unique des automatisations : liste fermée vérifiée juste avant
+    const result = await connector.invokeCapability(name, params, ctx);
+    await auditEvent(auth, {
+      event: "capability.call",
+      actorKind: "system",
+      subjectType: subject.type,
+      subjectId: subject.id,
+      details: { capability: name, connector: connector.id, outcome: "ok", reason: "automation" },
+    }, deps.db);
+    return result;
+  } catch (e) {
+    if (e instanceof Error && e.name === "AppError") throw e;
+    log.warn("capacite_en_echec", { capability: name, connector: connector.id, requestId: auth.requestId });
+    await auditEvent(auth, {
+      event: "capability.failure",
+      actorKind: "system",
+      subjectType: subject.type,
+      subjectId: subject.id,
+      details: { capability: name, connector: connector.id, outcome: "error", reason: "automation" },
     }, deps.db).catch(() => {});
     throw Errors.unavailable();
   }

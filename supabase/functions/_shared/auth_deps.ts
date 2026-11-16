@@ -1,7 +1,7 @@
 // Branchement réel des gardes sur Supabase (jeton, base). Séparé de auth.ts pour que la logique de décision se teste sans réseau.
 import { createClient } from "@supabase/supabase-js";
-import { AccessRow, AuthDeps, VerifiedToken } from "./auth.ts";
-import { createAccessResolver, pickKey } from "./db.ts";
+import { AccessRow, AuthDeps, VerifiedToken, WebhookAuthDeps } from "./auth.ts";
+import { createAccessResolver, createWebhookSourceResolver, pickKey } from "./db.ts";
 import { Errors } from "./errors.ts";
 
 function decodePayload(token: string): Record<string, unknown> {
@@ -44,4 +44,9 @@ export function supabaseAuthDeps(): AuthDeps {
     cronSecret: () => Deno.env.get("CRON_SECRET") || undefined,
     nowSeconds: () => Math.floor(Date.now() / 1000),
   };
+}
+
+export function supabaseWebhookDeps(): WebhookAuthDeps {
+  const lookup = createWebhookSourceResolver();
+  return { lookupSource: (sourceId) => lookup(sourceId), nowSeconds: () => Math.floor(Date.now() / 1000) };
 }

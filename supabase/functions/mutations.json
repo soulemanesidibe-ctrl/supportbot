@@ -214,8 +214,8 @@
   "expect": "noms fabriqués",
   "edits": [
    [
-    "!Object.hasOwn(CAPABILITIES, name)",
-    "false"
+    "  if (typeof name !== \"string\" || !Object.hasOwn(CAPABILITIES, name)) throw Errors.forbidden();",
+    "  if (typeof name !== \"string\" || false) throw Errors.forbidden();"
    ]
   ]
  },
@@ -1032,8 +1032,8 @@
   "expect": "un contexte fabriqué",
   "edits": [
    [
-    "  // Jamais de compteur pour un contexte qui n'a pas été fabriqué par auth.ts, ni pour autre chose qu'une personne (une tâche planifiée n'est pas limitée ici).\n  if (!isAuthContext(auth) || auth.kind !== \"user\") throw Errors.forbidden();\n",
-    "  if (auth.kind !== \"user\") throw Errors.forbidden();\n"
+    "  if (!isAuthContext(auth)) throw Errors.forbidden();\n  if (bucket === \"webhook\"",
+    "  if (bucket === \"webhook\""
    ]
   ]
  },
@@ -1065,8 +1065,8 @@
   "expect": "clés : composées à partir du contexte",
   "edits": [
    [
-    "`${bucket}:${rule.scope === \"user\" ? \"u\" : \"o\"}:${id}`",
-    "`${bucket}:u:${id}`"
+    "const key = `${bucket}:${rule.scope === \"user\" ? \"u\" : rule.scope === \"source\" ? \"s\" : \"o\"}:${id}`;",
+    "const key = `${bucket}:u:${id}`;"
    ]
   ]
  },
@@ -1164,8 +1164,8 @@
   "expect": "rateLimitRpc : réservée à une PERSONNE",
   "edits": [
    [
-    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null) throw Errors.forbidden();\n  const headers: Record<string, string> = { \"x-releve-request-id\"",
-    "  if (!isAuthContext(auth)) throw Errors.forbidden();\n  const headers: Record<string, string> = { \"x-releve-request-id\""
+    "  if (!person && !source) throw Errors.forbidden();\n",
+    "  if (!person && !source && auth.kind !== \"cron\") throw Errors.forbidden();\n"
    ]
   ]
  },
@@ -1351,8 +1351,8 @@
   "expect": "un GET ne porte jamais de corps",
   "edits": [
    [
-    "    if (init.method === \"GET\") throw new ConnectorHttpError(\"config\"); // GLPI et la plupart des API refusent un corps sur GET\n",
-    ""
+    "    if (init.method === \"GET\" || init.method === \"DELETE\") throw new ConnectorHttpError(\"config\");",
+    "    if (init.method === \"DELETE\") throw new ConnectorHttpError(\"config\");"
    ]
   ]
  },
@@ -1582,8 +1582,8 @@
   "expect": "test de connexion échoué",
   "edits": [
    [
-    "await deps.store.setConnectorStatus(auth, connectorId, { status: h.ok ? \"ok\" : \"error\", error:",
-    "await deps.store.setConnectorStatus(auth, connectorId, { status: \"ok\", error:"
+    "      const h = await deps.connectors.health(auth, connectorId).catch(() => ({ ok: false, detail: \"unavailable\" }));\n      await deps.store.setConnectorStatus(auth, connectorId, { status: h.ok ? \"ok\" : \"error\", error: h.ok ? null : String(h.detail ?? \"unavailable\").slice(0, 40) });\n      return { connectorId, status: h.ok ? \"ok\" : \"error\", detail: h.ok ? null : h.detail ?? \"unavailable\" };\n    },\n  })],\n  [\"connector.test\"",
+    "      const h = await deps.connectors.health(auth, connectorId).catch(() => ({ ok: false, detail: \"unavailable\" }));\n      await deps.store.setConnectorStatus(auth, connectorId, { status: \"ok\", error: h.ok ? null : String(h.detail ?? \"unavailable\").slice(0, 40) });\n      return { connectorId, status: h.ok ? \"ok\" : \"error\", detail: h.ok ? null : h.detail ?? \"unavailable\" };\n    },\n  })],\n  [\"connector.test\""
    ]
   ]
  },
@@ -1885,6 +1885,875 @@
    [
     "    .eq(\"user_id\", userOf(auth)).eq(\"connector_id\", connectorId).eq(\"org_id\", orgOf(auth)).is(\"revoked_at\", null).select(\"id\");",
     "    .eq(\"connector_id\", connectorId).eq(\"org_id\", orgOf(auth)).is(\"revoked_at\", null).select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'horodatage n'est plus contrôlé (rejeu tardif)",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : horodatage hors des 5 minutes",
+  "edits": [
+   [
+    "  if (Math.abs(d.nowSeconds() - Number(ts)) > WEBHOOK_TOLERANCE_SECONDS) throw Errors.unauthorized();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "webhook : un horodatage dans le futur est accepté",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : horodatage hors des 5 minutes",
+  "edits": [
+   [
+    "Math.abs(d.nowSeconds() - Number(ts))",
+    "(d.nowSeconds() - Number(ts))"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : la signature n'est plus comparée",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : signature fausse",
+  "edits": [
+   [
+    "  if (!match || !usable) throw Errors.unauthorized();",
+    "  if (!usable) throw Errors.unauthorized();"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : un secret court suffit",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : un secret trop court",
+  "edits": [
+   [
+    "source.secret.length >= 32 &&",
+    "source.secret.length >= 1 &&"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'organisation rendue par la base n'est plus validée",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : une organisation rendue par la base",
+  "edits": [
+   [
+    "    typeof source.orgId === \"string\" && UUID.test(source.orgId);",
+    "    typeof source.orgId === \"string\";"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'arrêt d'urgence de l'organisation est perdu",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : la base ne répond pas",
+  "edits": [
+   [
+    "    frozen: source!.frozen === true,",
+    "    frozen: false,"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : une panne de la base vaut « source inconnue » au lieu de 503",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : la base ne répond pas",
+  "edits": [
+   [
+    "    throw Errors.unavailable(); // la base ne répond pas : on refuse sans rien deviner\n  }\n  const usable",
+    "    source = null;\n  }\n  const usable"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'identifiant de source n'est plus validé avant la base",
+  "file": "_shared/auth.ts",
+  "expect": "webhook : en-tête de signature absent",
+  "edits": [
+   [
+    "  if (typeof sourceId !== \"string\" || !UUID.test(sourceId)) throw Errors.unauthorized();\n  const ts",
+    "  const ts"
+   ]
+  ]
+ },
+ {
+  "label": "tâche planifiée : n'importe quel contexte peut être limité à une organisation",
+  "file": "_shared/auth.ts",
+  "expect": "tâche planifiée : limitée",
+  "edits": [
+   [
+    "  if (!isAuthContext(cron) || cron.kind !== \"cron\" || cron.orgId !== null) throw Errors.forbidden();",
+    "  if (!isAuthContext(cron)) throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "tâche planifiée : une organisation suspendue est acceptée",
+  "file": "_shared/auth.ts",
+  "expect": "tâche planifiée : limitée",
+  "edits": [
+   [
+    "  if (!row || row.state === \"suspended\") throw Errors.forbidden();",
+    "  if (!row) throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "tâche planifiée : l'arrêt d'urgence relu en base est perdu",
+  "file": "_shared/auth.ts",
+  "expect": "tâche planifiée : limitée",
+  "edits": [
+   [
+    "    frozen: row.frozen === true,",
+    "    frozen: false,"
+   ]
+  ]
+ },
+ {
+  "label": "débit du webhook : une personne peut consommer le compteur d'une source",
+  "file": "_shared/ratelimit.ts",
+  "expect": "débit du webhook",
+  "edits": [
+   [
+    "  if (bucket === \"webhook\" ? auth.kind !== \"source\" : auth.kind !== \"user\") throw Errors.forbidden();",
+    "  if (auth.kind === \"cron\") throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "débit du webhook : le compteur de la source est celui de l'organisation",
+  "file": "_shared/ratelimit.ts",
+  "expect": "débit du webhook",
+  "edits": [
+   [
+    "rule.scope === \"source\" ? auth.sourceId : auth.orgId",
+    "rule.scope === \"source\" ? auth.orgId : auth.orgId"
+   ]
+  ]
+ },
+ {
+  "label": "correspondance : un chemin peut viser le prototype",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "configuration : champ inconnu",
+  "edits": [
+   [
+    "segs.every((s) => SEGMENT.test(s) && !FORBIDDEN_SEGMENTS.has(s));",
+    "segs.every((s) => SEGMENT.test(s));"
+   ]
+  ]
+ },
+ {
+  "label": "chemins : les propriétés héritées sont lues",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "chemins : seulement les propriétés propres",
+  "edits": [
+   [
+    "    else if (isPlainObject(cur) && Object.hasOwn(cur, seg)) cur = cur[seg];",
+    "    else if (typeof cur === \"object\" && cur !== null && seg in cur) cur = (cur as Record<string, unknown>)[seg];"
+   ]
+  ]
+ },
+ {
+  "label": "correspondance : un champ inconnu est ignoré au lieu d'être refusé",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "configuration : champ inconnu",
+  "edits": [
+   [
+    "    if (!Object.hasOwn(MAPPING_KEYS, k)) throw new SourceConfigError(`correspondance : champ inconnu`);",
+    "    if (!Object.hasOwn(MAPPING_KEYS, k)) continue;"
+   ]
+  ]
+ },
+ {
+  "label": "tables : une valeur hors liste est acceptée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "configuration : champ inconnu",
+  "edits": [
+   [
+    "    if (typeof v !== \"string\" || !(allowed as readonly string[]).includes(v)) throw",
+    "    if (typeof v !== \"string\") throw"
+   ]
+  ]
+ },
+ {
+  "label": "masquage : le résumé n'est plus masqué",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "masquage",
+  "edits": [
+   [
+    "cleanText(redactText(cleanText(summaryRaw, 2000)), 500);",
+    "cleanText(summaryRaw, 500);"
+   ]
+  ]
+ },
+ {
+  "label": "masquage : la charge brute n'est plus masquée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "masquage",
+  "edits": [
+   [
+    "      raw: redact(payload),",
+    "      raw: payload,"
+   ]
+  ]
+ },
+ {
+  "label": "déduplication : une clé porteuse d'un secret est stockée telle quelle",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "clé de déduplication",
+  "edits": [
+   [
+    "|| containsSecret(key)) key =",
+    ") key ="
+   ]
+  ]
+ },
+ {
+  "label": "déduplication : une clé longue est tronquée au lieu d'être hachée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "clé de déduplication",
+  "edits": [
+   [
+    "cleanText(scalar(getPath(payload, p)) ?? \"\", 2000));",
+    "cleanText(scalar(getPath(payload, p)) ?? \"\", 300));"
+   ]
+  ]
+ },
+ {
+  "label": "déduplication : la clé réservée « releve: » est acceptée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "refus : actif ou gravité absents",
+  "edits": [
+   [
+    "  if (key.startsWith(\"releve:\")) throw Errors.badRequest(\"Clé de déduplication réservée.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "texte : les caractères d'inversion de sens sont conservés",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "texte : caractères de contrôle",
+  "edits": [
+   [
+    "(cp >= 0x202a && cp <= 0x202e) ||",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "adresse d'origine : les identifiants dans l'adresse sont acceptés",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "adresse d'origine",
+  "edits": [
+   [
+    "if (u.protocol !== \"https:\" || u.username || u.password) return null;",
+    "if (u.protocol !== \"https:\") return null;"
+   ]
+  ]
+ },
+ {
+  "label": "date : une date dans le futur est acceptée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "écarts tolérés",
+  "edits": [
+   [
+    "return ms > nowMs + FUTURE_TOLERANCE_MS || ms < nowMs - MAX_AGE_MS ? undefined : ms;",
+    "return ms < nowMs - MAX_AGE_MS ? undefined : ms;"
+   ]
+  ]
+ },
+ {
+  "label": "gravité inconnue : traitée comme critique",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "écarts tolérés",
+  "edits": [
+   [
+    "    severity = \"warning\";",
+    "    severity = \"critical\";"
+   ]
+  ]
+ },
+ {
+  "label": "gravité absente : acceptée",
+  "file": "_shared/alerts/normalize.ts",
+  "expect": "refus : actif ou gravité absents",
+  "edits": [
+   [
+    "  if (sevRaw === undefined || sevRaw.trim() === \"\") throw",
+    "  if (false) throw"
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : le débit n'est plus compté",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "alerts-ingest : livraison signée = 202",
+  "edits": [
+   [
+    "    await deps.limit(delivery.auth);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : un doublon répond 202 (l'outil renverrait)",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "alerts-ingest : rejeu",
+  "edits": [
+   [
+    "status === \"duplicate\" ? 200 : 202",
+    "202"
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : le magasin accepte n'importe quel contexte",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "magasin : refuse tout contexte",
+  "edits": [
+   [
+    "      if (auth.kind !== \"source\" || auth.sourceId === null || auth.orgId === null) throw Errors.forbidden();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : « source désactivée entre-temps » devient une panne",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "magasin : appelle alert_ingest",
+  "edits": [
+   [
+    "        if (msg.includes(\"Source introuvable\")) throw Errors.unauthorized();",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : un état inattendu de la base est accepté",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "magasin : appelle alert_ingest",
+  "edits": [
+   [
+    "      if (typeof status !== \"string\" || !(INGEST_STATUSES as readonly string[]).includes(status)) throw Errors.unavailable();",
+    "      if (typeof status !== \"string\") throw Errors.unavailable();"
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : corps jusqu'à 640 Ko",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "alerts-ingest : méthode autre que POST",
+  "edits": [
+   [
+    "readRawBody(req, MAX_ALERT_BODY_BYTES)",
+    "readRawBody(req, 10 * MAX_ALERT_BODY_BYTES)"
+   ]
+  ]
+ },
+ {
+  "label": "alerts-ingest : une configuration invalide retombe sur le format natif",
+  "file": "_shared/alerts/ingest.ts",
+  "expect": "alerts-ingest : débit dépassé",
+  "edits": [
+   [
+    "      throw Errors.unavailable();\n    }\n    const { alert, warnings }",
+    "      cfg = parseSourceConfig({}, {});\n    }\n    const { alert, warnings }"
+   ]
+  ]
+ },
+ {
+  "label": "règles : un champ inconnu est accepté",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "  if (typeof field !== \"string\" || !Object.hasOwn(ALERT_FIELDS, field)) return null;",
+    "  if (typeof field !== \"string\") return null;"
+   ]
+  ]
+ },
+ {
+  "label": "règles : une clé en trop dans une condition est acceptée",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "  for (const k of Object.keys(c)) if (k !== \"field\" && k !== \"op\" && k !== \"value\") return null;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "règles : le type de la valeur n'est plus vérifié",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "      return hasType(value, type) ? { field: field as AlertField, op: op as Op, value } : null;",
+    "      return { field: field as AlertField, op: op as Op, value: value as string };"
+   ]
+  ]
+ },
+ {
+  "label": "règles : l'autonomie 1 est permise sur une action qui agit",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "  if (row.autonomy === 1 && a.kind !== \"propose_close_children\") return bad(\"autonomie\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "règles : les plafonds ne sont plus bornés",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "  if (!plain(l) || !intIn(l.maxRunsPerHour, 1, 1000) || !intIn(l.maxItemsPerRun, 1, 500) || !intIn(l.cooldownMinutes, 0, 1440)) return bad(\"plafonds\");",
+    "  if (!plain(l)) return bad(\"plafonds\");"
+   ]
+  ]
+ },
+ {
+  "label": "règles : une clé en trop dans la définition est acceptée",
+  "file": "_shared/automations/rules.ts",
+  "expect": "lecture stricte",
+  "edits": [
+   [
+    "  for (const k of Object.keys(d)) if (![\"all\", \"any\", \"action\", \"limits\"].includes(k)) return bad(\"definition\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "évaluation : « exists » vrai pour une valeur nulle",
+  "file": "_shared/automations/rules.ts",
+  "expect": "évaluation : « exists »",
+  "edits": [
+   [
+    "      return v !== null && v !== undefined && v !== \"\";",
+    "      return v !== undefined;"
+   ]
+  ]
+ },
+ {
+  "label": "évaluation : « neq » vrai pour une valeur absente",
+  "file": "_shared/automations/rules.ts",
+  "expect": "évaluation : « exists »",
+  "edits": [
+   [
+    "      return v !== null && v !== undefined && v !== c.value;",
+    "      return v !== c.value;"
+   ]
+  ]
+ },
+ {
+  "label": "évaluation : « any » ignoré",
+  "file": "_shared/automations/rules.ts",
+  "expect": "évaluation : toutes les conditions",
+  "edits": [
+   [
+    "  if (rule.any && !rule.any.some((c) => holds(c, ctx))) failed.push(\"any\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "règles effectives : la règle d'une autre organisation est prise",
+  "file": "_shared/automations/rules.ts",
+  "expect": "règles effectives",
+  "edits": [
+   [
+    "    if (r.org_id !== null && r.org_id !== orgId) continue; // défense en profondeur : jamais la règle d'une autre organisation\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "règles effectives : le modèle l'emporte sur la copie de l'organisation",
+  "file": "_shared/automations/rules.ts",
+  "expect": "règles effectives",
+  "edits": [
+   [
+    "if (!cur || (cur.org_id === null && r.org_id !== null)) byKey.set(k, r);",
+    "if (!cur) byKey.set(k, r);"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : l'arrêt d'urgence est ignoré",
+  "file": "_shared/automations/engine.ts",
+  "expect": "arrêt d'urgence : aucune lecture",
+  "edits": [
+   [
+    "  if (auth.frozen) {",
+    "  if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : l'autonomie 1 joue avant l'activation du client",
+  "file": "_shared/automations/engine.ts",
+  "expect": "fin d'incident (autonomie 1)",
+  "edits": [
+   [
+    "    if (rule.autonomy === 1 && !auth.activated) {",
+    "    if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : l'effet a lieu malgré la décision des plafonds",
+  "file": "_shared/automations/engine.ts",
+  "expect": "plafonds : simulation",
+  "edits": [
+   [
+    "    if (claim.decision !== \"executed\") {",
+    "    if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : une action non disponible n'est plus écartée",
+  "file": "_shared/automations/engine.ts",
+  "expect": "action non disponible",
+  "edits": [
+   [
+    "    if (!spec || !spec.triggers.includes(trigger.kind)) {",
+    "    if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : des paramètres hors liste sont acceptés",
+  "file": "_shared/automations/engine.ts",
+  "expect": "action non disponible",
+  "edits": [
+   [
+    "    if (!paramsValid(rule.action.kind, rule.action.params)) {",
+    "    if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : les salariés ne sont plus prévenus",
+  "file": "_shared/automations/engine.ts",
+  "expect": "incident regroupé : conditions remplies",
+  "edits": [
+   [
+    "      const notice = params.notify_users === \"template\" ? AUTOMATION_TEXTS.incidentOpened(ctx[\"alert.category\"]) : null;",
+    "      const notice = null;"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : l'astreinte est prévenue à chaque rattachement",
+  "file": "_shared/automations/engine.ts",
+  "expect": "ticketing : absent",
+  "edits": [
+   [
+    "      if (params.notify_oncall === \"yes\" && g.created) {",
+    "      if (params.notify_oncall === \"yes\") {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : un second ticket parent est créé",
+  "file": "_shared/automations/engine.ts",
+  "expect": "ticketing : absent",
+  "edits": [
+   [
+    "    if (!parentRef && g.parent) {",
+    "    if (g.parent) {"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : la clôture des enfants n'est plus proposée",
+  "file": "_shared/automations/engine.ts",
+  "expect": "fin d'incident : propositions",
+  "edits": [
+   [
+    "incidentCloseOut(auth, { incidentId: trigger.incidentId, maxItems, notice, propose: true })",
+    "incidentCloseOut(auth, { incidentId: trigger.incidentId, maxItems, notice, propose: false })"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : le message brut de la base est inscrit",
+  "file": "_shared/automations/engine.ts",
+  "expect": "fin d'incident : propositions",
+  "edits": [
+   [
+    "      const refused = c.refused ? (/niveau d'autonomie 0/i.test(c.refused) ? \"niveau_0\" : \"refus_base\") : null;",
+    "      const refused = c.refused ?? null;"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : le contexte garde les champs inconnus ou mal typés",
+  "file": "_shared/automations/engine.ts",
+  "expect": "SEC-18",
+  "edits": [
+   [
+    "    else if (hasType(v, type)) out[field] = v;",
+    "    else if (v !== undefined) out[field] = v as never;"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : une personne peut lancer les règles",
+  "file": "_shared/automations/engine.ts",
+  "expect": "moteur : jamais pour une personne",
+  "edits": [
+   [
+    "  if (!isAuthContext(auth) || (auth.kind !== \"cron\" && auth.kind !== \"source\") || auth.orgId === null) throw Errors.forbidden();\n}",
+    "  if (!isAuthContext(auth) || auth.orgId === null) throw Errors.forbidden();\n}"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : les identifiants ne sont plus validés",
+  "file": "_shared/automations/engine.ts",
+  "expect": "moteur : jamais pour une personne",
+  "edits": [
+   [
+    "  if (!UUID.test(trigger.alertId) || (trigger.kind === \"alert.resolved\" && !UUID.test(trigger.incidentId))) throw Errors.badRequest();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "magasin du moteur : les règles ne sont plus filtrées par organisation",
+  "file": "_shared/automations/engine.ts",
+  "expect": "magasin : chaque fonction SQL",
+  "edits": [
+   [
+    ".or(`org_id.eq.${org},org_id.is.null`)",
+    ".or(\"org_id.is.null\")"
+   ]
+  ]
+ },
+ {
+  "label": "magasin du moteur : un ticket sans identifiant valide est gardé",
+  "file": "_shared/automations/engine.ts",
+  "expect": "magasin : chaque fonction SQL",
+  "edits": [
+   [
+    "  if (typeof r.id !== \"string\" || !UUID.test(r.id)) return null;",
+    "  if (typeof r.id !== \"string\") return null;"
+   ]
+  ]
+ },
+ {
+  "label": "magasin du moteur : une décision inattendue est acceptée",
+  "file": "_shared/automations/engine.ts",
+  "expect": "magasin : chaque fonction SQL",
+  "edits": [
+   [
+    "  if (typeof r.decision !== \"string\" || !(CLAIMS as readonly string[]).includes(r.decision)) throw Errors.unavailable();",
+    "  if (typeof r.decision !== \"string\") throw Errors.unavailable();"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : le délai minimal porte sur toute l'organisation au lieu de la catégorie",
+  "file": "_shared/automations/engine.ts",
+  "expect": "incident regroupé : conditions remplies",
+  "edits": [
+   [
+    "      return typeof ctx[\"alert.category\"] === \"string\" ? `categorie:${ctx[\"alert.category\"]}` : null;",
+    "      return null;"
+   ]
+  ]
+ },
+ {
+  "label": "moteur : le détail d'une erreur interne est inscrit",
+  "file": "_shared/automations/engine.ts",
+  "expect": "échec de l'effet",
+  "edits": [
+   [
+    "      await note(rule.key, rule.version, \"error\", errorReason(e)).catch(() => {});",
+    "      await note(rule.key, rule.version, \"error\", e instanceof Error ? e.message : \"x\").catch(() => {});"
+   ]
+  ]
+ },
+ {
+  "label": "tâche : une alerte confirmée et en attente est évaluée deux fois",
+  "file": "_shared/automations/tick.ts",
+  "expect": "tâche : une alerte confirmée",
+  "edits": [
+   [
+    "opened.set(a.alertId, a);",
+    "opened.set(`${a.alertId}${opened.size}`, a);"
+   ]
+  ]
+ },
+ {
+  "label": "tâche : aucun budget de temps",
+  "file": "_shared/automations/tick.ts",
+  "expect": "tâche : un élément en échec",
+  "edits": [
+   [
+    "    if (deps.nowMs() - start > budget) {",
+    "    if (false) {"
+   ]
+  ]
+ },
+ {
+  "label": "tâche : une erreur arrête toute la tâche",
+  "file": "_shared/automations/tick.ts",
+  "expect": "tâche : un élément en échec",
+  "edits": [
+   [
+    "      report.errors++;\n",
+    "      throw e;\n"
+   ]
+  ]
+ },
+ {
+  "label": "tâche : n'importe quel contexte peut la lancer",
+  "file": "_shared/automations/tick.ts",
+  "expect": "tâche : seule une tâche planifiée",
+  "edits": [
+   [
+    "  if (!isAuthContext(cron) || cron.kind !== \"cron\" || cron.orgId !== null) throw Errors.forbidden();\n  const start",
+    "  const start"
+   ]
+  ]
+ },
+ {
+  "label": "suivi : la simulation est ignorée",
+  "file": "_shared/automations/tick.ts",
+  "expect": "suivi d'un incident ouvert",
+  "edits": [
+   [
+    ".find((r) => r !== null && r.enabled && !r.dryRun && r.action.kind === \"group_into_incident\");",
+    ".find((r) => r !== null && r.enabled && r.action.kind === \"group_into_incident\");"
+   ]
+  ]
+ },
+ {
+  "label": "suivi : l'alerte d'un autre incident est acceptée",
+  "file": "_shared/automations/tick.ts",
+  "expect": "suivi d'un incident ouvert",
+  "edits": [
+   [
+    "  if (!ctx || ctx[\"alert.incident\"] !== ref.incidentId) return false;",
+    "  if (!ctx) return false;"
+   ]
+  ]
+ },
+ {
+  "label": "suivi : l'arrêt d'urgence est ignoré",
+  "file": "_shared/automations/tick.ts",
+  "expect": "suivi d'un incident ouvert",
+  "edits": [
+   [
+    "  if (auth.frozen) return false;\n  const rule",
+    "  const rule"
+   ]
+  ]
+ },
+ {
+  "label": "suivi : l'organisation de la référence n'est plus comparée au contexte",
+  "file": "_shared/automations/tick.ts",
+  "expect": "suivi d'un incident ouvert",
+  "edits": [
+   [
+    "  if (!isAuthContext(auth) || auth.kind !== \"cron\" || auth.orgId !== ref.orgId) throw Errors.forbidden();",
+    "  if (!isAuthContext(auth)) throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "lectures de la tâche : l'arrêt d'urgence relu en base est perdu",
+  "file": "_shared/automations/tick.ts",
+  "expect": "lectures de la tâche",
+  "edits": [
+   [
+    "return { state: r.state, frozen: r.frozen_at !== null, activated: r.activated_at !== null };",
+    "return { state: r.state, frozen: false, activated: r.activated_at !== null };"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : la liste fermée des capacités n'est plus appliquée",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : seules",
+  "edits": [
+   [
+    "  if (typeof name !== \"string\" || !(SYSTEM_CAPABILITIES as readonly string[]).includes(name) || !Object.hasOwn(CAPABILITIES, name)) {",
+    "  if (typeof name !== \"string\" || !Object.hasOwn(CAPABILITIES, name)) {"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : une personne passe par la porte des automatisations",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : jamais pour une personne",
+  "edits": [
+   [
+    "  if (!isAuthContext(auth) || (auth.kind !== \"cron\" && auth.kind !== \"source\") || auth.orgId === null) throw Errors.forbidden();\n  assertNotFrozen(auth);\n  const cap",
+    "  if (!isAuthContext(auth) || auth.orgId === null) throw Errors.forbidden();\n  assertNotFrozen(auth);\n  const cap"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : l'arrêt d'urgence est ignoré",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : jamais pour une personne",
+  "edits": [
+   [
+    "  assertNotFrozen(auth);\n  const cap = name as CapabilityName;",
+    "  const cap = name as CapabilityName;"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : un durcissement de l'organisation est ignoré",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : jamais pour une personne",
+  "edits": [
+   [
+    "  if (!meta.demo || effectiveClass(cap, overrides) !== \"autonomous\" || targetPolicyOf(meta) !== \"none\") throw Errors.forbidden();",
+    "  if (!meta.demo || targetPolicyOf(meta) !== \"none\") throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : l'acteur est présenté comme l'agent",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : l'appel passe",
+  "edits": [
+   [
+    "    actor: { kind: \"system\", reason: \"automation\" },",
+    "    actor: { kind: \"agent\", conversationId: \"automation\" },"
+   ]
+  ]
+ },
+ {
+  "label": "automatisations : l'erreur brute du connecteur remonte",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "automatisations : l'appel passe",
+  "edits": [
+   [
+    "      details: { capability: name, connector: connector.id, outcome: \"error\", reason: \"automation\" },\n    }, deps.db).catch(() => {});\n    throw Errors.unavailable();",
+    "      details: { capability: name, connector: connector.id, outcome: \"error\", reason: \"automation\" },\n    }, deps.db).catch(() => {});\n    throw e;"
+   ]
+  ]
+ },
+ {
+  "label": "gabarit : une catégorie inconnue entre telle quelle dans le message",
+  "file": "_shared/automations/templates.ts",
+  "expect": "incident regroupé : le message aux salariés",
+  "edits": [
+   [
+    "  return typeof category === \"string\" && Object.hasOwn(CATEGORY_LABELS, category) && category !== \"other\"\n    ? `« ${CATEGORY_LABELS[category]} »`",
+    "  return typeof category === \"string\"\n    ? `« ${category} »`"
    ]
   ]
  }

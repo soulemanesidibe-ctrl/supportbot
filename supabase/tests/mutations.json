@@ -765,8 +765,8 @@
   "expect": "webhook : organisation suspendue",
   "edits": [
    [
-    "  if not exists (select 1 from public.organizations o where o.id = a.org_id and o.state <> 'suspended') then return null; end if;\n",
-    ""
+    "  select * into o from public.organizations where id = a.org_id and state <> 'suspended';",
+    "  select * into o from public.organizations where id = a.org_id;"
    ]
   ]
  },
@@ -811,6 +811,391 @@
    [
     "revoke all on public.webhook_deliveries from public, anon, authenticated;",
     "revoke all on public.webhook_deliveries from public, anon;\ngrant select on public.webhook_deliveries to authenticated;"
+   ]
+  ]
+ },
+ {
+  "label": "rejeu : une livraison déjà reçue est traitée de nouveau",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "SEC-17 rejeu",
+  "edits": [
+   [
+    "  if not public.webhook_first_delivery(p_source, p_digest) then return jsonb_build_object('status', 'duplicate'); end if;",
+    "  perform public.webhook_first_delivery(p_source, p_digest);"
+   ]
+  ]
+ },
+ {
+  "label": "réception : une source désactivée ou sans secret est acceptée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "SEC-17 : source inconnue, sans secret ou désactivée",
+  "edits": [
+   [
+    "  if s.id is null or s.status <> 'active' or s.vault_secret_id is null then raise exception 'Source introuvable'; end if;",
+    "  if s.id is null then raise exception 'Source introuvable'; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "réception : l'organisation suspendue n'est plus contrôlée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "SEC-17 : la source d'une organisation suspendue",
+  "edits": [
+   [
+    "  if v_org_state is null or v_org_state = 'suspended' then raise exception 'Source introuvable'; end if;",
+    "  if v_org_state is null then raise exception 'Source introuvable'; end if;"
+   ]
+  ]
+ },
+ {
+  "label": "validation : la clé réservée « releve: » est acceptée d'une source externe",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "validation : gravité",
+  "edits": [
+   [
+    "  if v_key is null or char_length(v_key) not between 1 and 300 or v_key like 'releve:%'      -- clé réservée aux alertes de Relève",
+    "  if v_key is null or char_length(v_key) not between 1 and 300"
+   ]
+  ]
+ },
+ {
+  "label": "validation : une date non ISO (« now ») est acceptée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "validation : gravité",
+  "edits": [
+   [
+    "  if coalesce(p_alert ->> 'occurred_at', '') !~ '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$' then\n    raise exception 'Alerte invalide'; end if;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "validation : une adresse d'origine non https est acceptée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "validation : gravité",
+  "edits": [
+   [
+    "     or (v_url is not null and (char_length(v_url) > 500 or v_url !~ '^https://[^\\s]+$'))",
+    "     or (v_url is not null and char_length(v_url) > 500)"
+   ]
+  ]
+ },
+ {
+  "label": "maintenance : ignorée, l'alerte est confirmée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "maintenance : l'alerte est conservée",
+  "edits": [
+   [
+    "  if private.in_maintenance(a.org_id, p_source, a.asset_name) then",
+    "  if false then"
+   ]
+  ]
+ },
+ {
+  "label": "anti-battement : une alerte est confirmée dès son premier événement",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "réception : une livraison refusée puis renvoyée",
+  "edits": [
+   [
+    "a.count >= private.alert_confirm_events() or",
+    "a.count >= 1 or"
+   ]
+  ]
+ },
+ {
+  "label": "motif d'actif : « _ » et « % » redeviennent des jokers",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "motif",
+  "edits": [
+   [
+    "$$ select p_asset like replace(replace(replace(replace(p_pattern, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '*', '%') escape '\\' $$;",
+    "$$ select p_asset like replace(p_pattern, '*', '%') $$;"
+   ]
+  ]
+ },
+ {
+  "label": "rattachement : les motifs d'actifs d'une AUTRE organisation s'appliquent",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "isolation : les motifs d'actifs de Bêta",
+  "edits": [
+   [
+    "     where l.org_id = s.org_id and private.asset_matches(v_asset, l.asset_pattern)",
+    "     where private.asset_matches(v_asset, l.asset_pattern)"
+   ]
+  ]
+ },
+ {
+  "label": "fin d'incident : l'incident se résout dès la première alerte résolue",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "fin d'incident : tant qu'une alerte",
+  "edits": [
+   [
+    "         select 1 from public.alerts x where x.incident_id = a.incident_id and x.state in ('open', 'acknowledged')) then",
+    "         select 1 from public.alerts x where false) then"
+   ]
+  ]
+ },
+ {
+  "label": "silence : l'alerte de silence ne se résout plus quand la source revient",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "silence : quand la source parle",
+  "edits": [
+   [
+    "     where source_id = p_source and synthetic and dedup_key = 'releve:silence' and state in ('open', 'acknowledged')",
+    "     where false"
+   ]
+  ]
+ },
+ {
+  "label": "confirmation à l'échéance : la maintenance est ignorée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "confirmation : au bout de 3 minutes",
+  "edits": [
+   [
+    "       and not private.in_maintenance(a.org_id, a.source_id, a.asset_name)\n     order by a.first_seen_at",
+    "     order by a.first_seen_at"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : les alertes non rattachées attendent aussi",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : seules les alertes",
+  "edits": [
+   [
+    "   where a.incident_id is null and a.state in ('open', 'acknowledged') and a.attachment_status = 'attached' and not a.synthetic",
+    "   where a.incident_id is null and a.state in ('open', 'acknowledged') and not a.synthetic"
+   ]
+  ]
+ },
+ {
+  "label": "contexte : les demandes d'une AUTRE organisation sont comptées",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "contexte : champs typés",
+  "edits": [
+   [
+    "        where c.org_id = p_org and a.category is not null and c.category = a.category",
+    "        where a.category is not null and c.category = a.category"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : l'arrêt d'urgence n'est plus respecté",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : refusé en arrêt d'urgence",
+  "edits": [
+   [
+    "  if private.org_is_frozen(p_org) then raise exception 'Organisation gelée (arrêt d''urgence) : aucune automatisation'; end if;\n  if a.state = 'resolved'",
+    "  if a.state = 'resolved'"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : IDOR, l'alerte d'une autre organisation est trouvée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : refusé en arrêt d'urgence",
+  "edits": [
+   [
+    "  select * into a from public.alerts where id = p_alert and org_id = p_org for update;",
+    "  select * into a from public.alerts where id = p_alert for update;"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : les demandes d'une AUTRE organisation sont rattachées",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : un incident, un ticket parent",
+  "edits": [
+   [
+    "   where c.org_id = p_org and c.category = a.category and c.created_at >= now() - interval '15 minutes'",
+    "   where c.category = a.category and c.created_at >= now() - interval '15 minutes'"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : la fenêtre de 15 minutes est ignorée",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : les salariés des demandes de la fenêtre",
+  "edits": [
+   [
+    "   where c.org_id = p_org and c.category = a.category and c.created_at >= now() - interval '15 minutes'",
+    "   where c.org_id = p_org and c.category = a.category"
+   ]
+  ]
+ },
+ {
+  "label": "regroupement : les salariés sont prévenus à chaque réévaluation",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "regroupement : rejoué",
+  "edits": [
+   [
+    "       where ic.incident_id = v_inc and ic.opened_notice_at is null",
+    "       where ic.incident_id = v_inc"
+   ]
+  ]
+ },
+ {
+  "label": "fin d'incident : la clôture est proposée alors que l'incident est encore ouvert",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "fin d'incident : tant qu'une alerte",
+  "edits": [
+   [
+    "  if i.state <> 'resolved' then return jsonb_build_object('status', 'incident_open'); end if;",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "fin d'incident : l'arrêt d'urgence n'est plus respecté",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "arrêt d'urgence : ni notification",
+  "edits": [
+   [
+    "  if private.org_is_frozen(p_org) then raise exception 'Organisation gelée (arrêt d''urgence) : aucune automatisation'; end if;\n  if i.state <> 'resolved'",
+    "  if i.state <> 'resolved'"
+   ]
+  ]
+ },
+ {
+  "label": "astreinte : une astreinte inscrite suffit, même sans accès au client",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "astreinte : la personne d'astreinte est prévenue",
+  "edits": [
+   [
+    "     where s.org_id = p_org and s.kind = 'on_call' and s.starts_at <= p_at and s.ends_at > p_at\n       and exists (select 1 from public.resolve_access(s.technician_user_id, p_org) r\n                    where r.org_role in ('partner_technician', 'org_technician') and not r.read_only);",
+    "     where s.org_id = p_org and s.kind = 'on_call' and s.starts_at <= p_at and s.ends_at > p_at;"
+   ]
+  ]
+ },
+ {
+  "label": "notifications : chacun lit celles des autres",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "RLS : un technicien lit SES notifications",
+  "edits": [
+   [
+    "create policy notifications_read on public.notifications for select to authenticated\n  using (recipient_user_id = (select auth.uid()) and private.can_read_support_data(org_id));",
+    "create policy notifications_read on public.notifications for select to authenticated\n  using (private.can_read_support_data(org_id));"
+   ]
+  ]
+ },
+ {
+  "label": "notifications : l'accès au client n'est plus revérifié",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "RLS : un technicien dont l'assignation est retirée",
+  "edits": [
+   [
+    "create policy notifications_read on public.notifications for select to authenticated\n  using (recipient_user_id = (select auth.uid()) and private.can_read_support_data(org_id));",
+    "create policy notifications_read on public.notifications for select to authenticated\n  using (recipient_user_id = (select auth.uid()));"
+   ]
+  ]
+ },
+ {
+  "label": "notifications : toutes les colonnes sont modifiables",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "RLS : un technicien ne peut changer que la date",
+  "edits": [
+   [
+    "grant update (read_at) on public.notifications to authenticated;",
+    "grant update on public.notifications to authenticated;"
+   ]
+  ]
+ },
+ {
+  "label": "incident : les conversations rattachées sont lisibles par tous",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "RLS : les conversations rattachées",
+  "edits": [
+   [
+    "create policy incident_conversations_read on public.incident_conversations for select to authenticated\n  using (private.can_read_support_data(org_id));",
+    "create policy incident_conversations_read on public.incident_conversations for select to authenticated\n  using (true);"
+   ]
+  ]
+ },
+ {
+  "label": "plafonds : une règle s'exécute deux fois pour le même déclencheur",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "plafonds : une exécution par déclencheur",
+  "edits": [
+   [
+    "    return jsonb_build_object('decision', 'already');",
+    "    null;"
+   ]
+  ]
+ },
+ {
+  "label": "plafonds : le délai minimal par périmètre est ignoré",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "plafonds : une exécution par déclencheur",
+  "edits": [
+   [
+    "     or (v_last is not null and v_last > now() - ((v_limits ->> 'cooldownMinutes')::int * interval '1 minute')) then",
+    "     then"
+   ]
+  ]
+ },
+ {
+  "label": "plafonds : le nombre d'exécutions par heure est ignoré",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "plafonds : au-delà",
+  "edits": [
+   [
+    "  if v_runs >= (v_limits ->> 'maxRunsPerHour')::int\n     or (",
+    "  if false\n     or ("
+   ]
+  ]
+ },
+ {
+  "label": "plafonds : le modèle de la plateforme l'emporte sur la copie de l'organisation",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "plafonds : la copie de l'organisation",
+  "edits": [
+   [
+    "   where key = p_rule_key and (org_id = p_org or org_id is null) order by org_id nulls last limit 1;",
+    "   where key = p_rule_key and (org_id = p_org or org_id is null) order by org_id nulls first limit 1;"
+   ]
+  ]
+ },
+ {
+  "label": "plafonds : la simulation est ignorée (la règle agit)",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "plafonds : la copie de l'organisation",
+  "edits": [
+   [
+    "  v_decision := case when r.dry_run then 'dry_run' else 'executed' end;",
+    "  v_decision := 'executed';"
+   ]
+  ]
+ },
+ {
+  "label": "droits : un utilisateur connecté peut appeler les fonctions d'alertes",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "droits : un utilisateur connecté ne peut appeler AUCUNE fonction de réception",
+  "edits": [
+   [
+    "  public.notify_oncall(uuid, text, text, uuid, jsonb, int) from public, anon, authenticated;",
+    "  public.notify_oncall(uuid, text, text, uuid, jsonb, int) from public, anon;"
+   ]
+  ]
+ },
+ {
+  "label": "webhook : l'arrêt d'urgence de l'organisation n'est plus transmis",
+  "file": "20261106101400_secrets_et_webhooks.sql",
+  "expect": "webhook : l'état de l'organisation accompagne",
+  "edits": [
+   [
+    "'frozen', o.frozen_at is not null,",
+    "'frozen', false,"
+   ]
+  ]
+ },
+ {
+  "label": "suivi : les incidents d'une organisation gelée sont suivis",
+  "file": "20261106101500_ingestion_des_alertes.sql",
+  "expect": "suivi : organisation gelée",
+  "edits": [
+   [
+    "     and o.state <> 'suspended' and o.frozen_at is null\n",
+    "     and o.state <> 'suspended'\n"
    ]
   ]
  }

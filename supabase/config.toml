@@ -440,3 +440,7 @@ verify_jwt = false
 
 [functions.admin]
 verify_jwt = false
+
+# Webhook des sources d'alertes : pas de jeton d'utilisateur, la signature HMAC de la source est la seule porte.
+[functions.alerts-ingest]
+verify_jwt = false

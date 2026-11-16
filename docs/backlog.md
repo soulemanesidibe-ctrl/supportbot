@@ -27,6 +27,12 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B22 | Console : demander le jeton délégué du valideur avec la revendication `ngcmfa` (second facteur de moins de 10 minutes exigé par Microsoft depuis janvier 2026) et redemander l'authentification sur un refus 403 | J4.4 | J5 |
 | B23 | Règle X2 : détecter une méthode « téléphone », « e-mail » ou « code logiciel » ajoutée récemment (Microsoft n'en donne pas la date) par les journaux d'audit « User registered security info » | J4.3 | Avant le niveau 1 chez un pilote |
 | B24 | Règle X1 : voir aussi les rôles reçus par un groupe et les rôles éligibles (PIM) | J4.3 | Avant le niveau 1 chez un pilote |
+| B25 | Règle « panne Microsoft 365 reconnue » (P1) : interroger l'état des services toutes les 5 minutes (la capacité de lecture existe), produire le déclencheur `m365.service_degraded` et répondre aux salariés par un gabarit | J4.7 | Si le temps le permet avant la démo |
+| B26 | Envoyer les notifications de l'astreinte (table `notifications`) par e-mail ou Teams, en plus de la console | J4.7 | Avec B14 |
+| B27 | Planifier la tâche `cron?job=alerts-tick` chaque minute (pg_cron et pg_net, secret des tâches dans le coffre) au premier déploiement ; sans elle, ni confirmation à l'échéance, ni regroupement, ni silence | J4.7 | Premier déploiement (guidé) |
+| B28 | Délai d'anti-battement réglable par source (aujourd'hui 3 minutes ou 2 événements pour toutes) | J4.6 | Après les premiers retours du pilote |
+| B29 | Un ticket copié vers GLPI APRÈS le regroupement (demande traitée plus tard) n'est pas lié au ticket parent dans GLPI : le lier à la copie, s'il appartient à un incident | J4.7 | J5 |
+| B30 | Le chat ne sait pas encore dire au salarié qu'un incident est en cours AVANT que la tâche planifiée ne le rattache (jusqu'à une minute) : lire l'incident ouvert de la catégorie dans l'orchestrateur | J4.7 | J5 |
 | B07 | Publier le rapport Semgrep dans l'onglet « Code scanning » de GitHub (gratuit sur un dépôt public) : demande un job séparé avec `security-events: write` pour garder les permissions minimales | J0 | Avant J6 |
 
 ## Plan des jalons à jour (6 novembre 2026)

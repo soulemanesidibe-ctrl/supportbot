@@ -188,3 +188,49 @@ Deno.test("registre : choisit le connecteur actif de L'ORGANISATION qui sait fai
   assert.equal(await codeOf(connectorFor(auth, "kb.search", onlyOther)), "service_unavailable", "un connecteur d'une autre organisation n'est jamais pris, même renvoyé par erreur");
   clearConnectorFactories();
 });
+
+// ---------------------------------------------------------------------------------------------------------------
+// Porte des automatisations (liste fermée)
+// ---------------------------------------------------------------------------------------------------------------
+Deno.test("automatisations : seules « créer un ticket » et « lier deux tickets » passent ; toute autre capacité est refusée", async () => {
+  const { assertSystemCapabilityAllowed, SYSTEM_CAPABILITIES } = await import("./call.ts");
+  const { makeCronOrgAuth } = await import("../testing.ts");
+  const auth = await makeCronOrgAuth();
+  assert.deepEqual([...SYSTEM_CAPABILITIES], ["ticket.create", "ticket.link_parent"]);
+  for (const name of [...NAMES, "__proto__", "constructor", "ticket.delete"]) {
+    const code = await codeOf(() => assertSystemCapabilityAllowed(name, auth, {}));
+    assert.equal(code, name === "ticket.create" || name === "ticket.link_parent" ? "aucune erreur" : "forbidden", name);
+  }
+});
+
+Deno.test("automatisations : jamais pour une personne, une tâche sans organisation, ni une organisation gelée ; une organisation peut durcir", async () => {
+  const { assertSystemCapabilityAllowed } = await import("./call.ts");
+  const { makeCronOrgAuth, makeSourceAuth } = await import("../testing.ts");
+  // Une imitation de contexte (objet littéral, copie) est refusée : seul un contexte fabriqué par auth.ts compte.
+  assert.equal(await codeOf(() => assertSystemCapabilityAllowed("ticket.create", { kind: "cron", orgId: TEST_ORG, frozen: false } as never, {})), "forbidden");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", { ...(await makeCronOrgAuth()) } as never, {})), "forbidden");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeAuth({ org_role: "partner_technician" }), {})), "forbidden");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeCronAuth(), {})), "forbidden");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeCronOrgAuth({ frozen: true }), {})), "org_frozen");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeSourceAuth(), {})), "aucune erreur");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeCronOrgAuth(), {}, { "ticket.create": "approval_required" })), "forbidden");
+  assert.equal(await codeOf(async () => assertSystemCapabilityAllowed("ticket.create", await makeCronOrgAuth(), "x".repeat(10) as never)), "bad_request");
+});
+
+Deno.test("automatisations : l'appel passe par le connecteur avec l'acteur « système / automatisation » et il est audité", async () => {
+  const { callSystemCapability } = await import("./call.ts");
+  const { makeCronOrgAuth } = await import("../testing.ts");
+  const { connector, spy } = spyConnector();
+  const db = fakeDb();
+  await callSystemCapability(await makeCronOrgAuth(), "ticket.link_parent", { parentRef: "10", childRef: "11" }, { type: "incident", id: "inc-1" }, { connectorFor: () => Promise.resolve(connector), db: db.deps });
+  assert.equal(spy.invoked.length, 1);
+  assert.deepEqual((spy.invoked[0].ctx as { actor: unknown }).actor, { kind: "system", reason: "automation" });
+  assert.equal(db.inserts[0].table, "audit_logs");
+  assert.equal(db.inserts[0].row.actor_kind, "system");
+  assert.equal(db.inserts[0].row.subject_type, "incident");
+  // Une erreur du connecteur ne remonte jamais telle quelle (elle peut contenir une adresse interne) : 503 et trace d'échec.
+  const failing = spyConnector({ fail: new Error("https://glpi.interne/apirest.php jeton=abc") });
+  const db2 = fakeDb();
+  assert.equal(await codeOf(callSystemCapability(await makeCronOrgAuth(), "ticket.create", { title: "t", body: "b", category: "vpn", priority: "high", requesterRef: "r" }, { type: "incident", id: "inc-1" }, { connectorFor: () => Promise.resolve(failing.connector), db: db2.deps })), "service_unavailable");
+  assert.equal(db2.inserts[0].row.event, "capability.failure");
+});

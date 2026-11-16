@@ -8,7 +8,7 @@ import { DbDeps, rateLimitRpc } from "./db.ts";
 import { Errors } from "./errors.ts";
 import { log } from "./log.ts";
 
-export interface RateRule { readonly scope: "user" | "org"; readonly windowSeconds: number; readonly limit: number }
+export interface RateRule { readonly scope: "user" | "org" | "source"; readonly windowSeconds: number; readonly limit: number }
 
 export const BUCKETS = {
   /** Messages d'un salarié : une personne n'écrit pas plus de 12 messages par minute ; l'organisation, 120. */
@@ -17,6 +17,8 @@ export const BUCKETS = {
   actions: [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }],
   /** Opérations d'administration (et acceptation d'une invitation, sans organisation : seule la règle « personne » s'applique). */
   admin: [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }],
+  /** Webhook d'alertes (après vérification de la signature) : 120 livraisons par minute et par source, 600 par organisation. */
+  webhook: [{ scope: "source", windowSeconds: 60, limit: 120 }, { scope: "org", windowSeconds: 60, limit: 600 }],
 } as const satisfies Record<string, readonly RateRule[]>;
 
 export type BucketName = keyof typeof BUCKETS;
@@ -27,13 +29,15 @@ export type Limiter = (auth: AuthContext) => Promise<void>;
 export interface RateLimitDeps { db?: DbDeps; nowSeconds?: () => number }
 
 export async function enforceRateLimit(auth: AuthContext, bucket: BucketName, deps: RateLimitDeps = {}): Promise<void> {
-  // Jamais de compteur pour un contexte qui n'a pas été fabriqué par auth.ts, ni pour autre chose qu'une personne (une tâche planifiée n'est pas limitée ici).
-  if (!isAuthContext(auth) || auth.kind !== "user") throw Errors.forbidden();
+  // Jamais de compteur pour un contexte qui n'a pas été fabriqué par auth.ts. Une personne pour chat, actions et admin ; une source signée
+  // pour le webhook ; une tâche planifiée n'est pas limitée ici.
+  if (!isAuthContext(auth)) throw Errors.forbidden();
+  if (bucket === "webhook" ? auth.kind !== "source" : auth.kind !== "user") throw Errors.forbidden();
   const now = deps.nowSeconds ? deps.nowSeconds() : Math.floor(Date.now() / 1000);
   for (const rule of BUCKETS[bucket]) {
-    const id = rule.scope === "user" ? auth.userId : auth.orgId;
+    const id = rule.scope === "user" ? auth.userId : rule.scope === "source" ? auth.sourceId : auth.orgId;
     if (id === null) continue; // pas d'organisation (acceptation d'une invitation) : seule la règle « personne » s'applique
-    const key = `${bucket}:${rule.scope === "user" ? "u" : "o"}:${id}`;
+    const key = `${bucket}:${rule.scope === "user" ? "u" : rule.scope === "source" ? "s" : "o"}:${id}`;
     let allowed: unknown;
     try {
       const { data, error } = await rateLimitRpc(auth, { key, windowSeconds: rule.windowSeconds, limit: rule.limit }, deps.db);

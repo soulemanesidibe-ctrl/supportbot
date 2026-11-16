@@ -2,7 +2,7 @@
 // Chaque garde renvoie un AuthContext, seule preuve acceptée par serviceClient(auth). Les droits ne se déduisent JAMAIS de ce
 // que dit le client (corps, paramètres, en-têtes) : l'identité vient du jeton vérifié, le rôle et la voie d'accès viennent de la
 // base (resolve_access), à chaque requête, à l'instant présent.
-import { AccessVia, AuthContext, mintContext, ORG_ROLES, OrgRole } from "./context.ts";
+import { AccessVia, AuthContext, isAuthContext, mintContext, ORG_ROLES, OrgRole } from "./context.ts";
 import { Errors } from "./errors.ts";
 
 export interface VerifiedToken {
@@ -105,6 +105,7 @@ async function verifyRequest(req: Request, deps?: AuthDeps): Promise<{ auth: Aut
     activated: false,
     aal: verified.aal === "aal2" ? "aal2" : "aal1",
     mfaAt: lastMfaAt(verified.amr),
+    sourceId: null,
     requestId: requestIdFrom(req),
   });
   return { auth, email: typeof verified.email === "string" ? verified.email : null };
@@ -146,6 +147,7 @@ export async function requireOrgMember(
     activated: access.is_activated === true,
     aal: user.aal,
     mfaAt: user.mfaAt,
+    sourceId: null,
     requestId: user.requestId,
   });
 }
@@ -188,6 +190,140 @@ export async function requireCronSecret(req: Request, deps?: AuthDeps): Promise<
     activated: true,
     aal: null,
     mfaAt: null,
+    sourceId: null,
     requestId: requestIdFrom(req),
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Webhook d'alertes signé (spec § 11.2, SEC-17)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** Ce que la base rend pour une source ACTIVE, avec secret, d'une organisation non suspendue (alert_source_for_webhook). */
+export interface WebhookSource {
+  orgId: string;
+  secret: string;
+  severityMap: unknown;
+  fieldMapping: unknown;
+  frozen: boolean;
+  activated: boolean;
+}
+
+export interface WebhookAuthDeps {
+  /** null si la source est inconnue, désactivée, sans secret ou si son organisation est suspendue : un seul cas pour l'appelant. */
+  lookupSource(sourceId: string): Promise<WebhookSource | null>;
+  nowSeconds(): number;
+}
+
+export interface VerifiedDelivery {
+  auth: AuthContext;
+  /** Empreinte de la livraison (horodatage et signature) : clé de la protection contre le rejeu. */
+  digest: string;
+  severityMap: unknown;
+  fieldMapping: unknown;
+}
+
+/** Écart toléré entre l'horodatage de la source et notre horloge (5 minutes, spec § 11.2). */
+export const WEBHOOK_TOLERANCE_SECONDS = 300;
+const WEBHOOK_TS = /^[0-9]{9,11}$/;
+const WEBHOOK_SIG = /^sha256=([0-9a-fA-F]{64})$/;
+// Secret de remplacement quand la source n'existe pas : on fait le MÊME calcul, pour que le temps de réponse ne dise rien. Tiré au
+// hasard à chaque démarrage (jamais une constante du dépôt public) : personne ne peut produire une signature qui lui corresponde.
+const ABSENT_SOURCE_SECRET = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, "0")).join("");
+
+let webhookDefaults: Promise<WebhookAuthDeps> | undefined;
+function defaultWebhookDeps(): Promise<WebhookAuthDeps> {
+  webhookDefaults ??= import("./auth_deps.ts").then((m) => m.supabaseWebhookDeps());
+  return webhookDefaults;
+}
+
+function hex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hmacSha256Hex(secret: string, ts: string, body: Uint8Array): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const prefix = new TextEncoder().encode(`${ts}.`);
+  const data = new Uint8Array(prefix.byteLength + body.byteLength);
+  data.set(prefix, 0);
+  data.set(body, prefix.byteLength);
+  return hex(new Uint8Array(await crypto.subtle.sign("HMAC", key, data)));
+}
+
+/**
+ * Garde du webhook : `X-Releve-Timestamp` (secondes) et `X-Releve-Signature: sha256=<hex>`, HMAC-SHA-256 de « horodatage + "." + corps »
+ * avec le secret de la source, calculé sur les OCTETS reçus. Toute absence ou erreur (en-tête, horodatage hors des 5 minutes, source
+ * inconnue, désactivée ou suspendue, signature fausse) donne la même réponse 401. Le secret ne sort jamais de cette fonction.
+ * Le contexte rendu est celui d'une SOURCE : son organisation vient de la base, jamais de la requête.
+ */
+export async function requireWebhookSource(req: Request, sourceId: string, body: Uint8Array, deps?: WebhookAuthDeps): Promise<VerifiedDelivery> {
+  const d = deps ?? await defaultWebhookDeps();
+  if (typeof sourceId !== "string" || !UUID.test(sourceId)) throw Errors.unauthorized();
+  const ts = req.headers.get("x-releve-timestamp") ?? "";
+  const sig = WEBHOOK_SIG.exec(req.headers.get("x-releve-signature") ?? "");
+  if (!WEBHOOK_TS.test(ts) || !sig) throw Errors.unauthorized();
+  if (Math.abs(d.nowSeconds() - Number(ts)) > WEBHOOK_TOLERANCE_SECONDS) throw Errors.unauthorized();
+  let source: WebhookSource | null;
+  try {
+    source = await d.lookupSource(sourceId.toLowerCase());
+  } catch {
+    throw Errors.unavailable(); // la base ne répond pas : on refuse sans rien deviner
+  }
+  const usable = source !== null && typeof source.secret === "string" && source.secret.length >= 32 &&
+    typeof source.orgId === "string" && UUID.test(source.orgId);
+  const given = sig[1].toLowerCase();
+  const expected = await hmacSha256Hex(usable ? source!.secret : ABSENT_SOURCE_SECRET, ts, body);
+  const match = await sameSecret(given, expected);
+  if (!match || !usable) throw Errors.unauthorized();
+  const auth = mintContext({
+    kind: "source",
+    userId: null,
+    orgId: source!.orgId,
+    role: null,
+    via: null,
+    readOnly: false,
+    frozen: source!.frozen === true,
+    activated: source!.activated === true,
+    aal: null,
+    mfaAt: null,
+    sourceId: sourceId.toLowerCase(),
+    requestId: requestIdFrom(req),
+  });
+  return { auth, digest: hex(await sha256(`${ts}:${given}`)), severityMap: source!.severityMap, fieldMapping: source!.fieldMapping };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Tâche planifiée qui agit pour UNE organisation (moteur d'automatisations)
+// ---------------------------------------------------------------------------------------------------------------
+
+export interface OrgStateRow { state: string; frozen: boolean; activated: boolean }
+
+/**
+ * À partir d'un contexte de tâche planifiée AUTHENTIQUE (requireCronSecret), contexte limité à une organisation dont l'état
+ * (arrêt d'urgence, activation) est relu en base à cet instant. Organisation inconnue ou suspendue : refus.
+ */
+export async function scopeCronToOrg(cron: AuthContext, orgId: string, readOrg: (orgId: string) => Promise<OrgStateRow | null>): Promise<AuthContext> {
+  if (!isAuthContext(cron) || cron.kind !== "cron" || cron.orgId !== null) throw Errors.forbidden();
+  if (typeof orgId !== "string" || !UUID.test(orgId)) throw Errors.forbidden();
+  let row: OrgStateRow | null;
+  try {
+    row = await readOrg(orgId);
+  } catch {
+    throw Errors.unavailable();
+  }
+  if (!row || row.state === "suspended") throw Errors.forbidden();
+  return mintContext({
+    kind: "cron",
+    userId: null,
+    orgId,
+    role: null,
+    via: null,
+    readOnly: false,
+    frozen: row.frozen === true,
+    activated: row.activated === true,
+    aal: null,
+    mfaAt: null,
+    sourceId: null,
+    requestId: cron.requestId,
   });
 }

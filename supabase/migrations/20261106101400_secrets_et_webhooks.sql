@@ -54,13 +54,18 @@ grant execute on function public.alert_source_secret_set(uuid, uuid, text) to se
 create function public.alert_source_for_webhook(p_source uuid) returns jsonb
 language plpgsql security definer set search_path = '' as
 $$
-declare a public.alert_sources%rowtype;
+declare
+  a public.alert_sources%rowtype;
+  o public.organizations%rowtype;
 begin
   select * into a from public.alert_sources where id = p_source and status = 'active' and vault_secret_id is not null;
   if a.id is null then return null; end if;
-  if not exists (select 1 from public.organizations o where o.id = a.org_id and o.state <> 'suspended') then return null; end if;
+  select * into o from public.organizations where id = a.org_id and state <> 'suspended';
+  if o.id is null then return null; end if;
+  -- frozen / activated : l'état de l'organisation, pour le contexte de la requête (arrêt d'urgence : alertes conservées, aucune automatisation).
   return jsonb_build_object('org_id', a.org_id, 'secret', private.read_alert_source_secret(a.id),
-                            'severity_map', a.severity_map, 'field_mapping', a.field_mapping);
+                            'severity_map', a.severity_map, 'field_mapping', a.field_mapping,
+                            'frozen', o.frozen_at is not null, 'activated', o.activated_at is not null);
 end $$;
 revoke all on function public.alert_source_for_webhook(uuid) from public, anon, authenticated;
 grant execute on function public.alert_source_for_webhook(uuid) to service_role;

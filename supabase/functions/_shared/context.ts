@@ -49,6 +49,8 @@ export interface ContextFields {
   readonly aal: "aal1" | "aal2" | null;
   /** Dernière vérification du second facteur, en secondes depuis 1970. */
   readonly mfaAt: number | null;
+  /** Source d'alertes dont la signature a été vérifiée (kind « source ») ; nul sinon. */
+  readonly sourceId: string | null;
   readonly requestId: string;
 }
 

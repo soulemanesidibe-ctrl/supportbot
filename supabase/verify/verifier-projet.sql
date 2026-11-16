@@ -1,4 +1,4 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 14 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 15 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
 -- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
@@ -9,9 +9,9 @@ tables_public as (
   where n.nspname = 'public' and c.relkind in ('r', 'p')
 ),
 checks(ordre, controle, attendu, trouve, ok) as (
-  select 1, 'Tables du schéma public', '38',
+  select 1, 'Tables du schéma public', '40',
          (select count(*)::text from tables_public),
-         (select count(*) = 38 from tables_public)
+         (select count(*) = 40 from tables_public)
   union all
   select 2, 'Tables SANS sécurité par ligne (RLS)', '0',
          (select count(*)::text from tables_public where not relrowsecurity),
