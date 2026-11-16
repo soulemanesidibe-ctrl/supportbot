@@ -298,3 +298,36 @@ Deno.test("Microsoft 365 : délier = seulement le lien actif de la personne du c
   assert.ok(has(ops[0], "eq", "user_id", TEST_USER) && has(ops[0], "eq", "connector_id", OTHER) && has(ops[0], "eq", "org_id", TEST_ORG) && has(ops[0], "is", "revoked_at", null));
   assert.equal(await codeOf(store(() => ok([])).s.unlinkMicrosoftIdentity(auth, OTHER)), "not_found");
 });
+
+Deno.test("règles d'automatisation : copie du modèle de la plateforme pour l'organisation du CONTEXTE ; seul l'état est choisi", async () => {
+  const auth = await makeAuth({ org_role: "org_admin" });
+  const tpl = { key: "incident-grouped", name: "Incident regroupé", version: 1, autonomy: 0, locked: false, trigger_kind: "alert.opened", definition: { all: [] } };
+  const { s, ops } = store((op) => (op.method === "select" ? ok(tpl) : ok(null)));
+  await s.setAutomationState(auth, { key: "incident-grouped", state: "dry_run" });
+  const read = ops[0];
+  assert.ok(has(read, "is", "org_id", null) && has(read, "eq", "key", "incident-grouped"), "lecture du modèle de la plateforme");
+  const write = ops[1];
+  assert.equal(write.method, "upsert");
+  assert.deepEqual(write.options, { onConflict: "org_id,key" });
+  assert.deepEqual(write.payload, {
+    org_id: TEST_ORG, key: "incident-grouped", name: "Incident regroupé", version: 1, autonomy: 0, locked: false, trigger_kind: "alert.opened",
+    definition: { all: [] }, enabled: true, dry_run: true, updated_by: TEST_USER,
+  });
+  const off = store((op) => (op.method === "select" ? ok(tpl) : ok(null)));
+  await off.s.setAutomationState(auth, { key: "incident-grouped", state: "disabled" });
+  assert.equal((off.ops[1].payload as Record<string, unknown>).enabled, false);
+  const on = store((op) => (op.method === "select" ? ok(tpl) : ok(null)));
+  await on.s.setAutomationState(auth, { key: "incident-grouped", state: "active" });
+  assert.deepEqual([(on.ops[1].payload as Record<string, unknown>).enabled, (on.ops[1].payload as Record<string, unknown>).dry_run], [true, false]);
+});
+
+Deno.test("règles d'automatisation : règle verrouillée ou inconnue refusée sans écriture ; refus de la base traduit", async () => {
+  const auth = await makeAuth({ org_role: "org_admin" });
+  const locked = store(() => ok({ key: "incident-grouped", locked: true }));
+  assert.equal(await codeOf(locked.s.setAutomationState(auth, { key: "incident-grouped", state: "disabled" })), "conflict");
+  assert.equal(locked.ops.length, 1, "aucune écriture");
+  const missing = store(() => ok(null));
+  assert.equal(await codeOf(missing.s.setAutomationState(auth, { key: "source-silent", state: "disabled" })), "not_found");
+  const refused = store((op) => (op.method === "select" ? ok({ key: "x", locked: false }) : { data: null, error: { code: "P0001", message: "La règle suspicious-reset est verrouillée par la plateforme" } }));
+  assert.equal(await codeOf(refused.s.setAutomationState(auth, { key: "incident-grouped", state: "dry_run" })), "conflict");
+});

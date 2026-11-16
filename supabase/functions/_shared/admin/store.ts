@@ -4,7 +4,7 @@
 import { AuthContext, OrgRole } from "../context.ts";
 import { acceptInvitationRpc, DbDeps, serviceClient } from "../db.ts";
 import { AppError, Errors } from "../errors.ts";
-import { AdminStore, ApprovalCategory, GateState, RelationshipRef, SupportCategory } from "./types.ts";
+import { AdminStore, ApprovalCategory, AUTOMATION_KEYS, AUTOMATION_STATES, GateState, RelationshipRef, SupportCategory } from "./types.ts";
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
@@ -38,6 +38,7 @@ const KNOWN_REFUSALS: ReadonlyArray<readonly [string, () => AppError]> = [
   ["avant l'activation", () => Errors.notActivated()],
   ["technicien habilité", () => Errors.forbidden()],
   ["autre tenant", () => Errors.conflict("Ce compte Microsoft appartient à un autre tenant que celui du client.")],
+  ["verrouillée", () => Errors.conflict("Cette règle est verrouillée par la plateforme : elle reste active.")],
 ];
 
 /** Traduit une erreur de la base en erreur publique. Un code inconnu ou une panne donne « indisponible » (échec fermé). */
@@ -191,6 +192,23 @@ async function setCategoryState(auth: AuthContext, a: { category: SupportCategor
   touched(data, Errors.notFound());
 }
 
+async function setAutomationState(auth: AuthContext, a: { key: typeof AUTOMATION_KEYS[number]; state: typeof AUTOMATION_STATES[number] }, deps?: DbDeps): Promise<void> {
+  const org = orgOf(auth);
+  const db = serviceClient(auth, deps);
+  // Le modèle de la plateforme fait foi pour la définition : l'organisation ne choisit que l'état (aucune définition libre par l'API).
+  const tpl = await db.from("automation_rules").select("key, name, version, autonomy, locked, trigger_kind, definition")
+    .is("org_id", null).eq("key", a.key).maybeSingle();
+  if (tpl.error) throw fail(tpl.error);
+  if (!tpl.data) throw Errors.notFound();
+  const t = tpl.data as Row;
+  if (t.locked === true) throw Errors.conflict("Cette règle est verrouillée par la plateforme : elle reste active.");
+  const { error } = await db.from("automation_rules").upsert({
+    org_id: org, key: a.key, name: t.name, version: t.version, autonomy: t.autonomy, locked: false, trigger_kind: t.trigger_kind,
+    definition: t.definition, enabled: a.state !== "disabled", dry_run: a.state === "dry_run", updated_by: userOf(auth),
+  }, { onConflict: "org_id,key" });
+  if (error) throw fail(error);
+}
+
 async function requestSupportAccess(auth: AuthContext, a: { clientOrgId: string; reason: string; durationMinutes: number }, deps?: DbDeps) {
   const { data, error } = await serviceClient(auth, deps).from("support_access_grants").insert({
     client_org_id: a.clientOrgId, requested_by: userOf(auth), reason: a.reason, duration_minutes: a.durationMinutes,
@@ -324,6 +342,7 @@ export function supabaseAdminStore(deps?: DbDeps): AdminStore {
     setFreeze: (auth, frozen) => setFreeze(auth, frozen, deps),
     setAutonomy: (auth, a) => setAutonomy(auth, a, deps),
     setCategoryState: (auth, a) => setCategoryState(auth, a, deps),
+    setAutomationState: (auth, a) => setAutomationState(auth, a, deps),
     requestSupportAccess: (auth, a) => requestSupportAccess(auth, a, deps),
     approveSupportAccess: (auth, id) => approveSupportAccess(auth, id, deps),
     revokeSupportAccess: (auth, id) => revokeSupportAccess(auth, id, deps),

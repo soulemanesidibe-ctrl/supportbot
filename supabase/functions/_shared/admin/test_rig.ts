@@ -16,7 +16,7 @@ export const MS_OID = "99999999-8888-4777-8666-555555555555";
 
 export const STORE_METHODS = [
   "createClient", "createInvitation", "acceptInvitation", "activateClient", "activeRelationship", "reduceRelationship", "revokeRelationship",
-  "createAssignment", "revokeAssignment", "offboardTechnician", "setFreeze", "setAutonomy", "setCategoryState", "requestSupportAccess",
+  "createAssignment", "revokeAssignment", "offboardTechnician", "setFreeze", "setAutonomy", "setCategoryState", "setAutomationState", "requestSupportAccess",
   "approveSupportAccess", "revokeSupportAccess", "createDelegation", "revokeDelegation", "qualifyConnector", "createConnector", "setConnectorStatus", "microsoftTenantOf", "linkMicrosoftIdentity", "unlinkMicrosoftIdentity",
 ] as const satisfies ReadonlyArray<keyof AdminStore>;
 
@@ -132,6 +132,7 @@ export const VALID_BODY: Readonly<Record<string, Record<string, unknown>>> = {
   "org.unfreeze": {},
   "autonomy.set": { category: "accounts", level: 1 },
   "category.set_state": { category: "password", state: "direct", reason: "Barres de passage atteintes, décision de l'administrateur" },
+  "automation.set_state": { key: "incident-grouped", state: "active" },
   "support_access.request": { clientOrgId: OTHER, reason: "Diagnostic d'un incident signalé", durationMinutes: 60 },
   "support_access.approve": { grantId: GRANT },
   "support_access.revoke": { grantId: GRANT },

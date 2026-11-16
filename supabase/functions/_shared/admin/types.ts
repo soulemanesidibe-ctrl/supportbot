@@ -14,6 +14,9 @@ export const SUPPORT_CATEGORIES = [
 export type SupportCategory = typeof SUPPORT_CATEGORIES[number];
 
 export const GATE_STATES = ["shadow", "direct", "advice_only"] as const;
+/** Règles que la démo exécute : `suspicious-reset` est verrouillée (code de l'orchestrateur), `m365-outage` attend le backlog B25. */
+export const AUTOMATION_KEYS = ["incident-grouped", "incident-resolved", "source-silent"] as const;
+export const AUTOMATION_STATES = ["active", "dry_run", "disabled"] as const;
 export type GateState = typeof GATE_STATES[number];
 
 /** Rôles qu'un client peut approuver pour son ESN (colonne approved_roles). */
@@ -44,6 +47,8 @@ export interface AdminStore {
   setFreeze(auth: AuthContext, frozen: boolean): Promise<{ cancelledActions: number }>;
   setAutonomy(auth: AuthContext, a: { category: ApprovalCategory; level: 0 | 1 }): Promise<void>;
   setCategoryState(auth: AuthContext, a: { category: SupportCategory; state: GateState; reason: string | null; override: boolean }): Promise<void>;
+  /** Copie de la règle de la plateforme pour CETTE organisation, active, en simulation ou désactivée. */
+  setAutomationState(auth: AuthContext, a: { key: typeof AUTOMATION_KEYS[number]; state: typeof AUTOMATION_STATES[number] }): Promise<void>;
   requestSupportAccess(auth: AuthContext, a: { clientOrgId: string; reason: string; durationMinutes: number }): Promise<{ grantId: string }>;
   approveSupportAccess(auth: AuthContext, grantId: string): Promise<void>;
   revokeSupportAccess(auth: AuthContext, grantId: string): Promise<void>;

@@ -6,7 +6,7 @@ import { ALL_ROLES, NOW_MS, OTHER, rig, VALID_BODY } from "./test_rig.ts";
 import { TEST_ORG } from "../testing.ts";
 import { hashToken } from "./token.ts";
 
-type Expect = { roles: readonly string[]; via: "member" | "any"; mfa: boolean | "si_niveau_1" | "si_direct"; frozen: boolean };
+type Expect = { roles: readonly string[]; via: "member" | "any"; mfa: boolean | "si_niveau_1" | "si_direct" | "si_actif"; frozen: boolean };
 const EXPECTED: Readonly<Record<string, Expect>> = {
   "client.create": { roles: ["partner_admin"], via: "member", mfa: true, frozen: false },
   "invitation.create": { roles: ["partner_admin", "org_admin"], via: "member", mfa: true, frozen: false },
@@ -20,6 +20,7 @@ const EXPECTED: Readonly<Record<string, Expect>> = {
   "org.unfreeze": { roles: ["org_admin", "partner_admin"], via: "any", mfa: true, frozen: true },
   "autonomy.set": { roles: ["org_admin"], via: "member", mfa: "si_niveau_1", frozen: true },
   "category.set_state": { roles: ["org_admin"], via: "member", mfa: "si_direct", frozen: true },
+  "automation.set_state": { roles: ["org_admin", "partner_admin"], via: "any", mfa: "si_actif", frozen: true },
   "support_access.request": { roles: ["super_admin"], via: "member", mfa: true, frozen: false },
   "support_access.approve": { roles: ["org_admin"], via: "member", mfa: true, frozen: false },
   "support_access.revoke": { roles: ["org_admin"], via: "member", mfa: false, frozen: true },
@@ -84,7 +85,7 @@ Deno.test("SEC-04 aucun accès à l'organisation visée : 403, même réponse qu
   assert.equal(r.calls.length, 0);
 });
 
-Deno.test("rôles : pour chaque opération, SEULS les rôles prévus passent (matrice complète 23 opérations × 10 rôles)", async () => {
+Deno.test("rôles : pour chaque opération, SEULS les rôles prévus passent (matrice complète 24 opérations × 10 rôles)", async () => {
   for (const op of ORG_OPS) {
     for (const role of ALL_ROLES) {
       const r = rig();
@@ -121,7 +122,7 @@ Deno.test("SEC-28 arrêt d'urgence : seules les opérations qui RESTREINT l'acc�
     const r = rig();
     // Pour les opérations à niveau variable, on teste la forme qui OUVRE (niveau 1, catégorie directe) : refusée si gelé.
     const res = await r.call(op, bodyFor(op, role), { access: { org_role: role, via: "member", is_frozen: true } });
-    const opensAccess = op === "autonomy.set" || op === "category.set_state";
+    const opensAccess = op === "autonomy.set" || op === "category.set_state" || op === "automation.set_state";
     assert.equal(res.status, EXPECTED[op].frozen && !opensAccess ? 200 : 403, `${op} gelée`);
     if (res.status === 403) assert.equal(res.code, "org_frozen", op);
   }
@@ -136,7 +137,8 @@ Deno.test("second facteur : exigé pour les opérations qui ouvrent ou créent ;
     const role = EXPECTED[op].roles[0];
     const needs = EXPECTED[op].mfa;
     const body = bodyFor(op, role);
-    const needsFor = (b: Record<string, unknown>) => needs === true || (needs === "si_niveau_1" && b.level === 1) || (needs === "si_direct" && b.state === "direct");
+    const needsFor = (b: Record<string, unknown>) =>
+      needs === true || (needs === "si_niveau_1" && b.level === 1) || (needs === "si_direct" && b.state === "direct") || (needs === "si_actif" && b.state === "active");
     for (const [label, mfaAge, ok] of [["sans", null, false], ["ancien", 660, false], ["récent", 300, true]] as const) {
       const r = rig();
       const res = await r.call(op, body, { access: { org_role: role, via: "member" }, mfaAge });
@@ -321,4 +323,22 @@ Deno.test("réponses d'erreur : aucun détail interne (pile, requête, nom de ta
   assert.equal(res.status, 500);
   assert.ok(!/constraint|organizations|secret\.ts|\/srv/.test(res.text), res.text);
   assert.ok(typeof res.json.requestId === "string" || res.text.length > 0);
+});
+
+Deno.test("règles d'automatisation : liste fermée des règles et des états ; couper ou simuler reste possible pendant un arrêt d'urgence", async () => {
+  const r = rig();
+  for (const body of [
+    { key: "suspicious-reset", state: "disabled" },
+    { key: "m365-outage", state: "active" },
+    { key: "__proto__", state: "active" },
+    { key: "incident-grouped", state: "supprimee" },
+    { key: "incident-grouped" },
+  ]) assert.equal((await r.call("automation.set_state", body)).status, 400, JSON.stringify(body));
+  assert.equal(r.calls.length, 0);
+  const frozen = rig();
+  assert.equal((await frozen.call("automation.set_state", { key: "incident-grouped", state: "disabled" }, { access: { is_frozen: true }, mfaAge: null })).status, 200);
+  assert.equal((await frozen.call("automation.set_state", { key: "incident-grouped", state: "dry_run" }, { access: { is_frozen: true }, mfaAge: null })).status, 200);
+  const active = await frozen.call("automation.set_state", { key: "incident-grouped", state: "active" }, { access: { is_frozen: true } });
+  assert.equal(active.status, 403);
+  assert.equal(active.code, "org_frozen");
 });

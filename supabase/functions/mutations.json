@@ -2756,5 +2756,60 @@
     "  return typeof category === \"string\"\n    ? `« ${category} »`"
    ]
   ]
+ },
+ {
+  "label": "admin règles : activer une règle sans second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "    mfa: (i: { state: string }) => i.state === \"active\",\n    allowWhenFrozen: true,\n    parse: (b) => ({ key: oneOf(b, \"key\", AUTOMATION_KEYS)",
+    "    mfa: false,\n    allowWhenFrozen: true,\n    parse: (b) => ({ key: oneOf(b, \"key\", AUTOMATION_KEYS)"
+   ]
+  ]
+ },
+ {
+  "label": "admin règles : activer pendant un arrêt d'urgence",
+  "file": "_shared/admin/ops.ts",
+  "expect": "règles d'automatisation : liste fermée",
+  "edits": [
+   [
+    "      if (i.state === \"active\") assertNotFrozen(auth);\n      await deps.store.setAutomationState(auth, i);",
+    "      await deps.store.setAutomationState(auth, i);"
+   ]
+  ]
+ },
+ {
+  "label": "admin règles : une règle verrouillée peut être changée",
+  "file": "_shared/admin/store.ts",
+  "expect": "règles d'automatisation : règle verrouillée",
+  "edits": [
+   [
+    "  if (t.locked === true) throw Errors.conflict(\"Cette règle est verrouillée par la plateforme : elle reste active.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin règles : la simulation reste une règle active",
+  "file": "_shared/admin/store.ts",
+  "expect": "règles d'automatisation : copie",
+  "edits": [
+   [
+    "definition: t.definition, enabled: a.state !== \"disabled\", dry_run: a.state === \"dry_run\",",
+    "definition: t.definition, enabled: a.state !== \"disabled\", dry_run: false,"
+   ]
+  ]
+ },
+ {
+  "label": "admin règles : le modèle est lu sans le filtre « plateforme »",
+  "file": "_shared/admin/store.ts",
+  "expect": "règles d'automatisation : copie",
+  "edits": [
+   [
+    "    .is(\"org_id\", null).eq(\"key\", a.key).maybeSingle();",
+    "    .eq(\"key\", a.key).maybeSingle();"
+   ]
+  ]
  }
 ]

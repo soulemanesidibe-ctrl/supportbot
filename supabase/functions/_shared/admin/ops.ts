@@ -4,7 +4,7 @@
 // Les opérations ne reçoivent jamais d'organisation dans leurs paramètres : elles agissent dans `auth.orgId`, vérifié par la base.
 import { assertNotFrozen, AuthContext, OrgRole } from "../context.ts";
 import { AppError, Errors } from "../errors.ts";
-import { AdminDeps, APPROVABLE_PARTNER_ROLES, APPROVAL_CATEGORIES, ENVIRONMENTS, GATE_STATES, INVITABLE, SUPPORT_CATEGORIES } from "./types.ts";
+import { AdminDeps, APPROVABLE_PARTNER_ROLES, APPROVAL_CATEGORIES, AUTOMATION_KEYS, AUTOMATION_STATES, ENVIRONMENTS, GATE_STATES, INVITABLE, SUPPORT_CATEGORIES } from "./types.ts";
 import { bool, Body, email, int, listOf, oneOf, optionalText, slug, text, uuid } from "./input.ts";
 import { hashToken, isTokenShape } from "./token.ts";
 import { baseOf, ConnectorHttpError } from "../connectors/http.ts";
@@ -179,6 +179,19 @@ export const ADMIN_OPS: ReadonlyMap<string, AdminOp<unknown>> = new Map<string, 
       if (i.state === "direct") assertNotFrozen(auth);
       await deps.store.setCategoryState(auth, i);
       return { category: i.category, state: i.state };
+    },
+  })],
+  ["automation.set_state", defineOp({
+    // Règles d'automatisation (spec § 12) : activer (effets réels : messages aux salariés, tickets) exige un second facteur ; mettre en
+    // simulation ou couper, non, et reste possible pendant un arrêt d'urgence. Une règle verrouillée ne se change pas (la base refuse aussi).
+    scope: "org", roles: ["org_admin", "partner_admin"], via: "any",
+    mfa: (i: { state: string }) => i.state === "active",
+    allowWhenFrozen: true,
+    parse: (b) => ({ key: oneOf(b, "key", AUTOMATION_KEYS), state: oneOf(b, "state", AUTOMATION_STATES) }),
+    async run(auth, i: { key: typeof AUTOMATION_KEYS[number]; state: typeof AUTOMATION_STATES[number] }, deps) {
+      if (i.state === "active") assertNotFrozen(auth);
+      await deps.store.setAutomationState(auth, i);
+      return { key: i.key, state: i.state };
     },
   })],
 
