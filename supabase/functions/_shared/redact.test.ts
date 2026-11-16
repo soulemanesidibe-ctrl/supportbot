@@ -30,6 +30,8 @@ Deno.test("redactText : JWT, Bearer, clés Supabase et clés privées", () => {
 Deno.test("redactText : mots de passe dits en clair par un salarié (règle n° 2)", () => {
   assert.ok(!redactText("Mon mot de passe est Azerty123 merci").includes("Azerty123"));
   assert.ok(!redactText("my password is hunter2").includes("hunter2"));
+  assert.ok(!redactText("Mon mot de passe actuel est Azerty123").includes("Azerty123"), "« actuel » entre les deux");
+  assert.ok(!redactText("mon mot de passe temporaire est Soleil42x").includes("Soleil42x"), "« temporaire » entre les deux");
   assert.ok(!redactText("mdp: Soleil2026!").includes("Soleil2026"));
   assert.ok(!redactText("https://exemple.test/api?token=abc123def&x=1").includes("abc123def"));
   assert.ok(!redactText("postgres://admin:" + "P4ssw0rd" + "@db.exemple.test/x").includes("P4ssw0rd"));

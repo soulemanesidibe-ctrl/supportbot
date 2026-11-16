@@ -8,6 +8,7 @@ export type ErrorCode =
   | "unauthorized"
   | "forbidden"
   | "not_found"
+  | "method_not_allowed"
   | "conflict"
   | "mfa_required"
   | "org_frozen"
@@ -35,6 +36,7 @@ export const Errors = {
   unauthorized: () => new AppError(401, "unauthorized", "Authentification requise."),
   forbidden: () => new AppError(403, "forbidden", "Accès refusé."),
   notFound: () => new AppError(404, "not_found", "Introuvable."),
+  methodNotAllowed: () => new AppError(405, "method_not_allowed", "Méthode non autorisée."),
   conflict: (message = "Cette opération est en conflit avec l'état actuel.") => new AppError(409, "conflict", message),
   mfaRequired: () => new AppError(403, "mfa_required", "Une vérification par second facteur récente est requise."),
   orgFrozen: () =>

@@ -64,3 +64,32 @@ jobs:
       - name: Tests unitaires
         working-directory: supabase/functions
         run: deno task test
+
+  mutations:
+    name: Test de mutation des fonctions (chaque défense cassée doit être vue)
+    # Plus long : avant toute fusion, chaque semaine et à la demande, pas à chaque envoi de branche.
+    if: ${{ github.event_name != 'push' }}
+    needs: deno
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer Node.js (pour l'installation épinglée de Deno)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Installer Deno (version et empreintes verrouillées, sans scripts)
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix security/tools/deno
+          echo "$GITHUB_WORKSPACE/security/tools/deno/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Casser chaque défense et vérifier que le bon test échoue
+        run: supabase/functions/mutations.sh

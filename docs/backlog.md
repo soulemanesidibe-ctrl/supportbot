@@ -13,6 +13,7 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B08 | Chaîne de hachage du journal d'audit, ancrée hors de la base (condensat publié chaque jour dans un stockage séparé) : rend vérifiable que l'éditeur n'a pas modifié le journal. Complète B05 | J2 : l'insertion seule protège contre l'application, pas contre le propriétaire du projet | Avant le premier client payant |
 | B09 | Étudier le mode d'accès d'un technicien d'ESN au tenant Microsoft 365 d'un client réel (GDAP ou compte dans le tenant) et en tirer `docs/permissions-graph.md` | Question Q1 de la spec : la base sait lier un compte Microsoft par technicien, pas encore quel type de compte il sera chez un client | Avant J4 pour le tenant de test ; avant le premier pilote réel pour les clients |
 | B10 | Stocker le durcissement de classe d'une capacité par organisation (le code sait l'appliquer, `effectiveClass`, mais le schéma n'a pas de table pour le conserver) ; à ajouter avec l'écran administrateur client si un pilote en a besoin | J3.4 | J5 ou plus tard |
+| B11 | Chat : réponse en flux (streaming), textes en anglais, rattachement du salarié à l'annuaire (`directory_user_id`), conversation reprise après une longue absence, calibrage du seuil de similarité de la base de connaissance | J3.5 | J5 et J6 |
 | B07 | Publier le rapport Semgrep dans l'onglet « Code scanning » de GitHub (gratuit sur un dépôt public) : demande un job séparé avec `security-events: write` pour garder les permissions minimales | J0 | Avant J6 |
 
 ## Plan des jalons à jour (6 novembre 2026)

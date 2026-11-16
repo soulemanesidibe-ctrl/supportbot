@@ -1,0 +1,310 @@
+[
+ {
+  "label": "orchestrateur : la porte de catégorie est ignorée (réponse publique en mode ombre)",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "MODE OMBRE",
+  "edits": [
+   [
+    "    if (gate === \"direct\") {\n      try {",
+    "    if (true) {\n      try {"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : les indices déterministes de manipulation ne comptent plus",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "INDICES DÉTERMINISTES",
+  "edits": [
+   [
+    "if (triage.manipulation || signals.length > 0) {",
+    "if (triage.manipulation) {"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : le message n'est plus masqué avant stockage et envoi",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "secrets : masqués",
+  "edits": [
+   [
+    "  const clean = redactText(raw);",
+    "  const clean = raw;"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : la sortie du modèle n'est plus contrôlée",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "garde-fous de sortie",
+  "edits": [
+   [
+    "    const check = checkOutput(answer.answer);",
+    "    const check = { ok: true as boolean, violations: [] as string[] };"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : l'arrêt d'urgence n'arrête plus rien",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "arrêt d'urgence",
+  "edits": [
+   [
+    "    if (auth.frozen) {\n      await say(TEXTS.frozen);",
+    "    if (false as boolean) {\n      await say(TEXTS.frozen);"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : une action sur un compte est traitée comme une question",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "action sur un compte",
+  "edits": [
+   [
+    "    if (triage.intent === \"account_action\") {",
+    "    if ((triage.intent as string) === \"jamais\") {"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : accès d'assistance en lecture seule autorisé à parler",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "contexte : un accès d'assistance",
+  "edits": [
+   [
+    "  if (auth.readOnly) throw Errors.readOnly();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : on répond même sans aucune fiche",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "aucune fiche trouvée",
+  "edits": [
+   [
+    "    if (hits.length === 0) {",
+    "    if (hits.length === 0 && false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : un échec de porte n'est plus un mode ombre (échec ouvert)",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "si la porte est illisible",
+  "edits": [
+   [
+    "    let gate: GateState = \"shadow\";",
+    "    let gate: GateState = \"direct\";"
+   ]
+  ]
+ },
+ {
+  "label": "schémas : une source inventée par le modèle est acceptée",
+  "file": "_shared/llm/schemas.ts",
+  "expect": "sortie invalide",
+  "edits": [
+   [
+    "if (typeof s !== \"string\" || !allowedSources.includes(s)) return null;",
+    "if (typeof s !== \"string\") return null;"
+   ]
+  ]
+ },
+ {
+  "label": "gardes de sortie : les liens ne sont plus contrôlés",
+  "file": "_shared/llm/guards.ts",
+  "expect": "chaque sortie dangereuse",
+  "edits": [
+   [
+    "    if (host === null || !hostAllowed(host, allowed)) v.add(\"lien_externe\");",
+    "    if (false as boolean) v.add(\"lien_externe\");"
+   ]
+  ]
+ },
+ {
+  "label": "gardes de sortie : les fausses actions annoncées passent",
+  "file": "_shared/llm/guards.ts",
+  "expect": "chaque sortie dangereuse",
+  "edits": [
+   [
+    "  if (ACTION_CLAIM.test(text)) v.add(\"action_pretendue\");",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "gardes de sortie : la fuite d'instructions n'est plus cherchée",
+  "file": "_shared/llm/guards.ts",
+  "expect": "fuite du prompt système",
+  "edits": [
+   [
+    "  if (w.length >= SHINGLE) {",
+    "  if (false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "encadrement : le contenu peut fermer lui-même la balise",
+  "file": "_shared/llm/wrap.ts",
+  "expect": "ne peut pas fermer",
+  "edits": [
+   [
+    "  text = text.replace(/</g, \"‹\").replace(/>/g, \"›\");",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "passerelle : un prompt système non enregistré est accepté",
+  "file": "_shared/llm/gateway.ts",
+  "expect": "validation : prompt système non enregistré",
+  "edits": [
+   [
+    "    if (!isStaticPrompt(req.system)) throw new LlmError(\"bad_request\", \"Le message système doit être un prompt statique enregistré\");",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "passerelle : un rôle « system » dans les messages est accepté",
+  "file": "_shared/llm/gateway.ts",
+  "expect": "validation : prompt système non enregistré",
+  "edits": [
+   [
+    "if ((m.role as string) !== \"user\" && (m.role as string) !== \"assistant\") {",
+    "if (false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "capacités : la classe effective n'est plus contrôlée (une action privilégiée passe)",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "matrice",
+  "edits": [
+   [
+    "  if (effectiveClass(cap, overrides) !== \"autonomous\") throw Errors.forbidden();",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "capacités : la cible « self_only » n'est plus vérifiée",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "cible",
+  "edits": [
+   [
+    "  if (policy === \"self_only\") {",
+    "  if (false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "capacités : une organisation peut assouplir une classe",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "durcissement",
+  "edits": [
+   [
+    "return o && STRICTNESS[o] > STRICTNESS[base] ? o : base;",
+    "return o ?? base;"
+   ]
+  ]
+ },
+ {
+  "label": "capacités : un nom fabriqué (__proto__) est accepté",
+  "file": "_shared/capabilities/call.ts",
+  "expect": "noms fabriqués",
+  "edits": [
+   [
+    "!Object.hasOwn(CAPABILITIES, name)",
+    "false"
+   ]
+  ]
+ },
+ {
+  "label": "auth : la liste de rôles autorisés n'est plus appliquée",
+  "file": "_shared/auth.ts",
+  "expect": "liste de rôles",
+  "edits": [
+   [
+    "  if (roles && !roles.includes(role)) throw Errors.forbidden();",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "auth : un accès d'assistance n'est plus en lecture seule",
+  "file": "_shared/auth.ts",
+  "expect": "même un champ read_only absent",
+  "edits": [
+   [
+    "readOnly: access.read_only === true || access.via === \"support_access\",",
+    "readOnly: access.read_only === true,"
+   ]
+  ]
+ },
+ {
+  "label": "auth : une réponse inattendue de la base est acceptée",
+  "file": "_shared/auth.ts",
+  "expect": "réponse inattendue de la base",
+  "edits": [
+   [
+    "if (!ORG_ROLES.includes(access.org_role as OrgRole) || !VIAS.includes(access.via as AccessVia)) throw Errors.forbidden();",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "auth : le second facteur n'est plus exigé (aal1 accepté)",
+  "file": "_shared/auth.ts",
+  "expect": "requireRecentMfa",
+  "edits": [
+   [
+    "if (auth.aal !== \"aal2\" || auth.mfaAt === null",
+    "if (auth.mfaAt === null"
+   ]
+  ]
+ },
+ {
+  "label": "auth : un secret de tâche planifiée trop court est accepté",
+  "file": "_shared/auth.ts",
+  "expect": "requireCronSecret",
+  "edits": [
+   [
+    "if (!expected || expected.length < 32 || !given",
+    "if (!expected || !given"
+   ]
+  ]
+ },
+ {
+  "label": "contexte : un faux AuthContext (copie) est accepté",
+  "file": "_shared/context.ts",
+  "expect": "AuthContext",
+  "edits": [
+   [
+    "return typeof x === \"object\" && x !== null && MINTED.has(x) && Object.isFrozen(x);",
+    "return typeof x === \"object\" && x !== null;"
+   ]
+  ]
+ },
+ {
+  "label": "db : la clé de service est donnée à un utilisateur sans organisation",
+  "file": "_shared/db.ts",
+  "expect": "sans organisation",
+  "edits": [
+   [
+    "  if (auth.kind === \"user\" && (auth.orgId === null || auth.role === null || auth.userId === null)) throw Errors.forbidden();",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "redact : les mots de passe dits en clair ne sont plus masqués",
+  "file": "_shared/redact.ts",
+  "expect": "mots de passe dits en clair",
+  "edits": [
+   [
+    "  { kind: \"secret\", re: /\\b(mot de passe|password|mdp)\\s+(?:actuel\\s+|temporaire\\s+)?(?:est|is)\\s+\\S+/gi, rep: (_m, k) => `${k} ${MASK}` },",
+    ""
+   ]
+  ]
+ }
+]

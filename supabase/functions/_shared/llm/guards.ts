@@ -6,7 +6,7 @@
 //     pour le technicien et passe la main.
 import { containsSecret } from "../redact.ts";
 import { registeredPromptTexts } from "./prompt_registry.ts";
-import { sanitizeExternal } from "./wrap.ts";
+import { invisibleStats, sanitizeExternal } from "./wrap.ts";
 
 // ------------------------------------------------------------------------------------------------ entrée
 const INPUT_RULES: Array<[string, RegExp]> = [
@@ -23,7 +23,10 @@ const INPUT_RULES: Array<[string, RegExp]> = [
 export function injectionSignals(text: string): string[] {
   const out: string[] = [];
   const clean = sanitizeExternal(text);
-  if (clean.length < text.normalize("NFC").length) out.push("caracteres_invisibles"); // des caractères cachés ont été retirés
+  // Un copier-coller depuis Word ou le web contient souvent un ou deux caractères invisibles : on ne signale que la dissimulation
+  // probable (caractères « tag », inversion du sens de lecture) ou une accumulation inhabituelle.
+  const inv = invisibleStats(text);
+  if (inv.hiding || inv.count >= 5) out.push("caracteres_invisibles");
   for (const [code, re] of INPUT_RULES) if (re.test(clean)) out.push(code);
   return out;
 }

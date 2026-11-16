@@ -26,6 +26,27 @@ function stripControls(s: string): string {
   return out;
 }
 
+export interface InvisibleStats {
+  readonly count: number;
+  /** Caractères « tag » Unicode (utilisés pour cacher du texte) ou de contrôle du sens de lecture (inversion d'affichage). */
+  readonly hiding: boolean;
+}
+
+/** Combien de caractères invisibles contient ce texte, et sont-ils de ceux qu'on utilise pour dissimuler une instruction ? */
+export function invisibleStats(text: string): InvisibleStats {
+  let count = 0;
+  let hiding = false;
+  for (const ch of text.normalize("NFC")) {
+    INVISIBLE.lastIndex = 0;
+    if (INVISIBLE.test(ch)) {
+      count++;
+      const c = ch.codePointAt(0) as number;
+      if ((c >= 0xE0000 && c <= 0xE01EF) || (c >= 0x202A && c <= 0x202E) || (c >= 0x2066 && c <= 0x2069)) hiding = true;
+    }
+  }
+  return { count, hiding };
+}
+
 export function sanitizeExternal(data: string): string {
   return stripControls(String(data).normalize("NFC").replace(INVISIBLE, "")).replace(/\r\n?/g, "\n");
 }
