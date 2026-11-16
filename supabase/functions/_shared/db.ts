@@ -1,6 +1,7 @@
-// Seul point d'accès à la clé service_role, qui CONTOURNE la sécurité par ligne. Deux entrées, aucune autre :
+// Seul point d'accès à la clé service_role, qui CONTOURNE la sécurité par ligne. Entrées, aucune autre :
 //   serviceClient(auth)      : exige un AuthContext authentique (fabriqué par auth.ts après vérification) ;
-//   createAccessResolver()   : réservé à auth.ts, pour demander à la base « quel est le rôle de cet utilisateur ici ? ».
+//   createAccessResolver()   : réservé à auth.ts, pour demander à la base « quel est le rôle de cet utilisateur ici ? » ;
+//   portes ÉTROITES          : un seul appel précis chacune (invitation, débit, source d'alertes, connexion du salarié).
 // Chaque requête porte l'acteur et l'identifiant de requête dans des en-têtes : la base les inscrit au journal d'audit
 // (migration 11), seulement parce que la requête porte la clé service_role (un navigateur ne peut pas les faire croire).
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
@@ -83,6 +84,59 @@ export async function acceptInvitationRpc(
   if (!isAuthContext(auth) || auth.kind !== "user" || auth.userId === null || auth.orgId !== null) throw Errors.forbidden();
   const client = build({ "x-releve-request-id": auth.requestId, "x-releve-actor": auth.userId }, deps);
   return await client.rpc("admin_accept_invitation", { p_user: auth.userId, p_email: a.email, p_token_hash: a.tokenHash });
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Connexion du salarié (fonction employee-auth) : portes ÉTROITES, chacune limitée à UN appel précis.
+// ---------------------------------------------------------------------------------------------------------------
+
+/**
+ * AVANT toute connexion, sans identité : seulement les deux lectures prévues pour l'écran de connexion (migration 17). La première
+ * ne renvoie que le nom et la couleur d'un client activé ; la seconde ne dit que « un code peut partir » (organisation) ou rien.
+ */
+export async function widgetSignInRpc(
+  requestId: string,
+  call: { fn: "widget_public_org"; slug: string } | { fn: "widget_code_allowed"; slug: string; email: string },
+  deps: DbDeps = realDeps,
+): Promise<{ data: unknown; error: unknown }> {
+  const client = build({ "x-releve-request-id": requestId }, deps);
+  if (call.fn === "widget_public_org") return await client.rpc("widget_public_org", { p_slug: call.slug });
+  if (call.fn === "widget_code_allowed") return await client.rpc("widget_code_allowed", { p_slug: call.slug, p_email: call.email });
+  throw Errors.forbidden();
+}
+
+/** Compteur de débit d'une demande de code (sans identité) : seulement les clés « otp: » composées par employee-auth. */
+export async function signInRateRpc(
+  requestId: string,
+  a: { key: string; windowSeconds: number; limit: number },
+  deps: DbDeps = realDeps,
+): Promise<{ data: unknown; error: unknown }> {
+  if (!/^otp:[a-z]:[a-z0-9-]{2,64}$/.test(a.key)) throw Errors.forbidden();
+  return await build({ "x-releve-request-id": requestId }, deps).rpc("rate_limit_hit", { p_key: a.key, p_window_seconds: a.windowSeconds, p_limit: a.limit });
+}
+
+/**
+ * Envoie un code de connexion à une adresse DÉJÀ VÉRIFIÉE dans la liste des salariés (widget_code_allowed). Le compte est créé par
+ * l'API d'administration si besoin (les inscriptions libres sont fermées : config.toml, enable_signup = false), puis le code part
+ * sans jamais créer de compte au passage. Aucune autre opération d'administration n'est exposée.
+ */
+export async function sendEmployeeCode(requestId: string, email: string, deps: DbDeps = realDeps): Promise<void> {
+  const client = build({ "x-releve-request-id": requestId }, deps);
+  const created = await client.auth.admin.createUser({ email, email_confirm: true });
+  // Compte déjà existant : c'est le cas ordinaire à partir de la deuxième connexion.
+  if (created.error && !/already|exist|registered/i.test(String(created.error.message ?? ""))) throw Errors.unavailable();
+  const sent = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (sent.error) throw Errors.unavailable();
+}
+
+/**
+ * Après la connexion par code : rattache LA personne du jeton (jamais une autre) à sa ligne d'annuaire dans l'organisation de
+ * l'adresse du widget. La fonction SQL lit l'adresse dans le compte, vérifie l'annuaire et ne donne que le rôle salarié.
+ */
+export async function employeeLinkRpc(auth: AuthContext, slug: string, deps: DbDeps = realDeps): Promise<{ data: unknown; error: unknown }> {
+  if (!isAuthContext(auth) || auth.kind !== "user" || auth.userId === null || auth.orgId !== null) throw Errors.forbidden();
+  const client = build({ "x-releve-request-id": auth.requestId, "x-releve-actor": auth.userId }, deps);
+  return await client.rpc("widget_employee_link", { p_slug: slug, p_user: auth.userId });
 }
 
 /**

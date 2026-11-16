@@ -1,6 +1,7 @@
 // Edge Function « actions » : validation, refus et exécution des actions de niveau 1 par un technicien. verify_jwt = false (voir
 // supabase/config.toml) : la vérification du jeton et des rôles est faite par requireOrgMember, en première instruction.
 import { createActionsHandler } from "../_shared/actions/handler.ts";
+import { originsFromEnv, withCors } from "../_shared/cors.ts";
 import { limiterFor } from "../_shared/ratelimit.ts";
 import { supabaseActionStore } from "../_shared/actions/store.ts";
 import { connectorFor } from "../_shared/capabilities/registry.ts";
@@ -8,4 +9,4 @@ import { registerConnectors } from "../_shared/connectors/register.ts";
 
 registerConnectors();
 
-Deno.serve(createActionsHandler({ deps: () => ({ store: supabaseActionStore(), connectorFor: (auth, name) => connectorFor(auth, name) }), limit: limiterFor("actions") }));
+Deno.serve(withCors(createActionsHandler({ deps: () => ({ store: supabaseActionStore(), connectorFor: (auth, name) => connectorFor(auth, name) }), limit: limiterFor("actions") }), originsFromEnv()));

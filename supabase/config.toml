@@ -238,7 +238,7 @@ max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+otp_expiry = 600   # code du salarié valable 10 minutes (texte de l'écran de connexion du widget)
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -439,6 +439,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.admin]
+verify_jwt = false
+
+# Connexion du salarié : « org » et « request_code » n'ont pas de jeton ; « link » vérifie le sien (requireUser).
+[functions.employee-auth]
 verify_jwt = false
 
 # Webhook des sources d'alertes : pas de jeton d'utilisateur, la signature HMAC de la source est la seule porte.

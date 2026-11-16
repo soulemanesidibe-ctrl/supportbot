@@ -3013,5 +3013,104 @@
     "if (typeof op !== \"string\") throw Errors.badRequest(\"Opération inconnue.\");"
    ]
   ]
+ },
+ {
+  "label": "connexion salarié : la réponse attend la vérification (durée révélatrice : énumération)",
+  "file": "_shared/employee_auth/handler.ts",
+  "expect": "réponse IDENTIQUE et immédiate",
+  "edits": [
+   [
+    "          deps.defer(codeWork(deps, requestId, slug, email).then(",
+    "          await (codeWork(deps, requestId, slug, email).then("
+   ]
+  ]
+ },
+ {
+  "label": "connexion salarié : un code part sans vérifier l'annuaire",
+  "file": "_shared/employee_auth/handler.ts",
+  "expect": "envoyé seulement si l'annuaire l'autorise",
+  "edits": [
+   [
+    "  if (!(await deps.codeAllowed(requestId, slug, email))) return \"refused\";\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "connexion salarié : l'adresse apparaît en clair dans la clé du compteur",
+  "file": "_shared/employee_auth/handler.ts",
+  "expect": "envoyé seulement si l'annuaire l'autorise",
+  "edits": [
+   [
+    "  const emailKey = `otp:e:${(await sha256Hex(email)).slice(0, 48)}`;",
+    "  const emailKey = `otp:e:${email.replace(/[^a-z0-9-]/g, \"-\").slice(0, 48)}`;"
+   ]
+  ]
+ },
+ {
+  "label": "connexion salarié : plus de limite par adresse",
+  "file": "_shared/employee_auth/handler.ts",
+  "expect": "au-delà d'une limite, ni vérification ni envoi",
+  "edits": [
+   [
+    "  if (!(await deps.hit(requestId, emailKey, CODE_LIMITS.email))) return \"limited\";\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "CORS : toute origine acceptée",
+  "file": "_shared/cors.ts",
+  "expect": "pré-vol et réponse seulement pour une origine autorisée",
+  "edits": [
+   [
+    "    const ok = origin !== null && allowed.has(origin);",
+    "    const ok = origin !== null;"
+   ]
+  ]
+ },
+ {
+  "label": "CORS : liste blanche qui accepte joker et http public",
+  "file": "_shared/cors.ts",
+  "expect": "liste blanche exacte",
+  "edits": [
+   [
+    "    if (ORIGIN.test(o)) out.add(o);",
+    "    if (o) out.add(o);"
+   ]
+  ]
+ },
+ {
+  "label": "porte étroite : n'importe quel compteur modifiable sans identité",
+  "file": "_shared/db.ts",
+  "expect": "compteurs « otp: » seulement",
+  "edits": [
+   [
+    "  if (!/^otp:[a-z]:[a-z0-9-]{2,64}$/.test(a.key)) throw Errors.forbidden();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "porte étroite : l'envoi du code crée des comptes au passage",
+  "file": "_shared/db.ts",
+  "expect": "code SANS création de compte",
+  "edits": [
+   [
+    "options: { shouldCreateUser: false }",
+    "options: { shouldCreateUser: true }"
+   ]
+  ]
+ },
+ {
+  "label": "porte étroite : une fonction quelconque appelable avant connexion",
+  "file": "_shared/db.ts",
+  "expect": "seulement les deux fonctions prévues",
+  "edits": [
+   [
+    "  if (call.fn === \"widget_code_allowed\") return await client.rpc(\"widget_code_allowed\", { p_slug: call.slug, p_email: call.email });\n  throw Errors.forbidden();",
+    "  return await client.rpc(call.fn, { p_slug: call.slug, p_email: (call as { email?: string }).email });"
+   ]
+  ]
  }
 ]
