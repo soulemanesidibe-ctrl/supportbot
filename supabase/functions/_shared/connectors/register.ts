@@ -7,6 +7,7 @@
 import { registerConnectorFactory } from "../capabilities/registry.ts";
 import { DemoConnector } from "./demo.ts";
 import { GlpiConnector } from "./glpi.ts";
+import { M365Connector } from "./m365.ts";
 import { supabaseSecretPort, SecretPort } from "./secrets.ts";
 
 export interface RegisterOptions {
@@ -14,6 +15,7 @@ export interface RegisterOptions {
   secrets?: SecretPort;
   allowedSuffixes?: readonly string[];
   allowDemo?: boolean;
+  m365AppCredentials?: () => { clientId: string; clientSecret: string } | null;
 }
 
 /** « .a.fr, B.cloud » → [".a.fr", "b.cloud"] ; tout ce qui n'a pas la forme d'un domaine est ignoré. */
@@ -26,6 +28,14 @@ export function registerConnectors(opts: RegisterOptions = {}): void {
   const allowedSuffixes = opts.allowedSuffixes ?? parseSuffixes(Deno.env.get("CONNECTOR_ALLOWED_HOST_SUFFIXES"));
   registerConnectorFactory("glpi", (row, auth) =>
     new GlpiConnector(row, { secret: () => secrets.get(auth, row.id), http: { fetch: opts.fetch, allowedSuffixes } }));
+  // Microsoft 365 : l'identifiant et le secret de l'application Relève (un seul couple pour tous les clients) sont lus au moment de
+  // l'appel, dans les secrets de la fonction. L'application n'a que des permissions de LECTURE ; les écritures utilisent le jeton délégué.
+  const appCredentials = opts.m365AppCredentials ?? (() => {
+    const clientId = Deno.env.get("MS_APP_CLIENT_ID");
+    const clientSecret = Deno.env.get("MS_APP_CLIENT_SECRET");
+    return clientId && clientSecret ? { clientId, clientSecret } : null;
+  });
+  registerConnectorFactory("m365", (row) => new M365Connector(row, { appCredentials, http: { fetch: opts.fetch } }));
   const allowDemo = opts.allowDemo ?? Deno.env.get("RELEVE_ALLOW_DEMO_CONNECTOR") === "1";
   if (allowDemo) registerConnectorFactory("demo", (row) => new DemoConnector(row.id));
 }

@@ -43,6 +43,8 @@ export interface ActionRigScript {
   refuseExecuting?: Error;
   nowSeconds?: number;
   result?: unknown;
+  /** Secret que le connecteur dépose dans le canal à usage unique (mot de passe temporaire). */
+  secret?: string;
 }
 
 export function makeActionRig(script: ActionRigScript = {}): ActionRig {
@@ -78,8 +80,9 @@ export function makeActionRig(script: ActionRigScript = {}): ActionRig {
   const connector = {
     id: "conn-m365", type: "m365", environment: "test",
     capabilities: () => caps,
-    invokeCapability: (name: string, params: unknown, ctx: unknown) => {
+    invokeCapability: (name: string, params: unknown, ctx: { deliverSecret?: (s: { kind: "temporary_password"; value: string }) => void }) => {
       calls.invoked.push({ name, params, ctx });
+      if (script.secret) ctx.deliverSecret?.({ kind: "temporary_password", value: script.secret });
       return script.connectorFails ? Promise.reject(script.connectorFails) : Promise.resolve(script.result ?? { ok: true, temporaryPasswordDeliveredTo: "technician" });
     },
     health: () => Promise.resolve({ ok: true, checkedAt: "2026-11-16T00:00:00Z" }),

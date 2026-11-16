@@ -2,7 +2,7 @@
 // CE humain. La machine à états, l'empreinte, l'éligibilité du valideur et l'interdiction de s'auto-valider sont imposées PAR LA BASE
 // (déclencheur action_requests_guard) : ce code ne les réécrit pas, il les respecte et traduit leurs refus.
 import type { AuthContext } from "../context.ts";
-import type { PrivilegedCapability } from "../capabilities/types.ts";
+import type { OneTimeSecret, PrivilegedCapability } from "../capabilities/types.ts";
 
 export type ActionStatus = "pending_approval" | "approved" | "executing" | "succeeded" | "failed" | "unknown" | "rejected" | "expired" | "cancelled";
 export type IdentityMethod = "callback" | "manager_confirmation" | "in_person";
@@ -76,4 +76,6 @@ export class ConnectorError extends Error {
 export interface ActionOutcome {
   readonly actionId: string;
   readonly status: "succeeded" | "failed" | "unknown";
+  /** Secret à usage unique pour le technicien qui valide (mot de passe temporaire) : présent seulement dans CETTE réponse. */
+  readonly oneTimeSecret?: OneTimeSecret;
 }

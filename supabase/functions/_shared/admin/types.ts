@@ -50,7 +50,12 @@ export interface AdminStore {
   createDelegation(auth: AuthContext, a: { delegatorId: string; delegateId: string; categories: readonly ApprovalCategory[]; days: number }): Promise<{ delegationId: string }>;
   revokeDelegation(auth: AuthContext, a: { delegationId: string; ownOnly: boolean }): Promise<void>;
   qualifyConnector(auth: AuthContext, a: { connectorId: string; environment: typeof ENVIRONMENTS[number] }): Promise<void>;
-  createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string }): Promise<{ connectorId: string }>;
+  createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string } | { type: "m365"; name: string; tenantId: string }): Promise<{ connectorId: string }>;
+  /** Tenant d'un connecteur Microsoft 365 DE CETTE organisation, ou null. */
+  microsoftTenantOf(auth: AuthContext, connectorId: string): Promise<string | null>;
+  /** Lie le compte Microsoft (déjà vérifié par Microsoft) de la personne du contexte, et d'elle seule. */
+  linkMicrosoftIdentity(auth: AuthContext, a: { connectorId: string; tenantId: string; objectId: string; upn: string }): Promise<void>;
+  unlinkMicrosoftIdentity(auth: AuthContext, connectorId: string): Promise<void>;
   setConnectorStatus(auth: AuthContext, connectorId: string, a: { status: "ok" | "error"; error: string | null }): Promise<void>;
 }
 
@@ -65,6 +70,8 @@ export interface AdminDeps {
   secrets: SecretPort;
   /** Test de connexion d'un connecteur de l'organisation. */
   connectors: { health(auth: AuthContext, connectorId: string): Promise<{ ok: boolean; detail?: string }> };
+  /** Vérification d'un jeton délégué Microsoft par Microsoft lui-même (/me) : tenant, identifiant d'objet, nom d'utilisateur. */
+  microsoft: { verify(token: string, tenantId: string): Promise<{ tenantId: string; objectId: string; upn: string }> };
   /** Domaines autorisés pour les serveurs de connecteurs (liste blanche facultative). */
   allowedHostSuffixes: readonly string[];
 }

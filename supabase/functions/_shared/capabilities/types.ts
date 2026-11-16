@@ -178,7 +178,14 @@ export interface InvocationContext {
     | { kind: "human"; userId: string; delegatedToken: string; viaDelegationId?: string };
   readonly actionRequestId?: string;
   readonly idempotencyKey?: string;
+  /**
+   * Canal À USAGE UNIQUE vers le technicien qui valide (mot de passe temporaire). Le connecteur y dépose le secret ; l'exécuteur le
+   * transmet dans la réponse à CE technicien et nulle part ailleurs : jamais stocké, journalisé, ni inclus dans le résultat de l'action.
+   */
+  readonly deliverSecret?: (secret: OneTimeSecret) => void;
 }
+
+export interface OneTimeSecret { readonly kind: "temporary_password"; readonly value: string }
 
 export interface ConnectorHealth { ok: boolean; checkedAt: string; detail?: string }
 

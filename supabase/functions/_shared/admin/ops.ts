@@ -3,7 +3,7 @@
 // l'accès : geler, révoquer, passer au niveau 0, fermer une catégorie). Le handler applique ces déclarations avant d'exécuter.
 // Les opérations ne reçoivent jamais d'organisation dans leurs paramètres : elles agissent dans `auth.orgId`, vérifié par la base.
 import { assertNotFrozen, AuthContext, OrgRole } from "../context.ts";
-import { Errors } from "../errors.ts";
+import { AppError, Errors } from "../errors.ts";
 import { AdminDeps, APPROVABLE_PARTNER_ROLES, APPROVAL_CATEGORIES, ENVIRONMENTS, GATE_STATES, INVITABLE, SUPPORT_CATEGORIES } from "./types.ts";
 import { bool, Body, email, int, listOf, oneOf, optionalText, slug, text, uuid } from "./input.ts";
 import { hashToken, isTokenShape } from "./token.ts";
@@ -279,6 +279,52 @@ export const ADMIN_OPS: ReadonlyMap<string, AdminOp<unknown>> = new Map<string, 
       const h = await deps.connectors.health(auth, i.connectorId);
       await deps.store.setConnectorStatus(auth, i.connectorId, { status: h.ok ? "ok" : "error", error: h.ok ? null : String(h.detail ?? "unavailable").slice(0, 40) });
       return { status: h.ok ? "ok" : "error", detail: h.ok ? null : h.detail ?? "unavailable" };
+    },
+  })],
+
+  // ---------------------------------------------------------------- Microsoft 365 : tenant du client, puis compte de chaque technicien (T12)
+  ["connector.create_m365", defineOp({
+    // SEC-30 : aucune connexion Microsoft 365 avant l'activation du client par son administrateur (la base le refuse aussi).
+    scope: "org", roles: ["org_admin", "partner_admin"], via: "any", mfa: true, allowWhenFrozen: false,
+    parse: (b) => ({ name: text(b, "name", 2, 80), tenantId: uuid(b, "tenantId") }),
+    async run(auth, i: { name: string; tenantId: string }, deps) {
+      if (!auth.activated) throw Errors.notActivated();
+      const { connectorId } = await deps.store.createConnector(auth, { type: "m365", name: i.name, tenantId: i.tenantId });
+      const h = await deps.connectors.health(auth, connectorId).catch(() => ({ ok: false, detail: "unavailable" }));
+      await deps.store.setConnectorStatus(auth, connectorId, { status: h.ok ? "ok" : "error", error: h.ok ? null : String(h.detail ?? "unavailable").slice(0, 40) });
+      return { connectorId, status: h.ok ? "ok" : "error", detail: h.ok ? null : h.detail ?? "unavailable" };
+    },
+  })],
+  ["microsoft.link", defineOp({
+    // Chacun lie SON compte : le jeton est vérifié par Microsoft, puis seul le lien (tenant, objet, nom d'utilisateur) est conservé.
+    scope: "org", roles: VALIDATORS, via: "any", mfa: true, allowWhenFrozen: false,
+    parse: (b) => {
+      const t = b.microsoftToken;
+      if (typeof t !== "string" || t.length < 20 || t.length > 6000) throw Errors.badRequest("Authentification Microsoft requise.");
+      return { connectorId: uuid(b, "connectorId"), token: t };
+    },
+    async run(auth, i: { connectorId: string; token: string }, deps) {
+      const tenant = await deps.store.microsoftTenantOf(auth, i.connectorId);
+      if (tenant === null) throw Errors.notFound();
+      let identity: { tenantId: string; objectId: string; upn: string };
+      try {
+        identity = await deps.microsoft.verify(i.token, tenant);
+      } catch (e) {
+        if (e instanceof ConnectorHttpError && (e.kind === "auth" || e.kind === "rejected")) {
+          throw new AppError(403, "forbidden", "Ce compte Microsoft ne peut pas être lié : il doit être le vôtre et appartenir au tenant du client.");
+        }
+        throw Errors.unavailable();
+      }
+      await deps.store.linkMicrosoftIdentity(auth, { connectorId: i.connectorId, ...identity });
+      return { linked: true, upn: identity.upn };
+    },
+  })],
+  ["microsoft.unlink", defineOp({
+    scope: "org", roles: VALIDATORS, via: "any", mfa: false, allowWhenFrozen: true,
+    parse: (b) => ({ connectorId: uuid(b, "connectorId") }),
+    async run(auth, i: { connectorId: string }, deps) {
+      await deps.store.unlinkMicrosoftIdentity(auth, i.connectorId);
+      return { linked: false };
     },
   })],
 ]);

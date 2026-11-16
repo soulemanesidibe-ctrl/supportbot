@@ -78,3 +78,18 @@ Deno.test("requestJson : un GET ne porte jamais de corps ; un corps est sériali
   assert.equal(seen?.body, JSON.stringify({ input: { name: "x" } }));
   assert.equal((seen?.headers as Record<string, string>)["content-type"], "application/json");
 });
+
+Deno.test("requestJson : PATCH et DELETE ; un DELETE n'a pas de corps ; un formulaire n'est permis qu'en POST et jamais avec un corps JSON", async () => {
+  const seen: RequestInit[] = [];
+  const f = ((_u: string, i: RequestInit) => { seen.push(i); return Promise.resolve(new Response(null, { status: 204 })); }) as unknown as typeof fetch;
+  await requestJson("https://g.exemple.fr/", { method: "PATCH", body: { accountEnabled: true } }, { fetch: f });
+  await requestJson("https://g.exemple.fr/", { method: "DELETE" }, { fetch: f });
+  assert.deepEqual(seen.map((s) => s.method), ["PATCH", "DELETE"]);
+  assert.equal(await kindAsync(requestJson("https://g.exemple.fr/", { method: "DELETE", body: {} }, { fetch: f })), "config");
+  assert.equal(await kindAsync(requestJson("https://g.exemple.fr/", { method: "GET", form: { a: "1" } }, { fetch: f })), "config");
+  assert.equal(await kindAsync(requestJson("https://g.exemple.fr/", { method: "POST", form: { a: "1" }, body: {} }, { fetch: f })), "config");
+  const posted: RequestInit[] = [];
+  await requestJson("https://g.exemple.fr/", { method: "POST", form: { client_id: "a b", scope: "https://graph.microsoft.com/.default" } }, { fetch: ((_u: string, i: RequestInit) => { posted.push(i); return Promise.resolve(json({})); }) as unknown as typeof fetch });
+  assert.equal(posted[0].body, "client_id=a+b&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default", "encodé par la bibliothèque, valeurs hostiles comprises");
+  assert.equal((posted[0].headers as Record<string, string>)["content-type"], "application/x-www-form-urlencoded");
+});

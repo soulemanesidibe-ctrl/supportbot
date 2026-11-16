@@ -11,7 +11,7 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 
 echo "== témoin"
 cp -r "$ROOT/supabase/functions" "$WORK/ctl"
-if ! (cd "$WORK/ctl" && deno test --no-prompt --no-check --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES >/dev/null 2>&1); then
+if ! (cd "$WORK/ctl" && deno test --no-prompt --no-check --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET >/dev/null 2>&1); then
   echo "TÉMOIN EN ÉCHEC : le banc est cassé, les mutations ne prouveraient rien."; exit 2
 fi
 echo "témoin : tests OK"
@@ -39,7 +39,7 @@ for i, m in enumerate(muts, 1):
     if invalid:
         continue
     open(path, 'w', encoding='utf-8').write(src)
-    r = subprocess.run(['deno', 'test', '--no-prompt', '--no-check', '--allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES'],
+    r = subprocess.run(['deno', 'test', '--no-prompt', '--no-check', '--allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET'],
                        cwd=d, capture_output=True, text=True)
     out = ansi.sub('', r.stdout + r.stderr)
     failed = re.findall(r'^(.*?) \.\.\. FAILED', out, re.M)

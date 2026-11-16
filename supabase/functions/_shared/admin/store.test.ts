@@ -255,3 +255,46 @@ Deno.test("connecteurs : le statut est écrit pour l'organisation du contexte se
   assert.deepEqual(Object.keys(p).sort(), ["last_error", "last_sync_at", "status"]);
   assert.equal(await codeOf(store(() => ok([])).s.setConnectorStatus(auth, OTHER, { status: "ok", error: null })), "not_found");
 });
+
+Deno.test("Microsoft 365 : tenant lu pour CE connecteur de CETTE organisation ; création avec le tenant en colonne et une configuration vide", async () => {
+  const auth = await makeAuth({ org_role: "org_admin" });
+  const { s, ops } = store(() => ({ data: { tenant_id: "11111111-2222-4333-8444-555555555555", id: "c" }, error: null }));
+  assert.equal(await s.microsoftTenantOf(auth, OTHER), "11111111-2222-4333-8444-555555555555");
+  assert.ok(has(ops[0], "eq", "id", OTHER) && has(ops[0], "eq", "org_id", TEST_ORG) && has(ops[0], "eq", "type", "m365"));
+  await s.createConnector(auth, { type: "m365", name: "M365", tenantId: "11111111-2222-4333-8444-555555555555" });
+  assert.deepEqual(ops[1].payload, { org_id: TEST_ORG, type: "m365", name: "M365", status: "draft", config: {}, tenant_id: "11111111-2222-4333-8444-555555555555" });
+  assert.equal(await store(() => ({ data: null, error: null })).s.microsoftTenantOf(auth, OTHER), null);
+  assert.equal(fail({ code: "P0001", message: "Microsoft 365 ne peut pas être connecté avant l'activation du client par son administrateur (SEC-30)" }).code, "not_activated");
+});
+
+Deno.test("Microsoft 365 : le lien est TOUJOURS celui de la personne du contexte ; même compte = mise à jour ; autre compte actif = conflit ; ancien lien révoqué = remplacé", async () => {
+  const auth = await makeAuth({ org_role: "org_technician" });
+  const id = { connectorId: OTHER, tenantId: "t", objectId: "obj-1", upn: "tech@c.fr" };
+  const fresh = store((op) => (op.terminal === "maybeSingle" ? { data: null, error: null } : ok()));
+  await fresh.s.linkMicrosoftIdentity(auth, id);
+  assert.ok(has(fresh.ops[0], "eq", "user_id", TEST_USER) && has(fresh.ops[0], "eq", "org_id", TEST_ORG) && has(fresh.ops[0], "eq", "connector_id", OTHER));
+  assert.deepEqual(fresh.ops[1].payload, { org_id: TEST_ORG, user_id: TEST_USER, connector_id: OTHER, tenant_id: "t", object_id: "obj-1", upn: "tech@c.fr" });
+
+  const same = store((op) => (op.terminal === "maybeSingle" ? { data: { id: "row", object_id: "obj-1", revoked_at: "2026-01-01T00:00:00Z" }, error: null } : ok()));
+  await same.s.linkMicrosoftIdentity(auth, id);
+  assert.equal(same.ops[1].method, "update");
+  assert.equal((same.ops[1].payload as { revoked_at: unknown }).revoked_at, null);
+  assert.ok(has(same.ops[1], "eq", "id", "row") && has(same.ops[1], "eq", "user_id", TEST_USER));
+
+  const other = store((op) => (op.terminal === "maybeSingle" ? { data: { id: "row", object_id: "obj-2", revoked_at: null }, error: null } : ok()));
+  assert.equal(await codeOf(other.s.linkMicrosoftIdentity(auth, id)), "conflict");
+  assert.equal(other.ops.length, 1, "rien n'est écrit");
+
+  const old = store((op) => (op.terminal === "maybeSingle" ? { data: { id: "row", object_id: "obj-2", revoked_at: "2026-01-01T00:00:00Z" }, error: null } : ok()));
+  await old.s.linkMicrosoftIdentity(auth, id);
+  assert.deepEqual(old.ops.map((o) => o.method), ["select", "delete", "insert"]);
+  assert.ok(old.ops[1].filters.some(([k, c]) => k === "not" && c === "revoked_at"), "on ne supprime qu'un lien RÉVOQUÉ");
+});
+
+Deno.test("Microsoft 365 : délier = seulement le lien actif de la personne du contexte ; aucun lien = introuvable", async () => {
+  const auth = await makeAuth({ org_role: "org_technician" });
+  const { s, ops } = store(() => ok());
+  await s.unlinkMicrosoftIdentity(auth, OTHER);
+  assert.ok(has(ops[0], "eq", "user_id", TEST_USER) && has(ops[0], "eq", "connector_id", OTHER) && has(ops[0], "eq", "org_id", TEST_ORG) && has(ops[0], "is", "revoked_at", null));
+  assert.equal(await codeOf(store(() => ok([])).s.unlinkMicrosoftIdentity(auth, OTHER)), "not_found");
+});

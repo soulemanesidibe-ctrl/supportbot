@@ -35,6 +35,9 @@ const KNOWN_REFUSALS: ReadonlyArray<readonly [string, () => AppError]> = [
   ["droits insuffisants", () => Errors.forbidden()],
   ["seul un administrateur", () => Errors.forbidden()],
   ["en attente pour", () => Errors.conflict("Une invitation est déjà en attente pour cette adresse et ce rôle.")],
+  ["avant l'activation", () => Errors.notActivated()],
+  ["technicien habilité", () => Errors.forbidden()],
+  ["autre tenant", () => Errors.conflict("Ce compte Microsoft appartient à un autre tenant que celui du client.")],
 ];
 
 /** Traduit une erreur de la base en erreur publique. Un code inconnu ou une panne donne « indisponible » (échec fermé). */
@@ -245,11 +248,13 @@ async function qualifyConnector(auth: AuthContext, a: { connectorId: string; env
   touched(data, Errors.notFound());
 }
 
-async function createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string }, deps?: DbDeps) {
-  // La configuration ne contient QUE l'adresse du serveur : la base refuse tout nom de clé qui ressemble à un secret.
-  const { data, error } = await serviceClient(auth, deps).from("connectors").insert({
-    org_id: orgOf(auth), type: a.type, name: a.name, status: "draft", config: { base_url: a.baseUrl },
-  }).select("id").single();
+async function createConnector(auth: AuthContext, a: { type: "glpi"; name: string; baseUrl: string } | { type: "m365"; name: string; tenantId: string }, deps?: DbDeps) {
+  // La configuration ne contient QUE l'adresse du serveur (GLPI) ou rien (Microsoft 365, dont le tenant a sa colonne) : la base refuse
+  // tout nom de clé qui ressemble à un secret.
+  const row: Row = a.type === "glpi"
+    ? { org_id: orgOf(auth), type: a.type, name: a.name, status: "draft", config: { base_url: a.baseUrl } }
+    : { org_id: orgOf(auth), type: a.type, name: a.name, status: "draft", config: {}, tenant_id: a.tenantId };
+  const { data, error } = await serviceClient(auth, deps).from("connectors").insert(row).select("id").single();
   if (error && (error as Row).code === "23505") throw Errors.conflict("Un connecteur porte déjà ce nom.");
   if (error || !data) throw error ? fail(error) : Errors.unavailable();
   return { connectorId: (data as Row).id as string };
@@ -259,6 +264,47 @@ async function setConnectorStatus(auth: AuthContext, connectorId: string, a: { s
   const { data, error } = await serviceClient(auth, deps).from("connectors")
     .update({ status: a.status, last_error: a.error, last_sync_at: nowIso() })
     .eq("id", connectorId).eq("org_id", orgOf(auth)).select("id");
+  if (error) throw fail(error);
+  touched(data, Errors.notFound());
+}
+
+async function microsoftTenantOf(auth: AuthContext, connectorId: string, deps?: DbDeps): Promise<string | null> {
+  const { data, error } = await serviceClient(auth, deps).from("connectors").select("tenant_id")
+    .eq("id", connectorId).eq("org_id", orgOf(auth)).eq("type", "m365").maybeSingle();
+  if (error) throw Errors.unavailable();
+  const t = (data as Row | null)?.tenant_id;
+  return typeof t === "string" ? t : null;
+}
+
+async function linkMicrosoftIdentity(auth: AuthContext, a: { connectorId: string; tenantId: string; objectId: string; upn: string }, deps?: DbDeps): Promise<void> {
+  const db = serviceClient(auth, deps);
+  const org = orgOf(auth);
+  const user = userOf(auth); // TOUJOURS la personne du contexte : on ne lie jamais le compte d'un autre
+  const existing = await db.from("microsoft_identities").select("id, object_id, revoked_at")
+    .eq("user_id", user).eq("connector_id", a.connectorId).eq("org_id", org).maybeSingle();
+  if (existing.error) throw Errors.unavailable();
+  const row = existing.data as Row | null;
+  if (row && row.object_id === a.objectId) {
+    const { error } = await db.from("microsoft_identities").update({ upn: a.upn, tenant_id: a.tenantId, linked_at: nowIso(), revoked_at: null })
+      .eq("id", row.id).eq("user_id", user).eq("org_id", org);
+    if (error) throw fail(error);
+    return;
+  }
+  if (row && row.revoked_at === null) throw Errors.conflict("Un autre compte Microsoft est déjà lié : déliez-le d'abord.");
+  if (row) {
+    // Ancien lien révoqué vers un AUTRE compte : on le retire pour en créer un nouveau (le lien est immuable, la base le garantit).
+    const { error } = await db.from("microsoft_identities").delete().eq("id", row.id).eq("user_id", user).eq("org_id", org).not("revoked_at", "is", null);
+    if (error) throw fail(error);
+  }
+  const { error } = await db.from("microsoft_identities").insert({
+    org_id: org, user_id: user, connector_id: a.connectorId, tenant_id: a.tenantId, object_id: a.objectId, upn: a.upn,
+  });
+  if (error) throw fail(error);
+}
+
+async function unlinkMicrosoftIdentity(auth: AuthContext, connectorId: string, deps?: DbDeps): Promise<void> {
+  const { data, error } = await serviceClient(auth, deps).from("microsoft_identities").update({ revoked_at: nowIso() })
+    .eq("user_id", userOf(auth)).eq("connector_id", connectorId).eq("org_id", orgOf(auth)).is("revoked_at", null).select("id");
   if (error) throw fail(error);
   touched(data, Errors.notFound());
 }
@@ -286,5 +332,8 @@ export function supabaseAdminStore(deps?: DbDeps): AdminStore {
     qualifyConnector: (auth, a) => qualifyConnector(auth, a, deps),
     createConnector: (auth, a) => createConnector(auth, a, deps),
     setConnectorStatus: (auth, id, a) => setConnectorStatus(auth, id, a, deps),
+    microsoftTenantOf: (auth, id) => microsoftTenantOf(auth, id, deps),
+    linkMicrosoftIdentity: (auth, a) => linkMicrosoftIdentity(auth, a, deps),
+    unlinkMicrosoftIdentity: (auth, id) => unlinkMicrosoftIdentity(auth, id, deps),
   };
 }

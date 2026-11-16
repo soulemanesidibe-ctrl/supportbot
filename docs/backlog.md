@@ -22,6 +22,11 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B17 | Révocation d'une invitation en attente par celui qui l'a émise (aujourd'hui elle expire seule au bout de 7 jours) | J3.9 | J5 |
 | B18 | GLPI : retrouver le demandeur dans GLPI par son e-mail (aujourd'hui le demandeur est écrit dans le corps du ticket) et renseigner la catégorie ITIL ; à faire après le contrôle de contrat sur une instance réelle | J4.1 | Après le premier essai réel |
 | B19 | Contrôle de contrat GLPI sur l'instance d'essai : statuts, lien « fils de », suivi, colonnes de recherche, activation de l'API, version (10 ou 11 : l'API v2 de GLPI 11 est une alternative) | J4.1 | Au démarrage de l'essai GLPI Cloud (45 jours : pas avant) |
+| B20 | Remplacer le secret client de l'application Relève par un **certificat** (assertion signée) et prévoir sa rotation : un seul secret sert à lire l'annuaire de tous les clients consentants | J4.3 | Avant le premier client payant |
+| B21 | Microsoft 365 : si l'e-mail du salarié n'est pas son nom d'utilisateur (UPN), retrouver le compte par l'attribut `mail` | J4.3 | Premier pilote |
+| B22 | Console : demander le jeton délégué du valideur avec la revendication `ngcmfa` (second facteur de moins de 10 minutes exigé par Microsoft depuis janvier 2026) et redemander l'authentification sur un refus 403 | J4.4 | J5 |
+| B23 | Règle X2 : détecter une méthode « téléphone », « e-mail » ou « code logiciel » ajoutée récemment (Microsoft n'en donne pas la date) par les journaux d'audit « User registered security info » | J4.3 | Avant le niveau 1 chez un pilote |
+| B24 | Règle X1 : voir aussi les rôles reçus par un groupe et les rôles éligibles (PIM) | J4.3 | Avant le niveau 1 chez un pilote |
 | B07 | Publier le rapport Semgrep dans l'onglet « Code scanning » de GitHub (gratuit sur un dépôt public) : demande un job séparé avec `security-events: write` pour garder les permissions minimales | J0 | Avant J6 |
 
 ## Plan des jalons à jour (6 novembre 2026)

@@ -1641,5 +1641,251 @@
     "          body: raw, security: opts.security === true, diagnostic,"
    ]
   ]
+ },
+ {
+  "label": "M365 : une écriture est permise sans jeton délégué de technicien",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "M365 écriture : JAMAIS sans le jeton délégué",
+  "edits": [
+   [
+    "    if (ctx.actor.kind !== \"human\" || typeof ctx.actor.delegatedToken !== \"string\" || !TOKEN_SHAPE.test(ctx.actor.delegatedToken)) {",
+    "    if (false as boolean) {"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : le mot de passe est réinitialisé même sans canal pour le remettre",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "pas de canal = RIEN n'est réinitialisé",
+  "edits": [
+   [
+    "    if (!ctx.deliverSecret) throw new ConnectorError(\"failed\", \"m365:no_secret_channel\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : le mot de passe est remis sans attendre la confirmation de Microsoft",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "ATTENTE de la confirmation",
+  "edits": [
+   [
+    "    if (!(await this.confirmed(location, token))) throw new ConnectorError(\"unknown\", \"m365:not_confirmed\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : l'adresse de suivi de l'opération n'est plus contrôlée (SSRF, fuite du jeton)",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "pas de canal = RIEN n'est réinitialisé",
+  "edits": [
+   [
+    "    if (!location.startsWith(`${GRAPH}/users/`) || !location.includes(\"/authentication/operations/\") || location.length > 500) throw new ConnectorError(\"unknown\", \"m365:bad_location\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : une réinitialisation échouée chez Microsoft est traitée comme non confirmée",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "pas de canal = RIEN n'est réinitialisé",
+  "edits": [
+   [
+    "      if (status === \"failed\") throw new ConnectorError(\"failed\", \"m365:reset_failed\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : un refus avant toute écriture devient incertain",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "un refus AVANT toute écriture est un échec certain",
+  "edits": [
+   [
+    "const certain = state.mutated === 0 && (e.kind === \"auth\"",
+    "const certain = false && (e.kind === \"auth\""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : un tenant qui n'est pas un identifiant est accepté",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "six capacités exactement",
+  "edits": [
+   [
+    "    if (typeof row.tenant_id !== \"string\" || !GUID.test(row.tenant_id)) throw new ConnectorHttpError(\"config\");",
+    "    if (typeof row.tenant_id !== \"string\") throw new ConnectorHttpError(\"config\");"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : le mot de passe est supprimé lors de la nouvelle inscription du second facteur",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "supprime TOUTES les méthodes sauf le mot de passe",
+  "edits": [
+   [
+    "      if (type === \"passwordAuthenticationMethod\") continue;\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : un identifiant de méthode hostile entre dans l'adresse",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "identifiants hostiles et méthodes inconnues",
+  "edits": [
+   [
+    "      if (segment && METHOD_ID.test(id)) deletable.push({ segment, id });",
+    "      if (segment) deletable.push({ segment, id });"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : une méthode impossible à supprimer est ignorée (faux succès)",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "identifiants hostiles et méthodes inconnues",
+  "edits": [
+   [
+    "    if (remaining > 0) throw new ConnectorError(state.mutated > 0 ? \"unknown\" : \"failed\", \"m365:method_not_deletable\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "M365 : tous les codes d'erreur de connexion comptent comme des échecs",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "M365 diagnostic : comptes, méthodes",
+  "edits": [
+   [
+    "      if (!FAILED_SIGNIN_CODES.has(code)) continue;",
+    "      if (code === 0) continue;"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : le rôle d'administration n'est plus signalé",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "M365 diagnostic : comptes, méthodes",
+  "edits": [
+   [
+    "      hasPrivilegedRole: roles.length > 0,",
+    "      hasPrivilegedRole: false,"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : un état de service inconnu est déclaré opérationnel",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "un état inconnu est « incident »",
+  "edits": [
+   [
+    "  return \"incident\";\n}",
+    "  return \"operational\";\n}"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : un jeton d'un autre tenant est envoyé à Microsoft pour lier un compte",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "lien du compte Microsoft : Microsoft vérifie",
+  "edits": [
+   [
+    "  if (tid !== expectedTenant.toLowerCase() || !GUID.test(oid)) throw new ConnectorHttpError(\"auth\", 403);",
+    "  if (!GUID.test(oid)) throw new ConnectorHttpError(\"auth\", 403);"
+   ]
+  ]
+ },
+ {
+  "label": "M365 : le compte renvoyé par Microsoft n'est plus comparé à celui du jeton",
+  "file": "_shared/connectors/m365.ts",
+  "expect": "lien du compte Microsoft : Microsoft vérifie",
+  "edits": [
+   [
+    "  if (id !== oid || !UPN.test(upn)) throw new ConnectorHttpError(\"auth\", 403);",
+    "  if (!UPN.test(upn)) throw new ConnectorHttpError(\"auth\", 403);"
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : la cible peut venir des paramètres libres au lieu de l'action approuvée",
+  "file": "_shared/actions/execute.ts",
+  "expect": "paramètres du connecteur : la CIBLE vient",
+  "edits": [
+   [
+    "  if (action.capability.startsWith(\"user.\")) return { ...own, userRef: action.target_ref };",
+    "  if (action.capability.startsWith(\"user.\")) return { userRef: action.target_ref, ...own };"
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : le mot de passe temporaire est rendu même quand l'action échoue",
+  "file": "_shared/actions/execute.ts",
+  "expect": "mot de passe temporaire : remis UNE fois",
+  "edits": [
+   [
+    "return status === \"succeeded\" && oneTimeSecret ? { actionId: action.id, status, oneTimeSecret } : { actionId: action.id, status };",
+    "return oneTimeSecret ? { actionId: action.id, status, oneTimeSecret } : { actionId: action.id, status };"
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : le mot de passe temporaire est stocké avec le résultat",
+  "file": "_shared/actions/execute.ts",
+  "expect": "mot de passe temporaire : remis UNE fois",
+  "edits": [
+   [
+    "  await deps.store.finish(auth, action.id, status, result);",
+    "  await deps.store.finish(auth, action.id, status, { ...result, oneTimeSecret });"
+   ]
+  ]
+ },
+ {
+  "label": "admin M365 : un tenant se connecte avant l'activation du client (SEC-30)",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SEC-30 : un tenant Microsoft 365",
+  "edits": [
+   [
+    "      if (!auth.activated) throw Errors.notActivated();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin M365 : le tenant attendu vient du corps de la requête",
+  "file": "_shared/admin/ops.ts",
+  "expect": "le tenant vient du CONNECTEUR",
+  "edits": [
+   [
+    "        identity = await deps.microsoft.verify(i.token, tenant);",
+    "        identity = await deps.microsoft.verify(i.token, String((i as { tenantId?: string }).tenantId ?? tenant));"
+   ],
+   [
+    "      return { connectorId: uuid(b, \"connectorId\"), token: t };",
+    "      return { connectorId: uuid(b, \"connectorId\"), token: t, tenantId: b.tenantId };"
+   ]
+  ]
+ },
+ {
+  "label": "admin M365 : un autre compte actif est silencieusement remplacé",
+  "file": "_shared/admin/store.ts",
+  "expect": "le lien est TOUJOURS celui de la personne",
+  "edits": [
+   [
+    "  if (row && row.revoked_at === null) throw Errors.conflict(\"Un autre compte Microsoft est déjà lié : déliez-le d'abord.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin M365 : le lien est filtré par l'utilisateur du corps et non du contexte",
+  "file": "_shared/admin/store.ts",
+  "expect": "délier = seulement le lien actif",
+  "edits": [
+   [
+    "    .eq(\"user_id\", userOf(auth)).eq(\"connector_id\", connectorId).eq(\"org_id\", orgOf(auth)).is(\"revoked_at\", null).select(\"id\");",
+    "    .eq(\"connector_id\", connectorId).eq(\"org_id\", orgOf(auth)).is(\"revoked_at\", null).select(\"id\");"
+   ]
+  ]
  }
 ]

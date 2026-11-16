@@ -50,7 +50,7 @@ Deno.test("connectorById : filtré par identifiant ET organisation du contexte ;
   await assert.rejects(() => connectorById(auth, "c1", foreign.deps), { code: "not_found" });
   const none = fakeSupabase(() => ({ data: null, error: null }));
   await assert.rejects(() => connectorById(auth, "c1", none.deps), { code: "not_found" });
-  const unknownType = fakeSupabase(() => ({ data: row("m365"), error: null }));
+  const unknownType = fakeSupabase(() => ({ data: row("jira"), error: null }));
   await assert.rejects(() => connectorById(auth, "c1", unknownType.deps), { code: "service_unavailable" });
   clearConnectorFactories();
 });

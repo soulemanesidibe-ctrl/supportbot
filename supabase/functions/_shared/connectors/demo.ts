@@ -34,9 +34,9 @@ export class DemoConnector implements Connector {
     return Promise.resolve({ ok: true, checkedAt: this.nowIso(), detail: "connecteur de démonstration" });
   }
 
-  invokeCapability<N extends DemoCapability>(name: N, params: CapabilityIO[N]["params"], _ctx: InvocationContext): Promise<CapabilityIO[N]["result"]> {
+  invokeCapability<N extends DemoCapability>(name: N, params: CapabilityIO[N]["params"], ctx: InvocationContext): Promise<CapabilityIO[N]["result"]> {
     try {
-      return Promise.resolve(this.run(name, params as never) as CapabilityIO[N]["result"]);
+      return Promise.resolve(this.run(name, params as never, ctx) as CapabilityIO[N]["result"]);
     } catch (e) {
       return Promise.reject(e);
     }
@@ -54,7 +54,7 @@ export class DemoConnector implements Connector {
   }
 
   // deno-lint-ignore no-explicit-any
-  private run(name: DemoCapability, p: any): unknown {
+  private run(name: DemoCapability, p: any, ctx: InvocationContext): unknown {
     switch (name) {
       case "ticket.create": {
         const ref = `DEMO-${++this.counter}`;
@@ -78,7 +78,11 @@ export class DemoConnector implements Connector {
       }
       case "user.diagnose": return this.diagnose(String(p.userRef));
       case "tenant.service_health": return [{ service: "Exchange Online", status: "operational" }, { service: "Microsoft Teams", status: "operational" }];
-      case "user.reset_password": return this.privileged(name, p, { ok: true, temporaryPasswordDeliveredTo: "technician" });
+      case "user.reset_password": {
+        const r = this.privileged(name, p, { ok: true, temporaryPasswordDeliveredTo: "technician" });
+        ctx.deliverSecret?.({ kind: "temporary_password", value: "Demo-Temporaire-0000" }); // valeur de démonstration, jamais un vrai mot de passe
+        return r;
+      }
       case "user.unlock":
       case "user.revoke_sessions":
       case "user.mfa_reregister": return this.privileged(name, p, { ok: true });

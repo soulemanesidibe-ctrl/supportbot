@@ -87,15 +87,23 @@ async function readBounded(res: Response): Promise<Uint8Array> {
  * Appel JSON. `url` DOIT être déjà validée (baseOf) ; on la revalide quand même : une faute de composition ne doit jamais ouvrir de porte.
  * Les statuts d'erreur deviennent des erreurs typées ; un 3xx est refusé.
  */
-export async function requestJson(url: string, init: { method: "GET" | "POST" | "PUT"; headers?: Record<string, string>; body?: unknown }, opts: HttpOptions = {}): Promise<JsonResponse> {
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+export async function requestJson(url: string, init: { method: HttpMethod; headers?: Record<string, string>; body?: unknown; form?: Record<string, string> }, opts: HttpOptions = {}): Promise<JsonResponse> {
   validateConnectorUrl(url, opts.allowedSuffixes ?? [], 2000); // adresse de requête : plus longue qu'une adresse de configuration (paramètres de recherche)
   const fetchFn = opts.fetch ?? fetch;
   const headers: Record<string, string> = { accept: "application/json", ...(init.headers ?? {}) };
   let body: string | undefined;
+  if (init.body !== undefined && init.form !== undefined) throw new ConnectorHttpError("config");
   if (init.body !== undefined) {
-    if (init.method === "GET") throw new ConnectorHttpError("config"); // GLPI et la plupart des API refusent un corps sur GET
+    if (init.method === "GET" || init.method === "DELETE") throw new ConnectorHttpError("config"); // GLPI et la plupart des API refusent un corps sur GET
     headers["content-type"] = "application/json";
     body = JSON.stringify(init.body);
+  } else if (init.form !== undefined) {
+    // Formulaire (jeton d'application Microsoft) : encodé ici, jamais composé à la main par l'appelant.
+    if (init.method !== "POST") throw new ConnectorHttpError("config");
+    headers["content-type"] = "application/x-www-form-urlencoded";
+    body = new URLSearchParams(init.form).toString();
   }
   let res: Response;
   try {

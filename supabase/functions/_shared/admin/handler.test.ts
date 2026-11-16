@@ -28,6 +28,9 @@ const EXPECTED: Readonly<Record<string, Expect>> = {
   "connector.qualify": { roles: ["org_admin"], via: "member", mfa: true, frozen: false },
   "connector.create_glpi": { roles: ["org_admin", "partner_admin"], via: "any", mfa: true, frozen: false },
   "connector.test": { roles: ["org_admin", "partner_admin"], via: "any", mfa: false, frozen: false },
+  "connector.create_m365": { roles: ["org_admin", "partner_admin"], via: "any", mfa: true, frozen: false },
+  "microsoft.link": { roles: ["partner_technician", "org_technician", "org_admin"], via: "any", mfa: true, frozen: false },
+  "microsoft.unlink": { roles: ["partner_technician", "org_technician", "org_admin"], via: "any", mfa: false, frozen: true },
 };
 const ORG_OPS = Object.keys(EXPECTED);
 
@@ -81,7 +84,7 @@ Deno.test("SEC-04 aucun accès à l'organisation visée : 403, même réponse qu
   assert.equal(r.calls.length, 0);
 });
 
-Deno.test("rôles : pour chaque opération, SEULS les rôles prévus passent (matrice complète 20 opérations × 10 rôles)", async () => {
+Deno.test("rôles : pour chaque opération, SEULS les rôles prévus passent (matrice complète 23 opérations × 10 rôles)", async () => {
   for (const op of ORG_OPS) {
     for (const role of ALL_ROLES) {
       const r = rig();

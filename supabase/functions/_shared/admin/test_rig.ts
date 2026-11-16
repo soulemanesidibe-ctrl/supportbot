@@ -11,11 +11,13 @@ export const REL = "323e4567-e89b-12d3-a456-426614174000";
 export const OTHER = "423e4567-e89b-12d3-a456-426614174000";
 export const OTHER2 = "523e4567-e89b-12d3-a456-426614174000";
 export const GRANT = "623e4567-e89b-12d3-a456-426614174000";
+export const TENANT_ID = "11111111-2222-4333-8444-555555555555";
+export const MS_OID = "99999999-8888-4777-8666-555555555555";
 
 export const STORE_METHODS = [
   "createClient", "createInvitation", "acceptInvitation", "activateClient", "activeRelationship", "reduceRelationship", "revokeRelationship",
   "createAssignment", "revokeAssignment", "offboardTechnician", "setFreeze", "setAutonomy", "setCategoryState", "requestSupportAccess",
-  "approveSupportAccess", "revokeSupportAccess", "createDelegation", "revokeDelegation", "qualifyConnector", "createConnector", "setConnectorStatus",
+  "approveSupportAccess", "revokeSupportAccess", "createDelegation", "revokeDelegation", "qualifyConnector", "createConnector", "setConnectorStatus", "microsoftTenantOf", "linkMicrosoftIdentity", "unlinkMicrosoftIdentity",
 ] as const satisfies ReadonlyArray<keyof AdminStore>;
 
 export type Call = { method: string; args: unknown[] };
@@ -34,6 +36,7 @@ export function recordingStore(over: Partial<Record<keyof AdminStore, (...a: unk
     requestSupportAccess: { grantId: GRANT },
     createDelegation: { delegationId: OTHER2 },
     createConnector: { connectorId: OTHER },
+    microsoftTenantOf: TENANT_ID,
   };
   const store: Record<string, unknown> = {};
   for (const m of STORE_METHODS) {
@@ -72,12 +75,13 @@ export function authDepsFor(who: Who = {}, seenOrgs: string[] = []): AuthDeps {
   };
 }
 
-export interface RigOptions { health?: { ok: boolean; detail?: string } | Error; secretFails?: boolean; suffixes?: readonly string[] }
+export interface RigOptions { health?: { ok: boolean; detail?: string } | Error; secretFails?: boolean; suffixes?: readonly string[]; verify?: Error }
 
 export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => unknown>> = {}, failTables: string[] = [], limit: Limiter = noLimit, opts: RigOptions = {}) {
   const rec = recordingStore(over);
   const secretCalls: Array<{ connectorId: string; secret: string }> = [];
   const healthCalls: string[] = [];
+  const verifyCalls: Array<{ token: string; tenantId: string }> = [];
   const db = fakeDb(failTables);
   const deps: AdminDeps = {
     store: rec.store,
@@ -92,6 +96,9 @@ export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => 
       health: (_a, id) => { healthCalls.push(id); const h = opts.health ?? { ok: true }; return h instanceof Error ? Promise.reject(h) : Promise.resolve(h); },
     },
     allowedHostSuffixes: opts.suffixes ?? [],
+    microsoft: {
+      verify: (token, tenantId) => { verifyCalls.push({ token, tenantId }); return opts.verify ? Promise.reject(opts.verify) : Promise.resolve({ tenantId, objectId: MS_OID, upn: "tech@client.exemple.fr" }); },
+    },
   };
   const seenOrgs: string[] = [];
   const handlerFor = (who: Who) => createAdminHandler({ deps: () => deps, authDeps: authDepsFor(who, seenOrgs), limit });
@@ -107,7 +114,7 @@ export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => 
     const code = ((json.error ?? {}) as { code?: string }).code;
     return { status: res.status, json, text, code };
   }
-  return { ...rec, db, call, seenOrgs, handlerFor, secretCalls, healthCalls };
+  return { ...rec, db, call, seenOrgs, handlerFor, secretCalls, healthCalls, verifyCalls };
 }
 
 /** Un corps valide pour chaque opération (hors orgId, ajouté par `call`). */
@@ -133,6 +140,9 @@ export const VALID_BODY: Readonly<Record<string, Record<string, unknown>>> = {
   "connector.qualify": { connectorId: OTHER, environment: "test" },
   "connector.create_glpi": { name: "GLPI du cabinet", baseUrl: "https://cabinet.glpi-network.cloud", userToken: "jeton-utilisateur-de-test", appToken: "jeton-application-test" },
   "connector.test": { connectorId: OTHER },
+  "connector.create_m365": { name: "Microsoft 365 du cabinet", tenantId: TENANT_ID },
+  "microsoft.link": { connectorId: OTHER, microsoftToken: ["en", "tete"].join("") + "." + "c".repeat(40) + "." + "signature" },
+  "microsoft.unlink": { connectorId: OTHER },
 };
 
 export const ALL_ROLES = ["super_admin", "platform_support", "partner_admin", "partner_manager", "partner_technician", "org_admin", "org_technician", "org_viewer", "auditor", "end_user"] as const;

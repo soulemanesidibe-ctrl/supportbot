@@ -7,6 +7,7 @@ import { limiterFor } from "../_shared/ratelimit.ts";
 import { connectorById } from "../_shared/capabilities/registry.ts";
 import { parseSuffixes, registerConnectors } from "../_shared/connectors/register.ts";
 import { supabaseSecretPort } from "../_shared/connectors/secrets.ts";
+import { verifyDelegatedIdentity } from "../_shared/connectors/m365.ts";
 
 registerConnectors();
 const secrets = supabaseSecretPort();
@@ -15,6 +16,7 @@ const allowedHostSuffixes = parseSuffixes(Deno.env.get("CONNECTOR_ALLOWED_HOST_S
 Deno.serve(createAdminHandler({
   deps: () => ({
     store: supabaseAdminStore(), newToken: () => newInvitationToken(), nowMs: () => Date.now(), secrets, allowedHostSuffixes,
+    microsoft: { verify: (token, tenantId) => verifyDelegatedIdentity(token, tenantId) },
     connectors: {
       health: async (auth, connectorId) => {
         const connector = await connectorById(auth, connectorId);

@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { AppError } from "../errors.ts";
 import { makeAuth, makeCronAuth, TEST_ORG, TEST_USER } from "../testing.ts";
-import { assertApprovedActionRequest, executeApprovedAction } from "./execute.ts";
+import { assertApprovedActionRequest, connectorParams, executeApprovedAction } from "./execute.ts";
 import { ACTION_ID, ActionRigScript, ConnectorError, HASH, makeActionRig, msToken, NOW, pendingAction } from "./test_rig.ts";
 
+const ctxAuth = () => makeAuth({ org_role: "partner_technician", via: "partner" });
 const approved = (over = {}) => pendingAction({ status: "approved", approver_id: TEST_USER, approved_hash: HASH, ...over });
 const rig = (script: ActionRigScript = {}) => makeActionRig({ action: approved(), ...script });
 async function code(p: Promise<unknown>): Promise<string> {
@@ -133,4 +134,38 @@ Deno.test("résultat : les secrets sont masqués (le mot de passe temporaire ne 
   const huge = rig({ result: { ok: true, blob: Array.from({ length: 40 }, () => "x".repeat(400)) } });
   await executeApprovedAction(await makeAuth(), ACTION_ID, msToken(), huge.deps);
   assert.deepEqual(huge.calls.finish[0].result, { tronque: true });
+});
+
+Deno.test("paramètres du connecteur : la CIBLE vient de l'action approuvée (couverte par l'empreinte), jamais des paramètres libres", async () => {
+  const cases: Array<[string, Record<string, unknown>, Record<string, unknown>]> = [
+    ["user.reset_password", { userRef: "autre.compte@client.test" }, { userRef: "marie@client-alpha.test" }],
+    ["user.unlock", {}, { userRef: "marie@client-alpha.test" }],
+    ["ticket.update_status", { status: "solved", ref: "999" }, { status: "solved", ref: "marie@client-alpha.test" }],
+  ];
+  for (const [capability, params, expected] of cases) {
+    const r = rig({ capabilities: ["user.reset_password", "user.unlock", "ticket.update_status"], action: pendingAction({ capability, params, status: "approved", approver_id: "123e4567-e89b-12d3-a456-426614174000", approved_hash: HASH }) });
+    await executeApprovedAction(await ctxAuth(), ACTION_ID, msToken(), r.deps);
+    assert.deepEqual(r.calls.invoked[0].params, expected, capability);
+  }
+  assert.deepEqual(connectorParams(pendingAction({ capability: "user.unlock", params: [] as never })), { userRef: "marie@client-alpha.test" }, "des paramètres non objet sont ignorés");
+});
+
+Deno.test("mot de passe temporaire : remis UNE fois, dans la réponse au technicien qui valide, et nulle part ailleurs (ni résultat stocké, ni audit, ni journal)", async () => {
+  const secret = ["Temp", "Secret", "9x7"].join("-");
+  const lines: string[] = [];
+  const saved = { info: console.info, warn: console.warn, error: console.error, log: console.log };
+  for (const k of ["info", "warn", "error", "log"] as const) console[k] = (...a: unknown[]) => { lines.push(a.map(String).join(" ")); };
+  try {
+    const r = rig({ secret, action: pendingAction({ capability: "user.reset_password", status: "approved", approver_id: "123e4567-e89b-12d3-a456-426614174000", approved_hash: HASH }) });
+    const out = await executeApprovedAction(await ctxAuth(), ACTION_ID, msToken(), r.deps);
+    assert.deepEqual(out, { actionId: ACTION_ID, status: "succeeded", oneTimeSecret: { kind: "temporary_password", value: secret } });
+    const stored = JSON.stringify([r.calls.finish, r.audits, r.action.current, lines]);
+    assert.ok(!stored.includes(secret), "le secret n'est ni stocké, ni audité, ni journalisé");
+    // Échec ou issue incertaine après le dépôt du secret : il n'est PAS rendu (il ne correspond à rien d'utilisable).
+    for (const [label, fails] of [["échec", new ConnectorError("failed", "x")], ["incertain", new Error("réseau")]] as const) {
+      const f = rig({ secret, connectorFails: fails, action: pendingAction({ capability: "user.reset_password", status: "approved", approver_id: "123e4567-e89b-12d3-a456-426614174000", approved_hash: HASH }) });
+      const o = await executeApprovedAction(await ctxAuth(), ACTION_ID, msToken(), f.deps);
+      assert.equal(o.oneTimeSecret, undefined, label);
+    }
+  } finally { Object.assign(console, saved); }
 });
