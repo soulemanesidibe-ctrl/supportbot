@@ -5,7 +5,7 @@
   },
   "lock": true,
   "tasks": {
-    "check": "deno check --frozen \"_shared/**/*.ts\" \"chat/*.ts\" \"cron/*.ts\"",
+    "check": "deno check --frozen \"_shared/**/*.ts\" \"chat/*.ts\" \"cron/*.ts\" \"actions/*.ts\"",
     "test": "deno test --frozen --no-prompt --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET"
   },
   "lint": { "rules": { "tags": ["recommended"] } },

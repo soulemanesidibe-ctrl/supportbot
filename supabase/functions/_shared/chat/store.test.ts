@@ -1,39 +1,8 @@
 import assert from "node:assert/strict";
 import { AppError } from "../errors.ts";
-import { DbDeps } from "../db.ts";
-import { makeAuth, TEST_ORG, TEST_USER } from "../testing.ts";
+import { fakeSupabase as fake, makeAuth, Op, TEST_ORG, TEST_USER } from "../testing.ts";
 import { supabaseChatStore } from "./store.ts";
 
-interface Op { table: string; method: string; filters: Array<[string, string, unknown]>; payload?: unknown; fn?: string; args?: unknown; terminal?: string; options?: unknown }
-type Reply = { data?: unknown; error?: unknown; count?: number | null };
-
-function fake(respond: (op: Op) => Reply): { deps: DbDeps; ops: Op[] } {
-  const ops: Op[] = [];
-  const builder = (table: string) => {
-    const op: Op = { table, method: "", filters: [] };
-    const q: Record<string, unknown> = {};
-    const primary = (m: string) => (payload?: unknown, options?: unknown) => { if (!op.method) { op.method = m; op.payload = payload; op.options = options; } return q; };
-    q.select = (cols: unknown, options?: unknown) => { if (!op.method) { op.method = "select"; op.payload = cols; op.options = options; } return q; };
-    q.insert = primary("insert");
-    q.update = primary("update");
-    for (const f of ["eq", "in", "is"]) q[f] = (col: string, val: unknown) => { op.filters.push([f, col, val]); return q; };
-    q.order = () => q;
-    q.limit = () => q;
-    q.single = () => { op.terminal = "single"; ops.push(op); return Promise.resolve(respond(op)); };
-    q.maybeSingle = () => { op.terminal = "maybeSingle"; ops.push(op); return Promise.resolve(respond(op)); };
-    q.then = (res: (r: Reply) => unknown, rej: (e: unknown) => unknown) => { ops.push(op); return Promise.resolve(respond(op)).then(res, rej); };
-    return q;
-  };
-  const deps: DbDeps = {
-    createClient: (() => ({
-      from: builder,
-      rpc: (fn: string, args: unknown) => { const op: Op = { table: "", method: "rpc", filters: [], fn, args }; ops.push(op); return Promise.resolve(respond(op)); },
-    })) as never,
-    url: () => "https://projet.exemple.test",
-    serviceKey: () => "cle-de-service-factice",
-  };
-  return { deps, ops };
-}
 const has = (op: Op, kind: string, col: string, val: unknown) => op.filters.some(([k, c, v]) => k === kind && c === col && JSON.stringify(v) === JSON.stringify(val));
 async function code(p: Promise<unknown>): Promise<string> {
   try { await p; } catch (e) { return e instanceof AppError ? e.code : `autre:${(e as Error).message}`; }

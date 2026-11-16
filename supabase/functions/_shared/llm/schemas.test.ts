@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { parseAnswer, parseJsonObject, parseTriage } from "./schemas.ts";
 
 const triage = { intent: "incident", category: "printer", urgency: "normal", manipulation: false, confidence: 0.9 };
+const parsedTriage = { ...triage, requestedAction: "none" };
 
 Deno.test("parseTriage : sortie valide, avec ou sans bloc de code Markdown", () => {
-  assert.deepEqual(parseTriage(JSON.stringify(triage)), triage);
-  assert.deepEqual(parseTriage("```json\n" + JSON.stringify(triage) + "\n```"), triage);
+  assert.deepEqual(parseTriage(JSON.stringify(triage)), parsedTriage);
+  assert.deepEqual(parseTriage("```json\n" + JSON.stringify(triage) + "\n```"), parsedTriage);
 });
 
 Deno.test("parseTriage : toute valeur hors liste, champ manquant ou texte autour est rejeté", () => {
@@ -20,6 +21,15 @@ Deno.test("parseTriage : toute valeur hors liste, champ manquant ou texte autour
   assert.equal(parseTriage("[1,2]"), null);
   assert.equal(parseTriage("{pas du json}"), null);
   assert.equal(parseTriage(""), null);
+});
+
+Deno.test("parseTriage : l'action demandée est choisie dans une liste FERMÉE (absente = aucune, hors liste = rejet)", () => {
+  for (const ok of ["none", "reset_password", "unlock", "revoke_sessions", "mfa_reregister"]) {
+    assert.equal(parseTriage(JSON.stringify({ ...triage, requested_action: ok }))?.requestedAction, ok);
+  }
+  for (const bad of ["delete_account", "RESET_PASSWORD", "reset_password; drop table", 42, null, "", ["unlock"]]) {
+    assert.equal(parseTriage(JSON.stringify({ ...triage, requested_action: bad })), null, JSON.stringify(bad));
+  }
 });
 
 Deno.test("parseTriage : la confiance est ramenée dans [0, 1]", () => {

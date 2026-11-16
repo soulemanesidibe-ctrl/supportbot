@@ -22,6 +22,7 @@ import { Answer, parseAnswer, parseTriage, Triage } from "../llm/schemas.ts";
 import { CompletionResult, LlmError } from "../llm/types.ts";
 import { sanitizeExternal, wrapExternal } from "../llm/wrap.ts";
 import { CATEGORY_LABELS, TEXTS } from "./texts.ts";
+import type { PrepareResult } from "../actions/prepare.ts";
 import type { ChatInput, ChatOutcome, ChatPorts, ChatResult, GateState, KbHit, PublicMessage } from "./types.ts";
 
 export const MAX_MESSAGE_CHARS = 4000;
@@ -160,11 +161,35 @@ export async function handleChatMessage(auth: AuthContext, input: ChatInput, por
       });
     }
 
-    // ---- 7. action sur un compte
+    // ---- 7. action sur un compte : jamais EXÉCUTÉE ici. L'IA peut seulement PRÉPARER une demande que des humains valideront.
     if (triage.intent === "account_action") {
-      return await handover(category, urgency, "account_action", TEXTS.accountAction, { reason: "action_sur_compte", intent: triage.intent, confidence: triage.confidence }, {
-        technicianNote: "Demande d'action sur un compte : vérification d'identité hors bande requise avant toute action.",
-      });
+      let prepared: PrepareResult | null = null;
+      if (triage.requestedAction !== "none") {
+        try {
+          prepared = await ports.actions.prepare(auth, { conversationId: conv.id, requested: triage.requestedAction });
+        } catch (e) {
+          // Toute panne de la préparation laisse la demande à un technicien, qui traite à la main après vérification d'identité.
+          log.warn("chat_preparation_action_en_echec", { erreur: e });
+        }
+      }
+      if (prepared?.status === "suspicious") {
+        return await handover(category, "high", "suspect", TEXTS.suspect, { reason: "demande_suspecte", flags: prepared.flags, intent: triage.intent }, {
+          security: true,
+          technicianNote: `Demande d'action sur un compte jugée SUSPECTE par les règles de risque (${prepared.flags.join(", ")}). Aucune action préparée.`,
+        });
+      }
+      const note = prepared?.status === "prepared"
+        ? `Demande d'action PRÉPARÉE (n° ${prepared.actionId}) : vérifiez l'identité du salarié par un autre moyen, puis validez dans la boîte de validation.`
+        : `Aucune action préparée (${prepared?.status === "not_prepared" ? prepared.reason : "non demandée ou préparation impossible"}) : traitez à la main après vérification d'identité.`;
+      return await handover(category, urgency, "account_action", TEXTS.accountAction, {
+        reason: "action_sur_compte",
+        intent: triage.intent,
+        confidence: triage.confidence,
+        requested_action: triage.requestedAction,
+        prepared: prepared?.status ?? "aucune",
+        action_request: prepared?.status === "prepared" ? prepared.actionId : null,
+        not_prepared_reason: prepared?.status === "not_prepared" ? prepared.reason : null,
+      }, { technicianNote: note });
     }
 
     // ---- 8. recherche dans la base de connaissance de l'organisation, puis réponse

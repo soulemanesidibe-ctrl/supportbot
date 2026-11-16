@@ -434,3 +434,6 @@ verify_jwt = false
 
 [functions.cron]
 verify_jwt = false
+
+[functions.actions]
+verify_jwt = false

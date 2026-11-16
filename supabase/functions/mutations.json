@@ -306,5 +306,269 @@
     ""
    ]
   ]
+ },
+ {
+  "label": "exécuteur : l'empreinte validée n'est plus comparée (M12)",
+  "file": "_shared/actions/execute.ts",
+  "expect": "empreinte",
+  "edits": [
+   [
+    "  if (!action.approved_hash || action.approved_hash !== action.params_hash) throw Errors.conflict(\"L'empreinte validée ne correspond pas à l'action.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : n'importe qui peut exécuter (pas seulement le valideur nommé)",
+  "file": "_shared/actions/execute.ts",
+  "expect": "exécutée par quelqu'un d'autre",
+  "edits": [
+   [
+    "  if (action.approver_id === null || action.approver_id !== auth.userId) throw Errors.forbidden(); // on exécute avec SON identité, ni celle d'un autre ni celle de l'IA\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : l'état « approuvée » n'est plus exigé",
+  "file": "_shared/actions/execute.ts",
+  "expect": "tout autre état",
+  "edits": [
+   [
+    "  if (action.status !== \"approved\") throw Errors.conflict(\"Cette action n'est pas (ou plus) approuvée.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : plus de passage atomique à « executing » (double exécution possible)",
+  "file": "_shared/actions/execute.ts",
+  "expect": "au plus UNE exécution",
+  "edits": [
+   [
+    "  await deps.store.markExecuting(auth, action.id);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : une issue incertaine est comptée comme un échec (rejouable)",
+  "file": "_shared/actions/execute.ts",
+  "expect": "issue : échec certain",
+  "edits": [
+   [
+    "status = e instanceof ConnectorError ? e.outcome : \"unknown\";",
+    "status = e instanceof ConnectorError ? e.outcome : \"failed\";"
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : le jeton n'est plus lié au compte Microsoft du valideur",
+  "file": "_shared/actions/execute.ts",
+  "expect": "jeton : celui d'un autre compte",
+  "edits": [
+   [
+    "  assertTokenBelongsToBinding(delegatedToken, await deps.store.microsoftBinding(auth, connector.id), deps.nowSeconds?.());\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : l'organisation gelée n'empêche plus l'exécution",
+  "file": "_shared/actions/execute.ts",
+  "expect": "organisation gelée, accès en lecture seule",
+  "edits": [
+   [
+    "export async function preflight(auth: AuthContext, action: ActionRow, delegatedToken: string, deps: ExecDeps): Promise<Connector> {\n  assertCanWrite(auth);\n",
+    "export async function preflight(auth: AuthContext, action: ActionRow, delegatedToken: string, deps: ExecDeps): Promise<Connector> {\n"
+   ]
+  ]
+ },
+ {
+  "label": "exécuteur : le résultat du connecteur n'est plus masqué",
+  "file": "_shared/actions/execute.ts",
+  "expect": "résultat : les secrets sont masqués",
+  "edits": [
+   [
+    "  const clean = redact(r && typeof r === \"object\" ? r : { value: r }) as Record<string, unknown>;",
+    "  const clean = (r && typeof r === \"object\" ? r : { value: r }) as Record<string, unknown>;"
+   ]
+  ]
+ },
+ {
+  "label": "jeton : l'identifiant d'objet n'est plus comparé",
+  "file": "_shared/actions/token.ts",
+  "expect": "jeton Microsoft : accepté seulement",
+  "edits": [
+   [
+    "  if (c.tid !== binding.tenantId || c.oid !== binding.objectId) throw Errors.forbidden();",
+    "  if (c.tid !== binding.tenantId) throw Errors.forbidden();"
+   ]
+  ]
+ },
+ {
+  "label": "validation : l'empreinte vue par le valideur n'est plus comparée (M12)",
+  "file": "_shared/actions/approve.ts",
+  "expect": "M12 : si l'action a changé",
+  "edits": [
+   [
+    "  if (input.seenHash !== action.params_hash) throw Errors.conflict(\"L'action a changé depuis votre affichage : relisez-la avant de valider.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "validation : le second facteur récent n'est plus exigé",
+  "file": "_shared/actions/approve.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "  requireRecentMfa(auth, 600, { nowSeconds: deps.nowSeconds ?? (() => Math.floor(Date.now() / 1000)) });\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "validation : le jeton n'est plus contrôlé avant d'approuver",
+  "file": "_shared/actions/approve.ts",
+  "expect": "pas d'approbation laissée sans suite",
+  "edits": [
+   [
+    "  await preflight(auth, { ...action, approver_id: auth.userId }, input.delegatedToken, deps);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "validation : une action déjà traitée peut être revalidée",
+  "file": "_shared/actions/approve.ts",
+  "expect": "validation : une action qui n'attend plus",
+  "edits": [
+   [
+    "  if (action.status !== \"pending_approval\") throw Errors.conflict(\"Cette action n'attend plus de validation.\");\n  // M12",
+    "  // M12"
+   ]
+  ]
+ },
+ {
+  "label": "préparation : le niveau d'autonomie 0 n'empêche plus de préparer",
+  "file": "_shared/actions/prepare.ts",
+  "expect": "niveau 0",
+  "edits": [
+   [
+    "  if ((await deps.store.autonomyLevel(auth, \"accounts\")) < 1) return { status: \"not_prepared\", reason: \"niveau_0\" };\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "préparation : un compte à privilèges obtient une action préparée",
+  "file": "_shared/actions/prepare.ts",
+  "expect": "X1 (compte à privilèges)",
+  "edits": [
+   [
+    "  if (verdict.decision === \"privileged\") return { status: \"not_prepared\", reason: \"compte_a_privileges\", flags: verdict.flags };\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "risque : la règle X1 (compte à privilèges) est supprimée",
+  "file": "_shared/actions/risk.ts",
+  "expect": "X1 :",
+  "edits": [
+   [
+    "  if (d.hasPrivilegedRole) return { decision: \"privileged\", flags: [\"X1\"] };\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "risque : le seuil X3 est relevé à 100 échecs",
+  "file": "_shared/actions/risk.ts",
+  "expect": "X3",
+  "edits": [
+   [
+    "failedSignInsThreshold: 10,",
+    "failedSignInsThreshold: 100,"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la transition n'est plus conditionnelle à l'état attendu",
+  "file": "_shared/actions/store.ts",
+  "expect": "transitions : écriture CONDITIONNELLE",
+  "edits": [
+   [
+    "    .eq(\"status\", from).select(\"id\");",
+    "    .select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la lecture d'une action n'est plus filtrée par organisation",
+  "file": "_shared/actions/store.ts",
+  "expect": "lecture d'une action",
+  "edits": [
+   [
+    "    .eq(\"id\", actionId).eq(\"org_id\", orgOf(auth)).maybeSingle();",
+    "    .eq(\"id\", actionId).maybeSingle();"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la vérification d'identité n'est plus attribuée au valideur",
+  "file": "_shared/actions/store.ts",
+  "expect": "approbation : enregistre l'identité",
+  "edits": [
+   [
+    "identity_check: { method: patch.identityMethod, performed_by: auth.userId,",
+    "identity_check: { method: patch.identityMethod, performed_by: null,"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : le niveau 2 serait accepté comme autonomie",
+  "file": "_shared/actions/store.ts",
+  "expect": "niveau d'autonomie : « 1 » seulement",
+  "edits": [
+   [
+    "  return level === 1 ? 1 : 0; // le niveau 2 n'existe pas : toute autre valeur vaut 0",
+    "  return level >= 1 ? 1 : 0;"
+   ]
+  ]
+ },
+ {
+  "label": "porte HTTP actions : un salarié peut valider",
+  "file": "_shared/actions/handler.ts",
+  "expect": "un salarié, un administrateur",
+  "edits": [
+   [
+    "const TECHNICIANS = [\"partner_technician\", \"org_technician\"] as const;",
+    "const TECHNICIANS = [\"partner_technician\", \"org_technician\", \"end_user\", \"org_admin\", \"partner_admin\"] as const;"
+   ]
+  ]
+ },
+ {
+  "label": "orchestrateur : une demande d'action jugée suspecte n'est plus traitée comme telle",
+  "file": "_shared/chat/orchestrator.ts",
+  "expect": "règles de risque X1 à X4",
+  "edits": [
+   [
+    "      if (prepared?.status === \"suspicious\") {",
+    "      if ((prepared?.status as string) === \"jamais\") {"
+   ]
+  ]
+ },
+ {
+  "label": "schémas : l'action demandée n'est plus limitée à la liste fermée",
+  "file": "_shared/llm/schemas.ts",
+  "expect": "liste FERMÉE",
+  "edits": [
+   [
+    "const requestedAction = o.requested_action === undefined ? \"none\" : oneOf(REQUESTED, o.requested_action);",
+    "const requestedAction = o.requested_action === undefined ? \"none\" : (o.requested_action as never);"
+   ]
+  ]
  }
 ]

@@ -50,3 +50,35 @@ export function fakeDb(failTables: string[] = []): { deps: DbDeps; inserts: Arra
   };
   return { deps, inserts };
 }
+
+// Faux client Supabase à chaînage : enregistre chaque opération (table, filtres, charge) et répond selon le script du test.
+export interface Op { table: string; method: string; filters: Array<[string, string, unknown]>; payload?: unknown; fn?: string; args?: unknown; terminal?: string; options?: unknown }
+export type Reply = { data?: unknown; error?: unknown; count?: number | null };
+
+export function fakeSupabase(respond: (op: Op) => Reply): { deps: DbDeps; ops: Op[] } {
+  const ops: Op[] = [];
+  const builder = (table: string) => {
+    const op: Op = { table, method: "", filters: [] };
+    const q: Record<string, unknown> = {};
+    const primary = (m: string) => (payload?: unknown, options?: unknown) => { if (!op.method) { op.method = m; op.payload = payload; op.options = options; } return q; };
+    q.select = (cols: unknown, options?: unknown) => { if (!op.method) { op.method = "select"; op.payload = cols; op.options = options; } return q; };
+    q.insert = primary("insert");
+    q.update = primary("update");
+    for (const f of ["eq", "in", "is"]) q[f] = (col: string, val: unknown) => { op.filters.push([f, col, val]); return q; };
+    q.order = () => q;
+    q.limit = () => q;
+    q.single = () => { op.terminal = "single"; ops.push(op); return Promise.resolve(respond(op)); };
+    q.maybeSingle = () => { op.terminal = "maybeSingle"; ops.push(op); return Promise.resolve(respond(op)); };
+    q.then = (res: (r: Reply) => unknown, rej: (e: unknown) => unknown) => { ops.push(op); return Promise.resolve(respond(op)).then(res, rej); };
+    return q;
+  };
+  const deps: DbDeps = {
+    createClient: (() => ({
+      from: builder,
+      rpc: (fn: string, args: unknown) => { const op: Op = { table: "", method: "rpc", filters: [], fn, args }; ops.push(op); return Promise.resolve(respond(op)); },
+    })) as never,
+    url: () => "https://projet.exemple.test",
+    serviceKey: () => "cle-de-service-factice",
+  };
+  return { deps, ops };
+}

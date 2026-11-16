@@ -4,6 +4,8 @@ import type { AuthContext } from "../context.ts";
 import type { CompletionRequest, CompletionResult, EmbeddingResult, Priority } from "../llm/types.ts";
 import type { UsageRecord } from "../llm/usage.ts";
 import type { AuditEvent } from "../audit.ts";
+import type { PrepareResult } from "../actions/prepare.ts";
+import type { RequestedAction } from "../actions/types.ts";
 
 export type GateState = "shadow" | "direct" | "advice_only";
 
@@ -68,6 +70,8 @@ export interface ChatPorts {
     failure(auth: AuthContext, purpose: "triage" | "answer" | "embedding", kind: string): Promise<void>;
   };
   readonly audit: (auth: AuthContext, ev: AuditEvent) => Promise<void>;
+  /** Préparation d'une action sur un compte : l'IA ne fait que préparer une demande que des humains valideront. */
+  readonly actions: { prepare(auth: AuthContext, input: { conversationId: string; requested: RequestedAction }): Promise<PrepareResult> };
 }
 
 export interface ChatInput {

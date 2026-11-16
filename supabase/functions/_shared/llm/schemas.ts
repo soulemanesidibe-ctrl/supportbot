@@ -9,12 +9,17 @@ export type Intent = typeof INTENTS[number];
 export const URGENCIES = ["low", "normal", "high", "critical"] as const;
 export type Urgency = typeof URGENCIES[number];
 
+export const REQUESTED = ["none", "reset_password", "unlock", "revoke_sessions", "mfa_reregister"] as const;
+export type Requested = typeof REQUESTED[number];
+
 export interface Triage {
   readonly intent: Intent;
   readonly category: Category;
   readonly urgency: Urgency;
   readonly manipulation: boolean;
   readonly confidence: number;
+  /** Action de compte demandée, dans une liste FERMÉE ; « none » si aucune. Le modèle ne fait que choisir, il n'agit pas. */
+  readonly requestedAction: Requested;
 }
 
 export interface Answer {
@@ -53,7 +58,10 @@ export function parseTriage(text: string): Triage | null {
   if (!intent || !category || !urgency || typeof o.manipulation !== "boolean") return null;
   const c = typeof o.confidence === "number" && Number.isFinite(o.confidence) ? Math.min(1, Math.max(0, o.confidence)) : null;
   if (c === null) return null;
-  return { intent, category, urgency, manipulation: o.manipulation, confidence: c };
+  // Champ absent = « none » ; valeur hors liste = sortie invalide.
+  const requestedAction = o.requested_action === undefined ? "none" : oneOf(REQUESTED, o.requested_action);
+  if (!requestedAction) return null;
+  return { intent, category, urgency, manipulation: o.manipulation, confidence: c, requestedAction };
 }
 
 /**

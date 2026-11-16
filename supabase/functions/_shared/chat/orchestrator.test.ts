@@ -92,12 +92,45 @@ Deno.test("manipulation repérée par les INDICES DÉTERMINISTES, même si le mo
   }
 });
 
-Deno.test("action sur un compte : jamais traitée dans le chat, vérification d'identité annoncée, ticket pour le technicien", async () => {
-  const { rig, result } = await run({ triage: triageJson({ intent: "account_action", category: "mfa" }), gate: "direct" }, "J'ai changé de téléphone, pouvez-vous réinitialiser mon authentification ?");
+const ACCOUNT_MSG = "J'ai changé de téléphone, pouvez-vous réinitialiser mon authentification ?";
+const accountTriage = triageJson({ intent: "account_action", category: "mfa", requested_action: "mfa_reregister" });
+
+Deno.test("action sur un compte : jamais EXÉCUTÉE dans le chat ; l'IA la PRÉPARE, un technicien vérifie l'identité", async () => {
+  const { rig, result } = await run({ triage: accountTriage, gate: "direct", prepare: { status: "prepared", actionId: "act-1", flags: [] } }, ACCOUNT_MSG);
   assert.equal(result.outcome, "account_action");
   assert.deepEqual(publicTexts(result), [TEXTS.accountAction]);
-  assert.equal(rig.calls.complete.filter((c) => c.purpose === "answer").length, 0);
+  assert.deepEqual(rig.prepared, [{ conversationId: "conv-1", requested: "mfa_reregister" }]);
+  assert.equal(rig.calls.complete.filter((c) => c.purpose === "answer").length, 0, "pas de réponse du modèle");
   assert.equal(rig.tickets[0].category, "mfa");
+  assert.equal(rig.tickets[0].diagnostic.action_request, "act-1");
+  assert.ok(rig.messages.some((m) => m.visibility === "technician" && m.content.includes("PRÉPARÉE (n° act-1)")));
+});
+
+Deno.test("action sur un compte : refus de préparer (niveau 0, compte à privilèges...) = prise en charge manuelle, raison nommée", async () => {
+  for (const reason of ["niveau_0", "compte_a_privileges", "identite_non_resolue", "diagnostic_indisponible", "client_non_active"] as const) {
+    const { rig, result } = await run({ triage: accountTriage, prepare: { status: "not_prepared", reason } }, ACCOUNT_MSG);
+    assert.equal(result.outcome, "account_action", reason);
+    assert.deepEqual(publicTexts(result), [TEXTS.accountAction], reason);
+    assert.equal(rig.tickets[0].diagnostic.not_prepared_reason, reason);
+    assert.ok(rig.messages.some((m) => m.visibility === "technician" && m.content.includes(`Aucune action préparée (${reason})`)));
+  }
+});
+
+Deno.test("action sur un compte : règles de risque X1 à X4 (« suspecte ») = réponse neutre identique et ticket de sécurité", async () => {
+  const { rig, result } = await run({ triage: accountTriage, prepare: { status: "suspicious", flags: ["X2", "X3"] } }, ACCOUNT_MSG);
+  assert.equal(result.outcome, "suspect");
+  assert.deepEqual(publicTexts(result), [TEXTS.suspect]);
+  assert.equal(rig.tickets[0].security, true);
+  assert.deepEqual(rig.tickets[0].diagnostic.flags, ["X2", "X3"]);
+});
+
+Deno.test("action sur un compte : aucune action demandée, ou panne de la préparation = technicien ; jamais d'action improvisée", async () => {
+  const none = await run({ triage: triageJson({ intent: "account_action", category: "password" }) }, ACCOUNT_MSG);
+  assert.equal(none.rig.prepared.length, 0, "rien demandé, rien préparé");
+  assert.equal(none.result.outcome, "account_action");
+  const broken = await run({ triage: accountTriage, prepare: new Error("base muette") }, ACCOUNT_MSG);
+  assert.equal(broken.result.outcome, "account_action");
+  assert.equal(broken.rig.tickets.length, 1);
 });
 
 Deno.test("tri : réponse invalide, valeur hors liste ou modèle injoignable = passage à un technicien, jamais d'improvisation", async () => {
