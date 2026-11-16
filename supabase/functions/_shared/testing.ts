@@ -83,3 +83,6 @@ export function fakeSupabase(respond: (op: Op) => Reply): { deps: DbDeps; ops: O
   };
   return { deps, ops };
 }
+
+/** Limiteur neutre pour les tests qui ne portent pas sur le débit (la production fournit toujours `limiterFor`). */
+export const noLimit: (auth: unknown) => Promise<void> = () => Promise.resolve();

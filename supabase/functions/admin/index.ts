@@ -3,7 +3,9 @@
 import { createAdminHandler } from "../_shared/admin/handler.ts";
 import { supabaseAdminStore } from "../_shared/admin/store.ts";
 import { newInvitationToken } from "../_shared/admin/token.ts";
+import { limiterFor } from "../_shared/ratelimit.ts";
 
 Deno.serve(createAdminHandler({
   deps: () => ({ store: supabaseAdminStore(), newToken: () => newInvitationToken(), nowMs: () => Date.now() }),
+  limit: limiterFor("admin"),
 }));

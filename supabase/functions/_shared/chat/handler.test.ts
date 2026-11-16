@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { makeRig } from "./test_rig.ts";
 import { createChatHandler } from "./handler.ts";
-import { TEST_ORG, testAuthDeps, TEST_JWT } from "../testing.ts";
+import { noLimit, TEST_ORG, testAuthDeps, TEST_JWT } from "../testing.ts";
 
 const bearer = { authorization: `Bearer ${TEST_JWT}`, "content-type": "application/json" };
 const body = (o: Record<string, unknown>) => JSON.stringify(o);
@@ -10,7 +10,7 @@ const call = (handler: (r: Request) => Promise<Response>, init: { method?: strin
 
 Deno.test("handler : succès, réponse JSON marquée « assistant IA » et identifiant de requête", async () => {
   const rig = makeRig({ gate: "direct" });
-  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps() });
+  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit });
   const res = await call(h, { body: body({ orgId: TEST_ORG, message: "Mon imprimante est hors ligne" }) });
   assert.equal(res.status, 200);
   assert.ok(res.headers.get("x-request-id"));
@@ -21,7 +21,7 @@ Deno.test("handler : succès, réponse JSON marquée « assistant IA » et ident
 
 Deno.test("handler : méthode autre que POST = 405, sans jeton = 401, mauvais corps = 400", async () => {
   const rig = makeRig();
-  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps() });
+  const h = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(), limit: noLimit });
   assert.equal((await call(h, { method: "GET", body: undefined })).status, 405);
   assert.equal((await call(h, { headers: { "content-type": "application/json" }, body: body({ orgId: TEST_ORG, message: "x" }) })).status, 401);
   assert.equal((await call(h, { headers: { ...bearer, "content-type": "text/plain" }, body: "x" })).status, 400);
@@ -33,8 +33,8 @@ Deno.test("handler : méthode autre que POST = 405, sans jeton = 401, mauvais co
 
 Deno.test("handler : sans droit dans l'organisation, ou avec un rôle autre que salarié = 403, identique et sans détail", async () => {
   const rig = makeRig();
-  const none = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(null) });
-  const technician = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps({ org_role: "partner_technician", via: "partner" }) });
+  const none = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps(null), limit: noLimit });
+  const technician = createChatHandler({ ports: () => rig.ports, authDeps: testAuthDeps({ org_role: "partner_technician", via: "partner" }), limit: noLimit });
   const a = await call(none, { body: body({ orgId: TEST_ORG, message: "x" }) });
   const b = await call(technician, { body: body({ orgId: TEST_ORG, message: "x" }) });
   assert.equal(a.status, 403);
@@ -49,7 +49,7 @@ Deno.test("handler : une erreur interne inattendue ne laisse filtrer AUCUN déta
   const original = console.error;
   console.error = () => {};
   try {
-    const h = createChatHandler({ ports: () => boom, authDeps: testAuthDeps() });
+    const h = createChatHandler({ ports: () => boom, authDeps: testAuthDeps(), limit: noLimit });
     const res = await call(h, { body: body({ orgId: TEST_ORG, message: "Bonjour, l'imprimante" }) });
     const text = await res.text();
     assert.equal(res.status, 500);

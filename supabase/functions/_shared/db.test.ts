@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { AuthDeps, requireCronSecret, requireOrgMember, requireUser } from "./auth.ts";
-import { acceptInvitationRpc, createAccessResolver, DbDeps, pickKey, serviceClient } from "./db.ts";
+import { acceptInvitationRpc, createAccessResolver, DbDeps, pickKey, rateLimitRpc, serviceClient } from "./db.ts";
 import { AppError } from "./errors.ts";
 
 const USER = "123e4567-e89b-12d3-a456-426614174000";
@@ -128,4 +128,24 @@ Deno.test("acceptInvitationRpc : n'appelle QUE la fonction d'acceptation, avec l
   await acceptInvitationRpc(bare, { email: "a@b.test", tokenHash: "h".repeat(64), ...{ p_user: "00000000-0000-4000-8000-000000000000" } } as never, deps);
   assert.deepEqual(rpcs, [{ fn: "admin_accept_invitation", args: { p_user: USER, p_email: "a@b.test", p_token_hash: "h".repeat(64) } }]);
   assert.deepEqual(calls[0].opts.global.headers, { "x-releve-request-id": bare.requestId, "x-releve-actor": USER });
+});
+
+Deno.test("rateLimitRpc : réservée à une PERSONNE authentifiée (avec ou sans organisation) ; n'appelle que rate_limit_hit", async () => {
+  const bare = await requireUser(req(), authDeps);
+  const member = await requireOrgMember(req(), ORG, undefined, authDeps);
+  const cron = await requireCronSecret(req({ "x-cron-secret": "s".repeat(40) }), authDeps);
+  for (const [label, ctx] of [["tâche planifiée", cron], ["objet fabriqué", { ...bare }], ["null", null]] as const) {
+    const { deps, calls } = fakeDeps();
+    let code = "aucune erreur";
+    try { await rateLimitRpc(ctx as never, { key: "chat:u:x", windowSeconds: 60, limit: 12 }, deps); } catch (e) { code = e instanceof AppError ? e.code : "autre"; }
+    assert.equal(code, "forbidden", label);
+    assert.equal(calls.length, 0, `${label} : aucun client créé`);
+  }
+  const a = fakeDeps();
+  await rateLimitRpc(bare, { key: "admin:u:x", windowSeconds: 60, limit: 30 }, a.deps);
+  assert.deepEqual(a.rpcs, [{ fn: "rate_limit_hit", args: { p_key: "admin:u:x", p_window_seconds: 60, p_limit: 30 } }]);
+  assert.deepEqual(a.calls[0].opts.global.headers, { "x-releve-request-id": bare.requestId, "x-releve-actor": USER });
+  const b = fakeDeps();
+  await rateLimitRpc(member, { key: "chat:o:y", windowSeconds: 60, limit: 120 }, b.deps);
+  assert.deepEqual(b.calls[0].opts.global.headers, { "x-releve-request-id": member.requestId, "x-releve-actor": USER, "x-releve-org": ORG });
 });

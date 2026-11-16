@@ -6,6 +6,7 @@ import { AuthDeps, requireOrgMember, requireRecentMfa, requestIdFrom, requireUse
 import { AuthContext } from "../context.ts";
 import { auditEvent } from "../audit.ts";
 import { errorResponse, Errors } from "../errors.ts";
+import type { Limiter } from "../ratelimit.ts";
 import { jsonResponse, readJsonBody } from "../http.ts";
 import { ADMIN_OPS } from "./ops.ts";
 import { AdminDeps } from "./types.ts";
@@ -13,7 +14,7 @@ import { AdminDeps } from "./types.ts";
 const MAX_BODY_BYTES = 20_000;
 const MFA_MAX_AGE_SECONDS = 600;
 
-export function createAdminHandler(opts: { deps: () => AdminDeps; authDeps?: AuthDeps }): (req: Request) => Promise<Response> {
+export function createAdminHandler(opts: { deps: () => AdminDeps; authDeps?: AuthDeps; limit: Limiter }): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     const requestId = requestIdFrom(req);
     try {
@@ -34,6 +35,8 @@ export function createAdminHandler(opts: { deps: () => AdminDeps; authDeps?: Aut
         auth = await requireOrgMember(req, typeof body.orgId === "string" ? body.orgId : "", op.roles, opts.authDeps);
         if (op.via === "member" && auth.via !== "member") throw Errors.forbidden();
       }
+
+      await opts.limit(auth); // avant la lecture des champs et tout accès en base
 
       const input = op.parse(body);
 

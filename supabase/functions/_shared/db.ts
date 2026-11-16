@@ -85,6 +85,22 @@ export async function acceptInvitationRpc(
   return await client.rpc("admin_accept_invitation", { p_user: auth.userId, p_email: a.email, p_token_hash: a.tokenHash });
 }
 
+/**
+ * Porte ÉTROITE du limiteur de débit : incrémente un compteur (fonction SQL `rate_limit_hit`) pour une personne authentifiée, avec ou sans
+ * organisation (une personne qui accepte une invitation n'en a pas). Elle ne lit ni n'écrit rien d'autre ; la clé est composée par le
+ * limiteur à partir du contexte vérifié, jamais par une requête.
+ */
+export async function rateLimitRpc(
+  auth: AuthContext,
+  a: { key: string; windowSeconds: number; limit: number },
+  deps: DbDeps = realDeps,
+): Promise<{ data: unknown; error: unknown }> {
+  if (!isAuthContext(auth) || auth.kind !== "user" || auth.userId === null) throw Errors.forbidden();
+  const headers: Record<string, string> = { "x-releve-request-id": auth.requestId, "x-releve-actor": auth.userId };
+  if (auth.orgId) headers["x-releve-org"] = auth.orgId;
+  return await build(headers, deps).rpc("rate_limit_hit", { p_key: a.key, p_window_seconds: a.windowSeconds, p_limit: a.limit });
+}
+
 /** RÉSERVÉ à auth.ts : résout le rôle d'un utilisateur DÉJÀ authentifié (jeton vérifié) dans une organisation. */
 export function createAccessResolver(deps: DbDeps = realDeps): (userId: string, orgId: string) => Promise<AccessRow | null> {
   return async (userId, orgId) => {

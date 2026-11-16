@@ -2,5 +2,6 @@
 // jeton est faite ICI par requireOrgMember, car les nouvelles clés de la plateforme ne sont pas des JWT.
 import { createChatHandler } from "../_shared/chat/handler.ts";
 import { defaultChatPorts } from "../_shared/chat/ports.ts";
+import { limiterFor } from "../_shared/ratelimit.ts";
 
-Deno.serve(createChatHandler({ ports: defaultChatPorts }));
+Deno.serve(createChatHandler({ ports: defaultChatPorts, limit: limiterFor("chat") }));

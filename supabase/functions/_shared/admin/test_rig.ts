@@ -1,6 +1,7 @@
 // Banc de test de la fonction `admin` : magasin enregistreur, jeton factice, requêtes signées « comme » un rôle donné.
 import { AccessRow, AuthDeps } from "../auth.ts";
-import { fakeDb, TEST_JWT, TEST_ORG, TEST_USER, testAccess } from "../testing.ts";
+import { fakeDb, noLimit, TEST_JWT, TEST_ORG, TEST_USER, testAccess } from "../testing.ts";
+import type { Limiter } from "../ratelimit.ts";
 import { createAdminHandler } from "./handler.ts";
 import { AdminDeps, AdminStore } from "./types.ts";
 
@@ -70,7 +71,7 @@ export function authDepsFor(who: Who = {}, seenOrgs: string[] = []): AuthDeps {
   };
 }
 
-export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => unknown>> = {}, failTables: string[] = []) {
+export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => unknown>> = {}, failTables: string[] = [], limit: Limiter = noLimit) {
   const rec = recordingStore(over);
   const db = fakeDb(failTables);
   const deps: AdminDeps = {
@@ -80,7 +81,7 @@ export function rig(over: Partial<Record<keyof AdminStore, (...a: unknown[]) => 
     newToken: () => Promise.resolve({ token: "T".repeat(43), hash: "h".repeat(64) }),
   };
   const seenOrgs: string[] = [];
-  const handlerFor = (who: Who) => createAdminHandler({ deps: () => deps, authDeps: authDepsFor(who, seenOrgs) });
+  const handlerFor = (who: Who) => createAdminHandler({ deps: () => deps, authDeps: authDepsFor(who, seenOrgs), limit });
   async function call(op: string, body: Record<string, unknown> = {}, who: Who = {}, headers: Record<string, string> = {}) {
     const res = await handlerFor(who)(new Request("https://exemple.test/admin", {
       method: "POST",

@@ -3,6 +3,7 @@
 // dans cette requête, et n'est ni stocké, ni journalisé, ni renvoyé.
 import { AuthDeps, requireOrgMember, requestIdFrom } from "../auth.ts";
 import { errorResponse, Errors } from "../errors.ts";
+import type { Limiter } from "../ratelimit.ts";
 import { jsonResponse, readJsonBody } from "../http.ts";
 import { approveAction, rejectAction } from "./approve.ts";
 import { executeApprovedAction, ExecDeps } from "./execute.ts";
@@ -10,13 +11,14 @@ import { executeApprovedAction, ExecDeps } from "./execute.ts";
 const MAX_BODY_BYTES = 20_000;
 const TECHNICIANS = ["partner_technician", "org_technician"] as const;
 
-export function createActionsHandler(opts: { deps: () => ExecDeps; authDeps?: AuthDeps }): (req: Request) => Promise<Response> {
+export function createActionsHandler(opts: { deps: () => ExecDeps; authDeps?: AuthDeps; limit: Limiter }): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     const requestId = requestIdFrom(req);
     try {
       if (req.method !== "POST") throw Errors.methodNotAllowed();
       const body = await readJsonBody(req, MAX_BODY_BYTES);
       const auth = await requireOrgMember(req, typeof body.orgId === "string" ? body.orgId : "", TECHNICIANS, opts.authDeps);
+      await opts.limit(auth);
       const deps = opts.deps();
       switch (body.op) {
         case "approve": {

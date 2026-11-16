@@ -1025,5 +1025,148 @@
     "  if (typeof email !== \"string\") throw Errors.forbidden();\n"
    ]
   ]
+ },
+ {
+  "label": "débit : un contexte non fabriqué par auth.ts est accepté par le limiteur",
+  "file": "_shared/ratelimit.ts",
+  "expect": "un contexte fabriqué",
+  "edits": [
+   [
+    "  // Jamais de compteur pour un contexte qui n'a pas été fabriqué par auth.ts, ni pour autre chose qu'une personne (une tâche planifiée n'est pas limitée ici).\n  if (!isAuthContext(auth) || auth.kind !== \"user\") throw Errors.forbidden();\n",
+    "  if (auth.kind !== \"user\") throw Errors.forbidden();\n"
+   ]
+  ]
+ },
+ {
+  "label": "débit : une réponse inattendue du compteur laisse passer (échec ouvert)",
+  "file": "_shared/ratelimit.ts",
+  "expect": "échec FERMÉ",
+  "edits": [
+   [
+    "    throw Errors.unavailable(); // réponse inattendue : on ne devine pas\n",
+    "    continue;\n"
+   ]
+  ]
+ },
+ {
+  "label": "débit : une erreur du compteur laisse passer (échec ouvert)",
+  "file": "_shared/ratelimit.ts",
+  "expect": "échec FERMÉ",
+  "edits": [
+   [
+    "      if (error) throw Errors.unavailable();\n",
+    "      if (error) continue;\n"
+   ]
+  ]
+ },
+ {
+  "label": "débit : le compteur de la personne et celui de l'organisation sont confondus",
+  "file": "_shared/ratelimit.ts",
+  "expect": "clés : composées à partir du contexte",
+  "edits": [
+   [
+    "`${bucket}:${rule.scope === \"user\" ? \"u\" : \"o\"}:${id}`",
+    "`${bucket}:u:${id}`"
+   ]
+  ]
+ },
+ {
+  "label": "débit : les fonctions partagent un même compteur",
+  "file": "_shared/ratelimit.ts",
+  "expect": "clés : composées à partir du contexte",
+  "edits": [
+   [
+    "`${bucket}:${rule.scope",
+    "`x:${rule.scope"
+   ]
+  ]
+ },
+ {
+  "label": "débit : le délai de reprise est faux",
+  "file": "_shared/ratelimit.ts",
+  "expect": "dépassement : 429",
+  "edits": [
+   [
+    "rule.windowSeconds - (now % rule.windowSeconds)",
+    "rule.windowSeconds"
+   ]
+  ]
+ },
+ {
+  "label": "débit : la limite de messages d'un salarié est relevée",
+  "file": "_shared/ratelimit.ts",
+  "expect": "règles figées",
+  "edits": [
+   [
+    "{ scope: \"user\", windowSeconds: 60, limit: 12 }",
+    "{ scope: \"user\", windowSeconds: 60, limit: 1200 }"
+   ]
+  ]
+ },
+ {
+  "label": "débit : la règle de l'organisation est supprimée pour les opérations d'administration",
+  "file": "_shared/ratelimit.ts",
+  "expect": "règles figées",
+  "edits": [
+   [
+    "  admin: [{ scope: \"user\", windowSeconds: 60, limit: 30 }, { scope: \"org\", windowSeconds: 60, limit: 120 }],",
+    "  admin: [{ scope: \"user\", windowSeconds: 60, limit: 30 }],"
+   ]
+  ]
+ },
+ {
+  "label": "débit : sans organisation, la règle « organisation » est calculée avec un identifiant nul",
+  "file": "_shared/ratelimit.ts",
+  "expect": "personne sans organisation",
+  "edits": [
+   [
+    "    if (id === null) continue;",
+    "    if (false as boolean) continue;"
+   ]
+  ]
+ },
+ {
+  "label": "chat : le limiteur n'est plus appelé",
+  "file": "_shared/chat/handler.ts",
+  "expect": "SEC-24 chat",
+  "edits": [
+   [
+    "      await opts.limit(auth); // avant tout travail (modèle, base) : un salarié ne peut pas saturer le fournisseur\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "actions : le limiteur n'est plus appelé",
+  "file": "_shared/actions/handler.ts",
+  "expect": "SEC-24 actions",
+  "edits": [
+   [
+    "      await opts.limit(auth);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : le limiteur n'est plus appelé",
+  "file": "_shared/admin/handler.ts",
+  "expect": "SEC-24 admin",
+  "edits": [
+   [
+    "      await opts.limit(auth); // avant la lecture des champs et tout accès en base\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "porte du limiteur : plus aucun contrôle de personne (une tâche planifiée peut incrémenter un compteur)",
+  "file": "_shared/db.ts",
+  "expect": "rateLimitRpc : réservée à une PERSONNE",
+  "edits": [
+   [
+    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null) throw Errors.forbidden();\n  const headers: Record<string, string> = { \"x-releve-request-id\"",
+    "  if (!isAuthContext(auth)) throw Errors.forbidden();\n  const headers: Record<string, string> = { \"x-releve-request-id\""
+   ]
+  ]
  }
 ]
