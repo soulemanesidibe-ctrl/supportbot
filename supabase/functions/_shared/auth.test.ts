@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { AccessRow, AuthDeps, lastMfaAt, requestIdFrom, requireCronSecret, requireOrgMember, requireRecentMfa, requireUser } from "./auth.ts";
+import { AccessRow, AuthDeps, lastMfaAt, requestIdFrom, requireCronSecret, requireOrgMember, requireRecentMfa, requireUser, requireUserWithEmail } from "./auth.ts";
 import { assertActivated, assertCanWrite, assertNotFrozen, isAuthContext } from "./context.ts";
 import { AppError } from "./errors.ts";
 
@@ -162,4 +162,17 @@ Deno.test("requestIdFrom : un identifiant inoffensif est repris, un identifiant 
   assert.match(injected, /^[0-9a-f-]{36}$/);
   assert.match(requestIdFrom(req({ "x-request-id": "a".repeat(200) })), /^[0-9a-f-]{36}$/);
   assert.match(requestIdFrom(req({})), /^[0-9a-f-]{36}$/);
+});
+
+Deno.test("requireUserWithEmail : adresse CONFIRMÉE seulement (mise en minuscules) ; absente, nulle ou démesurée = refus", async () => {
+  const withEmail = (email: string | null | undefined) => deps({ verifyToken: () => Promise.resolve({ userId: USER, aal: "aal1", amr: [], email }) });
+  const ok = await requireUserWithEmail(req(), withEmail("Admin@Client.TEST"));
+  assert.equal(ok.email, "admin@client.test");
+  assert.equal(isAuthContext(ok.auth), true);
+  assert.equal(ok.auth.orgId, null, "aucune organisation : la personne n'est pas (encore) membre");
+  assert.equal(await code(requireUserWithEmail(req(), withEmail(null))), "forbidden", "adresse non confirmée par le serveur d'authentification");
+  assert.equal(await code(requireUserWithEmail(req(), withEmail(undefined))), "forbidden");
+  assert.equal(await code(requireUserWithEmail(req(), withEmail(""))), "forbidden");
+  assert.equal(await code(requireUserWithEmail(req(), withEmail("a".repeat(321)))), "forbidden");
+  assert.equal(await code(requireUserWithEmail(req({}), withEmail("a@b.test"))), "unauthorized", "sans jeton : 401 avant tout");
 });

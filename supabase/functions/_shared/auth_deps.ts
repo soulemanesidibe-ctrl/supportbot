@@ -36,6 +36,8 @@ export function supabaseAuthDeps(): AuthDeps {
         userId: user.id,
         aal: claims.aal === "aal2" ? "aal2" : "aal1",
         amr: Array.isArray(claims.amr) ? claims.amr : [],
+        // Seulement si le serveur d'authentification l'a confirmée (lien reçu par e-mail ou fournisseur d'identité).
+        email: user.email_confirmed_at && typeof user.email === "string" ? user.email : null,
       };
     },
     resolveAccess: (userId: string, orgId: string): Promise<AccessRow | null> => resolver(userId, orgId),

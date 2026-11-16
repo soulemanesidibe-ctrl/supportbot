@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { AuthDeps, requireCronSecret, requireOrgMember, requireUser } from "./auth.ts";
-import { createAccessResolver, DbDeps, pickKey, serviceClient } from "./db.ts";
+import { acceptInvitationRpc, createAccessResolver, DbDeps, pickKey, serviceClient } from "./db.ts";
 import { AppError } from "./errors.ts";
 
 const USER = "123e4567-e89b-12d3-a456-426614174000";
@@ -107,4 +107,25 @@ Deno.test("pickKey : la nouvelle clé nommée d'abord, l'ancienne en repli, jama
   assert.equal(pickKey('["a"]', undefined), undefined);
   assert.equal(pickKey(undefined, undefined), undefined);
   assert.equal(pickKey("", ""), undefined);
+});
+
+Deno.test("acceptInvitationRpc : seule une personne authentifiée SANS organisation l'obtient ; un membre, une tâche ou un faux contexte sont refusés", async () => {
+  const bare = await requireUser(req(), authDeps);
+  const member = await requireOrgMember(req(), ORG, undefined, authDeps);
+  const cron = await requireCronSecret(req({ "x-cron-secret": "s".repeat(40) }), authDeps);
+  for (const [label, ctx] of [["membre", member], ["tâche planifiée", cron], ["objet fabriqué", { ...bare }], ["null", null], ["chaîne", USER]] as const) {
+    const { deps, calls } = fakeDeps();
+    let code = "aucune erreur";
+    try { await acceptInvitationRpc(ctx as never, { email: "a@b.test", tokenHash: "h".repeat(64) }, deps); } catch (e) { code = e instanceof AppError ? e.code : "autre"; }
+    assert.equal(code, "forbidden", label);
+    assert.equal(calls.length, 0, `${label} : aucun client créé`);
+  }
+});
+
+Deno.test("acceptInvitationRpc : n'appelle QUE la fonction d'acceptation, avec l'identifiant de la personne posé par le code (jamais par l'appelant)", async () => {
+  const { deps, calls, rpcs } = fakeDeps();
+  const bare = await requireUser(req(), authDeps);
+  await acceptInvitationRpc(bare, { email: "a@b.test", tokenHash: "h".repeat(64), ...{ p_user: "00000000-0000-4000-8000-000000000000" } } as never, deps);
+  assert.deepEqual(rpcs, [{ fn: "admin_accept_invitation", args: { p_user: USER, p_email: "a@b.test", p_token_hash: "h".repeat(64) } }]);
+  assert.deepEqual(calls[0].opts.global.headers, { "x-releve-request-id": bare.requestId, "x-releve-actor": USER });
 });

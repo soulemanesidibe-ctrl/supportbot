@@ -64,7 +64,8 @@ export function fakeSupabase(respond: (op: Op) => Reply): { deps: DbDeps; ops: O
     q.select = (cols: unknown, options?: unknown) => { if (!op.method) { op.method = "select"; op.payload = cols; op.options = options; } return q; };
     q.insert = primary("insert");
     q.update = primary("update");
-    for (const f of ["eq", "in", "is"]) q[f] = (col: string, val: unknown) => { op.filters.push([f, col, val]); return q; };
+    q.upsert = primary("upsert");
+    for (const f of ["eq", "neq", "in", "is", "gt", "gte", "lt", "lte", "or"]) q[f] = (col: string, val: unknown) => { op.filters.push([f, col, val]); return q; };
     q.order = () => q;
     q.limit = () => q;
     q.single = () => { op.terminal = "single"; ops.push(op); return Promise.resolve(respond(op)); };

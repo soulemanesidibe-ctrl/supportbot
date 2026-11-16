@@ -232,6 +232,21 @@ Chaque fonction commence par **une** vérification d'authentification (conventio
 
 La **console lit en direct** avec le client Supabase (la RLS protège) et **écrit par les Edge Functions** pour tout ce qui est sensible (validation, délégation, relation, niveau d'autonomie). Le client Supabase du navigateur utilise la clé publique uniquement.
 
+**Mise en œuvre de la fonction `admin` (J3.9).** `_shared/admin/` : une **liste fermée de 19 opérations** (`ops.ts`), chacune déclarant ses rôles, sa voie d'accès (membre, ou aussi ESN assignée), le second facteur et si elle reste possible en arrêt d'urgence. La porte (`handler.ts`) applique toujours le même ordre : méthode, corps borné à 20 Ko, opération connue, authentification et rôle, lecture stricte des champs (`input.ts`, jamais le corps entier recopié dans une écriture), lecture seule refusée, arrêt d'urgence refusé sauf pour ce qui **restreint** (geler, révoquer une relation, une assignation, une délégation ou un accès d'assistance, revenir au niveau 0, fermer une catégorie, retirer un technicien), second facteur de moins de 10 minutes, **trace d'audit avant d'agir** (si le journal ne répond pas, rien n'est fait), puis l'opération. Aucune opération ne reçoit l'organisation en paramètre : elle agit dans l'organisation du contexte, confrontée à la base.
+
+| Famille | Opérations | Qui | Second facteur |
+|---|---|---|---|
+| Création et invitations | `client.create`, `invitation.create`, `invitation.accept` | administrateur ESN ; administrateur ESN ou client ; toute personne **avec adresse e-mail confirmée** | oui, oui, non |
+| Relation avec l'ESN | `client.activate`, `relationship.reduce`, `relationship.revoke` | administrateur du client | oui, oui, **non** |
+| Techniciens de l'ESN | `assignment.create`, `assignment.revoke`, `technician.offboard` | administrateur ESN | oui, **non**, oui |
+| Arrêt d'urgence | `org.freeze`, `org.unfreeze` | administrateur du client ou de l'ESN (le dégel est réservé par la base au client ou à la plateforme) | **non**, oui |
+| Autonomie et catégories | `autonomy.set`, `category.set_state` | administrateur du client | seulement pour le niveau 1 et pour « réponse directe » |
+| Accès d'assistance | `support_access.request`, `.approve`, `.revoke` | super administrateur ; administrateur du client | oui, oui, **non** |
+| Suppléance | `delegation.create`, `delegation.revoke` | technicien valideur (ses propres validations) ; administrateur du client (réattribution) | oui, **non** |
+| Connecteur | `connector.qualify` | administrateur du client | oui |
+
+Choix à connaître. (1) **Un arrêt d'urgence ne demande pas de second facteur** : il doit pouvoir se faire en une seconde ; lever le gel en exige un. (2) **Une invitation est à usage unique, expirante (7 jours), son jeton n'est jamais stocké** (seule l'empreinte SHA-256 l'est) et n'est renvoyé qu'une fois à la personne qui invite. L'acceptation exige l'adresse e-mail **confirmée** par le serveur d'authentification (`requireUserWithEmail`) ; tout refus (jeton inconnu, expiré, déjà utilisé, autre adresse, organisation suspendue) donne le **même message**. (3) Une personne qui accepte une invitation n'a encore aucune organisation : `serviceClient` la refuse toujours ; elle n'obtient qu'une **porte étroite** (`acceptInvitationRpc`) qui n'appelle que la fonction SQL d'acceptation, avec son identifiant posé par le code. (4) Le client créé par une ESN naît **non activé**, avec une relation active de 12 mois limitée aux rôles administrateur et technicien, ses 11 catégories fermées (mode ombre) et aucun niveau d'autonomie ; **aucune opération ne rattache un client existant** à une ESN sans lui. (5) Le plafond de clients (10 par défaut) est **provisoire** et ne se modifie par aucune opération. **Pas encore fait :** notification du super administrateur à la création d'un client (la trace d'audit existe ; l'envoi attend les canaux de J4/J5), chaînes de valideurs (`approval_policies`, écran J5), import des salariés, envoi des invitations par e-mail (J5).
+
 ### 5.3 Session et jetons : décision technique à confirmer
 
 Aucun jeton dans `localStorage` (CSP stricte, menace M15). Conception retenue :
@@ -864,6 +879,7 @@ Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par
 | 10 | `20261106101000_conservation` | Purge planifiable (conversations, charges d'alerte), expirations |
 | 11 | `20261106101100_contexte_de_requete` | **Jalon J3.** `resolve_access` (rôle et voie d'accès d'un utilisateur dans une organisation, règles de la base) ; acteur et identifiant de requête dans le journal d'audit pour les écritures des Edge Functions (en-têtes posés par `serviceClient`, honorés seulement pour le rôle `service_role`) |
 | 12 | `20261106101200_droits_explicites_du_service` | **Jalon J3.** Droits du service sur les tables, **explicites** : indispensables sur un projet où l'option « Automatically expose new tables » est désactivée (recommandée par Supabase, futur défaut des nouveaux projets) ; sans effet visible sur le projet actuel. Le journal d'audit reste en insertion seule |
+| 13 | `20261106101300_administration_et_debit` | **Jalon J3.** Fonctions SQL d'administration atomiques, appelables par le service seulement et qui re-vérifient elles-mêmes qui agit : création d'un client (organisation, relation active et invitation en une transaction, second facteur récent, plafond de clients), acceptation d'une invitation, arrêt d'urgence (gel et annulation des demandes en attente), départ d'un technicien ; plafond de clients par ESN (`organizations.client_cap`, 10 par défaut, **provisoire**) ; limitation de débit (`rate_limits`, `rate_limit_hit`) |
 
 | # | Commit livré |
 |---|---|

@@ -16,6 +16,10 @@ Tout ce qui dépasse le jalon en cours est noté ici au lieu d'être fait (règl
 | B11 | Chat : réponse en flux (streaming), textes en anglais, rattachement du salarié à l'annuaire (`directory_user_id`), conversation reprise après une longue absence, calibrage du seuil de similarité de la base de connaissance | J3.5 | J5 et J6 |
 | B12 | Vérifier aussi la signature du jeton Microsoft du valideur côté Relève (clés publiques du locataire) : aujourd'hui `actions` contrôle locataire, identifiant d'objet et expiration, et c'est Microsoft Graph qui refuse un jeton falsifié à l'appel. Défense en profondeur, à ajouter avec le connecteur réel | J3.7 | J4 |
 | B13 | Action à issue « incertaine » : écran de revue pour le technicien (état réel du compte, puis clôture manuelle « faite » ou « non faite » avec motif, journalisée). Aujourd'hui l'action reste « incertaine » et n'est jamais rejouée toute seule | J3.7 | J5 |
+| B14 | Notifier le super administrateur à la création d'un client par une ESN (histoire E3) et prévenir le valideur remplaçant et l'administrateur du client d'une délégation créée (I3) : aujourd'hui seule la trace d'audit existe, aucun canal d'envoi | J3.9 | J4 (canaux) puis J5 |
+| B15 | Édition des chaînes de valideurs (`approval_policies`) par l'administrateur du client : la table et son verrou existent, aucune opération de la fonction `admin` ne les écrit ; les chaînes de la démonstration viennent de la graine | J3.9 | J5, avec l'écran « Valideurs » |
+| B16 | Import des salariés par fichier (`directory_users`) et envoi des invitations par e-mail | J3.9 | J5 |
+| B17 | Révocation d'une invitation en attente par celui qui l'a émise (aujourd'hui elle expire seule au bout de 7 jours) | J3.9 | J5 |
 | B07 | Publier le rapport Semgrep dans l'onglet « Code scanning » de GitHub (gratuit sur un dépôt public) : demande un job séparé avec `security-events: write` pour garder les permissions minimales | J0 | Avant J6 |
 
 ## Plan des jalons à jour (6 novembre 2026)

@@ -10,6 +10,8 @@ export interface VerifiedToken {
   aal: "aal1" | "aal2";
   /** Entrées amr du jeton : [{ method, timestamp }], format documenté par Supabase. */
   amr: ReadonlyArray<{ method?: unknown; timestamp?: unknown }>;
+  /** Adresse e-mail CONFIRMÉE par le serveur d'authentification ; absente ou nulle si elle ne l'est pas. */
+  email?: string | null;
 }
 
 export interface AccessRow {
@@ -67,6 +69,20 @@ export function lastMfaAt(amr: VerifiedToken["amr"]): number | null {
 
 /** Vérifie le jeton de la requête. L'organisation et le rôle restent inconnus : à utiliser seulement pour ce qui ne dépend pas d'une organisation. */
 export async function requireUser(req: Request, deps?: AuthDeps): Promise<AuthContext> {
+  return (await verifyRequest(req, deps)).auth;
+}
+
+/**
+ * Comme requireUser, avec l'adresse e-mail CONFIRMÉE de la personne (pour accepter une invitation, menace M29).
+ * Une adresse non confirmée est refusée : une invitation ne s'accepte pas avec une adresse que personne n'a prouvée.
+ */
+export async function requireUserWithEmail(req: Request, deps?: AuthDeps): Promise<{ auth: AuthContext; email: string }> {
+  const { auth, email } = await verifyRequest(req, deps);
+  if (typeof email !== "string" || email.length === 0 || email.length > 320) throw Errors.forbidden();
+  return { auth, email: email.toLowerCase() };
+}
+
+async function verifyRequest(req: Request, deps?: AuthDeps): Promise<{ auth: AuthContext; email: string | null }> {
   const d = deps ?? await defaultDeps();
   const match = BEARER.exec(req.headers.get("authorization") ?? "");
   if (!match) throw Errors.unauthorized();
@@ -78,7 +94,7 @@ export async function requireUser(req: Request, deps?: AuthDeps): Promise<AuthCo
     throw Errors.unauthorized();
   }
   if (!UUID.test(verified.userId)) throw Errors.unauthorized();
-  return mintContext({
+  const auth = mintContext({
     kind: "user",
     userId: verified.userId,
     orgId: null,
@@ -91,6 +107,7 @@ export async function requireUser(req: Request, deps?: AuthDeps): Promise<AuthCo
     mfaAt: lastMfaAt(verified.amr),
     requestId: requestIdFrom(req),
   });
+  return { auth, email: typeof verified.email === "string" ? verified.email : null };
 }
 
 /**

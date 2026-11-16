@@ -69,6 +69,22 @@ export function serviceClient(auth: AuthContext, deps: DbDeps = realDeps): Supab
   return build(headers, deps);
 }
 
+/**
+ * Porte ÉTROITE pour une personne authentifiée qui n'est (encore) membre d'aucune organisation : elle n'obtient PAS de client de
+ * service général (serviceClient le refuse), seulement l'appel de la fonction SQL qui accepte une invitation. Cette fonction vérifie
+ * elle-même le jeton (empreinte), l'adresse e-mail confirmée, l'expiration et l'usage unique. L'identifiant de la personne est posé ICI,
+ * à partir du contexte vérifié : l'appelant ne peut pas accepter une invitation « pour » quelqu'un d'autre.
+ */
+export async function acceptInvitationRpc(
+  auth: AuthContext,
+  a: { email: string; tokenHash: string },
+  deps: DbDeps = realDeps,
+): Promise<{ data: unknown; error: unknown }> {
+  if (!isAuthContext(auth) || auth.kind !== "user" || auth.userId === null || auth.orgId !== null) throw Errors.forbidden();
+  const client = build({ "x-releve-request-id": auth.requestId, "x-releve-actor": auth.userId }, deps);
+  return await client.rpc("admin_accept_invitation", { p_user: auth.userId, p_email: a.email, p_token_hash: a.tokenHash });
+}
+
 /** RÉSERVÉ à auth.ts : résout le rôle d'un utilisateur DÉJÀ authentifié (jeton vérifié) dans une organisation. */
 export function createAccessResolver(deps: DbDeps = realDeps): (userId: string, orgId: string) => Promise<AccessRow | null> {
   return async (userId, orgId) => {

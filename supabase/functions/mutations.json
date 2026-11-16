@@ -570,5 +570,460 @@
     "const requestedAction = o.requested_action === undefined ? \"none\" : (o.requested_action as never);"
    ]
   ]
+ },
+ {
+  "label": "admin : une opération inconnue n'est plus refusée proprement",
+  "file": "_shared/admin/handler.ts",
+  "expect": "porte : méthode, corps et opération inconnue",
+  "edits": [
+   [
+    "      if (!op) throw Errors.badRequest(\"Opération inconnue.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : la liste des rôles autorisés n'est plus transmise à la garde",
+  "file": "_shared/admin/handler.ts",
+  "expect": "rôles : pour chaque opération",
+  "edits": [
+   [
+    "body.orgId : \"\", op.roles, opts.authDeps);",
+    "body.orgId : \"\", undefined, opts.authDeps);"
+   ]
+  ]
+ },
+ {
+  "label": "admin : la voie ESN est acceptée pour une opération réservée aux membres",
+  "file": "_shared/admin/handler.ts",
+  "expect": "voie d'accès",
+  "edits": [
+   [
+    "        if (op.via === \"member\" && auth.via !== \"member\") throw Errors.forbidden();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : une écriture est permise en lecture seule",
+  "file": "_shared/admin/handler.ts",
+  "expect": "accès d'assistance (lecture seule)",
+  "edits": [
+   [
+    "      if (auth.readOnly) throw Errors.readOnly();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : l'arrêt d'urgence n'empêche plus d'agir",
+  "file": "_shared/admin/handler.ts",
+  "expect": "SEC-28 arrêt d'urgence",
+  "edits": [
+   [
+    "      if (auth.frozen && !op.allowWhenFrozen) throw Errors.orgFrozen();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : le second facteur n'est plus exigé",
+  "file": "_shared/admin/handler.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "      if (needsMfa) requireRecentMfa(auth, MFA_MAX_AGE_SECONDS, opts.authDeps);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "admin : plus de trace d'audit avant d'agir",
+  "file": "_shared/admin/handler.ts",
+  "expect": "audit AVANT d'agir",
+  "edits": [
+   [
+    "      if (op.scope === \"org\") await auditEvent(",
+    "      if (false as boolean) await auditEvent("
+   ]
+  ]
+ },
+ {
+  "label": "admin : l'audit applicatif est aussi tenté sans organisation (acceptation d'invitation)",
+  "file": "_shared/admin/handler.ts",
+  "expect": "M29 acceptation d'une invitation",
+  "edits": [
+   [
+    "      if (op.scope === \"org\") await auditEvent(",
+    "      if (op.scope) await auditEvent("
+   ]
+  ]
+ },
+ {
+  "label": "invitation : n'importe quel rôle d'invitation est accepté pour n'importe quel appelant",
+  "file": "_shared/admin/ops.ts",
+  "expect": "invitations : chacun n'invite que",
+  "edits": [
+   [
+    "      if (auth.role === null || !(INVITABLE[auth.role] ?? []).includes(i.role)) throw Errors.forbidden();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "création de client : sans second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "scope: \"org\", roles: PARTNER_ADMIN, via: \"member\", mfa: true, allowWhenFrozen: false,\n    parse: (b) => ({ name:",
+    "scope: \"org\", roles: PARTNER_ADMIN, via: \"member\", mfa: false, allowWhenFrozen: false,\n    parse: (b) => ({ name:"
+   ]
+  ]
+ },
+ {
+  "label": "arrêt d'urgence : le gel exige un second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "via: \"any\", mfa: false, allowWhenFrozen: true,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      const r = await deps.store.setFreeze(auth, true);",
+    "via: \"any\", mfa: true, allowWhenFrozen: true,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      const r = await deps.store.setFreeze(auth, true);"
+   ]
+  ]
+ },
+ {
+  "label": "arrêt d'urgence : le dégel n'exige plus de second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "via: \"any\", mfa: true, allowWhenFrozen: true,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      await deps.store.setFreeze(auth, false);",
+    "via: \"any\", mfa: false, allowWhenFrozen: true,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      await deps.store.setFreeze(auth, false);"
+   ]
+  ]
+ },
+ {
+  "label": "arrêt d'urgence : la révocation de la relation est bloquée quand l'organisation est gelée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SEC-28 arrêt d'urgence",
+  "edits": [
+   [
+    "via: \"member\", mfa: false, allowWhenFrozen: true,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      await deps.store.revokeRelationship(auth);",
+    "via: \"member\", mfa: false, allowWhenFrozen: false,\n    parse: () => ({}),\n    async run(auth, _i, deps) {\n      await deps.store.revokeRelationship(auth);"
+   ]
+  ]
+ },
+ {
+  "label": "arrêt d'urgence : le départ d'un technicien est bloqué quand l'organisation est gelée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SEC-28 arrêt d'urgence",
+  "edits": [
+   [
+    "via: \"member\", mfa: true, allowWhenFrozen: true,\n    parse: (b) => ({ userId: uuid(b, \"userId\") }),",
+    "via: \"member\", mfa: true, allowWhenFrozen: false,\n    parse: (b) => ({ userId: uuid(b, \"userId\") }),"
+   ]
+  ]
+ },
+ {
+  "label": "autonomie : le niveau 2 serait accepté",
+  "file": "_shared/admin/ops.ts",
+  "expect": "niveaux d'autonomie",
+  "edits": [
+   [
+    "level: int(b, \"level\", 0, 1) as 0 | 1",
+    "level: int(b, \"level\", 0, 2) as 0 | 1"
+   ]
+  ]
+ },
+ {
+  "label": "autonomie : le niveau 1 n'exige plus de second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "mfa: (i: { level: 0 | 1 }) => i.level === 1,",
+    "mfa: false,"
+   ]
+  ]
+ },
+ {
+  "label": "autonomie : le niveau 1 reste possible quand l'organisation est gelée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SEC-28 arrêt d'urgence",
+  "edits": [
+   [
+    "      if (i.level === 1) assertNotFrozen(auth);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "catégorie : l'ouverture n'exige plus de second facteur",
+  "file": "_shared/admin/ops.ts",
+  "expect": "second facteur",
+  "edits": [
+   [
+    "mfa: (i: { state: string }) => i.state === \"direct\",",
+    "mfa: false,"
+   ]
+  ]
+ },
+ {
+  "label": "catégorie : l'ouverture reste possible quand l'organisation est gelée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "SEC-28 arrêt d'urgence",
+  "edits": [
+   [
+    "      if (i.state === \"direct\") assertNotFrozen(auth);\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "délégation : un technicien délègue les validations d'un autre",
+  "file": "_shared/admin/ops.ts",
+  "expect": "délégations : on délègue SES validations",
+  "edits": [
+   [
+    "      if (delegatorId !== auth.userId && auth.role !== \"org_admin\") throw Errors.forbidden();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "délégation : un technicien révoque celles des autres",
+  "file": "_shared/admin/ops.ts",
+  "expect": "révocation d'une délégation",
+  "edits": [
+   [
+    "ownOnly: auth.role !== \"org_admin\"",
+    "ownOnly: false"
+   ]
+  ]
+ },
+ {
+  "label": "assignation : plus de plafond à la fin de la relation",
+  "file": "_shared/admin/ops.ts",
+  "expect": "assignation : jamais au-delà",
+  "edits": [
+   [
+    "const endsMs = Math.min(deps.nowMs() + i.days * DAY_MS, Date.parse(rel.expiresAt));",
+    "const endsMs = deps.nowMs() + i.days * DAY_MS;"
+   ]
+  ]
+ },
+ {
+  "label": "accès d'assistance : l'administrateur du client peut demander l'accès",
+  "file": "_shared/admin/ops.ts",
+  "expect": "rôles : pour chaque opération",
+  "edits": [
+   [
+    "scope: \"org\", roles: [\"super_admin\"], via: \"member\", mfa: true, allowWhenFrozen: false,",
+    "scope: \"org\", roles: [\"super_admin\", \"org_admin\"], via: \"member\", mfa: true, allowWhenFrozen: false,"
+   ]
+  ]
+ },
+ {
+  "label": "invitation : la forme du jeton n'est plus contrôlée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "M29 acceptation d'une invitation",
+  "edits": [
+   [
+    "      if (!isTokenShape(b.token)) throw Errors.badRequest(\"Invitation invalide ou expirée.\");\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "invitation : l'adresse du corps remplace l'adresse confirmée",
+  "file": "_shared/admin/ops.ts",
+  "expect": "M29 acceptation d'une invitation",
+  "edits": [
+   [
+    "      return { token: b.token };",
+    "      return { token: b.token, email: b.email };"
+   ],
+   [
+    "{ email: verifiedEmail, tokenHash",
+    "{ email: String((i as { email?: unknown }).email ?? verifiedEmail), tokenHash"
+   ]
+  ]
+ },
+ {
+  "label": "saisie : un caractère de contrôle est accepté dans un texte",
+  "file": "_shared/admin/input.ts",
+  "expect": "text : borné",
+  "edits": [
+   [
+    "if (t.length < min || t.length > max || hasControl(t)) return bad(key);",
+    "if (t.length < min || t.length > max) return bad(key);"
+   ]
+  ]
+ },
+ {
+  "label": "saisie : un caractère de contrôle est accepté dans une adresse",
+  "file": "_shared/admin/input.ts",
+  "expect": "slug, uuid, email",
+  "edits": [
+   [
+    "t.length > 320 || hasControl(t) || !EMAIL.test(t)",
+    "t.length > 320 || !EMAIL.test(t)"
+   ]
+  ]
+ },
+ {
+  "label": "saisie : une liste fermée accepte les doublons",
+  "file": "_shared/admin/input.ts",
+  "expect": "oneOf, listOf, int, bool",
+  "edits": [
+   [
+    "|| !list.includes(x as T) || out.includes(x as T)) return bad(key);",
+    "|| !list.includes(x as T)) return bad(key);"
+   ]
+  ]
+ },
+ {
+  "label": "saisie : un entier à virgule est accepté",
+  "file": "_shared/admin/input.ts",
+  "expect": "oneOf, listOf, int, bool",
+  "edits": [
+   [
+    "!Number.isInteger(v) || ",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "magasin : l'activation n'est plus limitée à l'organisation du contexte",
+  "file": "_shared/admin/store.ts",
+  "expect": "écritures simples",
+  "edits": [
+   [
+    ".eq(\"id\", orgOf(auth)).eq(\"type\", \"client\").is(\"activated_at\", null).select(\"id\");",
+    ".eq(\"type\", \"client\").is(\"activated_at\", null).select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la révocation d'assignation n'est plus limitée aux relations de ce client",
+  "file": "_shared/admin/store.ts",
+  "expect": "assignation : la relation doit être celle",
+  "edits": [
+   [
+    ".eq(\"id\", assignmentId).in(\"relationship_id\", ids).is(\"revoked_at\", null).select(\"id\");",
+    ".eq(\"id\", assignmentId).is(\"revoked_at\", null).select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : l'assignation n'est plus rattachée à une relation de ce client",
+  "file": "_shared/admin/store.ts",
+  "expect": "assignation : la relation doit être celle",
+  "edits": [
+   [
+    ".eq(\"id\", a.relationshipId).eq(\"client_org_id\", orgOf(auth)).limit(1);",
+    ".eq(\"id\", a.relationshipId).limit(1);"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : un technicien peut révoquer la délégation d'un autre",
+  "file": "_shared/admin/store.ts",
+  "expect": "écritures simples",
+  "edits": [
+   [
+    "  if (a.ownOnly) q = q.or(",
+    "  if (false as boolean) q = q.or("
+   ]
+  ]
+ },
+ {
+  "label": "magasin : le texte brut d'un refus inconnu de la base est renvoyé",
+  "file": "_shared/admin/store.ts",
+  "expect": "fail : chaque refus connu",
+  "edits": [
+   [
+    "return new AppError(403, \"forbidden\", REFUSED);",
+    "return new AppError(403, \"forbidden\", String(e.message));"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : le niveau 1 est écrit sans preuve de second facteur",
+  "file": "_shared/admin/store.ts",
+  "expect": "autonomie : le niveau 1 porte",
+  "edits": [
+   [
+    "mfa_verified_at: a.level === 1 ? mfaIso(auth) : null",
+    "mfa_verified_at: null"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : l'approbation d'un accès d'assistance n'est plus conditionnelle",
+  "file": "_shared/admin/store.ts",
+  "expect": "accès d'assistance : l'approbation",
+  "edits": [
+   [
+    ".eq(\"id\", grantId).eq(\"client_org_id\", orgOf(auth)).is(\"approved_by\", null).select(\"id\");",
+    ".eq(\"id\", grantId).eq(\"client_org_id\", orgOf(auth)).select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la révocation d'un accès d'assistance n'est plus limitée au client",
+  "file": "_shared/admin/store.ts",
+  "expect": "écritures simples",
+  "edits": [
+   [
+    ".eq(\"id\", grantId).eq(\"client_org_id\", orgOf(auth)).is(\"revoked_at\", null).select(\"id\");",
+    ".eq(\"id\", grantId).is(\"revoked_at\", null).select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "magasin : la qualification d'un connecteur n'est plus limitée à l'organisation",
+  "file": "_shared/admin/store.ts",
+  "expect": "écritures simples",
+  "edits": [
+   [
+    ".eq(\"id\", a.connectorId).eq(\"org_id\", orgOf(auth)).eq(\"type\", \"m365\").select(\"id\");",
+    ".eq(\"id\", a.connectorId).eq(\"type\", \"m365\").select(\"id\");"
+   ]
+  ]
+ },
+ {
+  "label": "porte d'acceptation : un membre d'une organisation peut l'utiliser",
+  "file": "_shared/db.ts",
+  "expect": "acceptInvitationRpc : seule une personne",
+  "edits": [
+   [
+    "auth.kind !== \"user\" || auth.userId === null || auth.orgId !== null",
+    "auth.kind !== \"user\" || auth.userId === null"
+   ]
+  ]
+ },
+ {
+  "label": "porte d'acceptation : l'identifiant de la personne vient de l'appelant",
+  "file": "_shared/db.ts",
+  "expect": "acceptInvitationRpc : n'appelle QUE",
+  "edits": [
+   [
+    "{ p_user: auth.userId, p_email: a.email",
+    "{ p_user: (a as unknown as { p_user?: string }).p_user ?? auth.userId, p_email: a.email"
+   ]
+  ]
+ },
+ {
+  "label": "garde : une adresse e-mail non confirmée est acceptée",
+  "file": "_shared/auth.ts",
+  "expect": "requireUserWithEmail",
+  "edits": [
+   [
+    "  if (typeof email !== \"string\" || email.length === 0 || email.length > 320) throw Errors.forbidden();\n",
+    "  if (typeof email !== \"string\") throw Errors.forbidden();\n"
+   ]
+  ]
  }
 ]
