@@ -10,10 +10,21 @@ type Vars = Record<string, string | number>;
 
 const DICTS: Record<Lang, Partial<Record<MessageKey, string>>> = { fr, en };
 
+/** Singulier selon la langue : en français 0 et 1 sont au singulier, en anglais seulement 1. */
+const singular = (lang: Lang, n: number) => (lang === "fr" ? Math.abs(n) < 2 : Math.abs(n) === 1);
+
+/**
+ * {nom} insère la variable ; {nom|singulier|pluriel} choisit la forme accordée au nombre « nom » (« 1 incident ouvert »,
+ * « 3 incidents ouverts »), sans l'insérer.
+ */
 export function translate(lang: Lang, key: MessageKey, vars?: Vars): string {
   const raw = DICTS[lang][key] ?? fr[key];
   if (!vars) return raw;
-  return raw.replace(/\{(\w+)\}/g, (m, name: string) => (Object.hasOwn(vars, name) ? String(vars[name]) : m));
+  return raw.replace(/\{(\w+)(?:\|([^|{}]*)\|([^|{}]*))?\}/g, (m, name: string, one?: string, many?: string) => {
+    if (!Object.hasOwn(vars, name)) return m;
+    if (one === undefined || many === undefined) return String(vars[name]);
+    return singular(lang, Number(vars[name])) ? one : many;
+  });
 }
 
 /** Français par défaut (clients français) ; l'anglais seulement sur choix explicite de la personne, retenu dans ce navigateur. */

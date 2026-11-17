@@ -1411,5 +1411,38 @@
     "     and m.role in ('partner_admin', 'partner_manager', 'partner_technician');"
    ]
   ]
+ },
+ {
+  "label": "accès administrateur : lisible par un technicien ou l'ESN",
+  "file": "20261106101900_acces_administrateur.sql",
+  "expect": "accès : réservé à l'administrateur DU client",
+  "edits": [
+   [
+    "private.is_member_of(p_org, array['org_admin']))",
+    "private.can_read_org_config(p_org))"
+   ]
+  ]
+ },
+ {
+  "label": "accès administrateur : sans second facteur",
+  "file": "20261106101900_acces_administrateur.sql",
+  "expect": "SEC-33 accès : refusé sans second facteur",
+  "edits": [
+   [
+    "  if not (private.session_has_second_factor() and private.is_member_of(p_org, array['org_admin'])) then",
+    "  if not (private.is_member_of(p_org, array['org_admin'])) then"
+   ]
+  ]
+ },
+ {
+  "label": "accès administrateur : une demande d'assistance en attente est cachée",
+  "file": "20261106101900_acces_administrateur.sql",
+  "expect": "accès : demande d'accès d'assistance EN ATTENTE",
+  "edits": [
+   [
+    "and (g.ends_at is null or g.ends_at > now())",
+    "and g.ends_at > now()"
+   ]
+  ]
  }
 ]

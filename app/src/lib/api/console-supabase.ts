@@ -9,25 +9,14 @@ import type {
 } from "./console-types.ts";
 import { CAPABILITY_TITLE } from "./console-titles.ts";
 import { microsoftToken } from "./microsoft.ts";
-import { createSessionClient, type SessionClient } from "./session.ts";
+import type { SessionClient } from "./session.ts";
+import { claimsOf, createStaffAuth, staffSession } from "./staff.ts";
 import { ApiError, functionsBase } from "./supabase.ts";
 import type { Category } from "./types.ts";
 
 type Fetch = (input: string, init: RequestInit) => Promise<Response>;
 // Ligne renvoyée par la base : chaque champ est relu et converti explicitement avant usage.
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-/** Revendications du jeton d'accès (lues pour l'affichage seulement : la base et les fonctions les vérifient, pas l'interface). */
-export function claimsOf(token: string): { sub?: string; aal?: string; name?: string } {
-  try {
-    const part = token.split(".")[1] ?? "";
-    const json = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=")));
-    const meta = (json.user_metadata ?? {}) as Record<string, unknown>;
-    return { sub: json.sub, aal: json.aal, name: typeof meta.full_name === "string" ? meta.full_name : undefined };
-  } catch {
-    return {};
-  }
-}
 
 const firstName = (full: string | undefined) => (full ?? "").trim().split(/\s+/)[0]?.split("@")[0] ?? "";
 const PRIORITY: Record<string, Priority> = { urgent: "urgent", high: "high", normal: "normal", low: "low" };
@@ -36,14 +25,16 @@ const CATEGORY: Record<string, string> = {
   onedrive: "OneDrive", slow_pc: "Poste lent", onboarding: "Arrivée", offboarding: "Départ", other: "Autre",
 };
 
+export { claimsOf };
+
 export function createSupabaseConsoleApi(opts: { url?: string; publishableKey?: string; fetcher?: Fetch; session?: SessionClient } = {}): ConsoleApi & StaffAuthApi {
   const url = opts.url ?? (import.meta.env.VITE_SUPABASE_URL as string | undefined);
   const key = opts.publishableKey ?? (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined);
   const base = functionsBase(url);
   if (!key || !key.startsWith("sb_publishable_")) throw new Error("Clé publiable Supabase absente (VITE_SUPABASE_PUBLISHABLE_KEY)");
   const fetcher: Fetch = opts.fetcher ?? fetch;
-  const session = opts.session ?? createSessionClient("staff", fetcher);
-  let pendingAccess: string | null = null; // jeton sans second facteur, entre le mot de passe et le code TOTP
+  const session = opts.session ?? staffSession(fetcher);
+  const staff = createStaffAuth({ url: url as string, publishableKey: key, fetcher, session });
   let names = new Map<string, string>();
 
   const db: SupabaseClient = createClient(url as string, key, {
@@ -63,63 +54,19 @@ export function createSupabaseConsoleApi(opts: { url?: string; publishableKey?: 
     if (!res.ok) throw new ApiError(res.status, data?.error?.code ?? "error");
     return data as T;
   };
-  const auth = async (path: string, init: RequestInit & { token: string }) => {
-    const res = await fetcher(`${url}/auth/v1/${path}`, {
-      ...init,
-      headers: { apikey: key, authorization: `Bearer ${init.token}`, "content-type": "application/json" },
-    });
-    if (!res.ok) throw new ApiError(res.status, "auth");
-    return (await res.json()) as Row;
-  };
   const rows = async (q: PromiseLike<{ data: unknown; error: unknown }>): Promise<Row[]> => {
     const { data, error } = await q;
     if (error) throw new ApiError(503, "unavailable");
     return (data ?? []) as Row[];
   };
   const client = (id: string): ClientRef => ({ id, name: names.get(id) ?? "Client" });
-  const verifiedTotp = async (token: string): Promise<string | null> => {
-    const user = await auth("user", { method: "GET", token });
-    const f = ((user.factors ?? []) as Row[]).find((x) => x.factor_type === "totp" && x.status === "verified");
-    return f ? String(f.id) : null;
-  };
-
   const api: ConsoleApi & StaffAuthApi = {
-    // ---------------------------------------------------------------- connexion du personnel
-    async resume() {
-      if (!(await session.resume())) return false;
-      return claimsOf(await session.accessToken()).aal === "aal2";
-    },
-    async password(email, password) {
-      const res = await fetcher("/api/session/password", {
-        method: "POST", credentials: "same-origin", cache: "no-store",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) return { ok: false };
-      const d = (await res.json()) as { accessToken: string };
-      pendingAccess = d.accessToken;
-      return { ok: true, next: (await verifiedTotp(d.accessToken)) ? "mfa_verify" : "mfa_enroll" };
-    },
-    async enroll() {
-      if (!pendingAccess) throw new ApiError(401, "no_session");
-      const f = await auth("factors", { method: "POST", token: pendingAccess, body: JSON.stringify({ factor_type: "totp", friendly_name: `Relève ${new Date().toISOString().slice(0, 10)}` }) });
-      return { factorId: String(f.id), qrSvg: String(f.totp?.qr_code ?? ""), secret: String(f.totp?.secret ?? "") };
-    },
-    async verify(factorId, code) {
-      if (!pendingAccess) return false;
-      const id = factorId ?? (await verifiedTotp(pendingAccess));
-      if (!id) return false;
-      const res = await fetcher("/api/session/mfa", {
-        method: "POST", credentials: "same-origin", cache: "no-store",
-        headers: { "content-type": "application/json", authorization: `Bearer ${pendingAccess}` }, body: JSON.stringify({ factorId: id, code }),
-      });
-      if (!res.ok) return false;
-      pendingAccess = null;
-      return await session.resume(); // le cookie personnel porte maintenant une session à second facteur
-    },
-    async signOut() {
-      pendingAccess = null;
-      await session.signOut();
-    },
+    // ---------------------------------------------------------------- connexion du personnel (staff.ts)
+    resume: () => staff.resume(),
+    password: (e, p) => staff.password(e, p),
+    enroll: () => staff.enroll(),
+    verify: (f, c) => staff.verify(f, c),
+    signOut: () => staff.signOut(),
 
     // ---------------------------------------------------------------- lectures
     async context(): Promise<ConsoleContext> {

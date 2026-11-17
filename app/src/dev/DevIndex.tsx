@@ -5,6 +5,8 @@ import { Logo } from "../ui/Logo.tsx";
 const SURFACES = [
   { href: "/w/cabinet-alpha", title: "Widget salarié", body: "Ce que voit un salarié de Cabinet Alpha. Thème clair." },
   { href: "/console", title: "Console technicien", body: "File unifiée, validations, incident, passation de garde. Thème sombre. Tout code à 6 chiffres convient." },
+  { href: "/esn", title: "Écran ESN", body: "Tous les clients par urgence, zoom, qualité de Relève, rapport mensuel, opportunités, revenu et marge." },
+  { href: "/admin", title: "Administrateur client", body: "État du support, qualité, qui a accès à quoi (révocable), connecteurs, autonomie, arrêt d'urgence." },
 ];
 
 export default function DevIndex() {

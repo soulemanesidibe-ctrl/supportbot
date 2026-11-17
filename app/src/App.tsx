@@ -7,6 +7,9 @@ import { TooltipProvider } from "./ui/Overlay.tsx";
 
 const WidgetApp = lazy(() => import("./widget/WidgetApp.tsx"));
 const ConsoleApp = lazy(() => import("./console/ConsoleApp.tsx"));
+const EsnApp = lazy(() => import("./dashboards/EsnApp.tsx"));
+const MonthlyReport = lazy(() => import("./dashboards/MonthlyReport.tsx"));
+const AdminApp = lazy(() => import("./dashboards/AdminApp.tsx"));
 // Le sommaire de démonstration n'existe qu'en mode démo : absent du paquet de production.
 // Expression écrite ici (pas importée) pour que la construction la remplace par une constante et retire le code mort.
 const DevIndex = import.meta.env.VITE_RELEVE_DEMO === "1" ? lazy(() => import("./dev/DevIndex.tsx")) : null;
@@ -24,6 +27,9 @@ function Surface({ theme, children }: { theme: Theme; children: ReactNode }) {
 const router = createBrowserRouter([
   { path: "/w/:org", element: <Surface theme="light"><WidgetApp /></Surface> },
   { path: "/console", element: <Surface theme="dark"><ConsoleApp /></Surface> },
+  { path: "/esn", element: <Surface theme="dark"><EsnApp /></Surface> },
+  { path: "/esn/rapport/:org", element: <Surface theme="light"><MonthlyReport /></Surface> },
+  { path: "/admin", element: <Surface theme="dark"><AdminApp /></Surface> },
   { path: "/", element: DevIndex ? <Surface theme="dark"><DevIndex /></Surface> : <Navigate to="/console" replace /> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);

@@ -10,8 +10,16 @@ import { useT } from "../lib/i18n/index.tsx";
 
 type Step = { name: "password" } | { name: "enroll"; factorId: string; qrSvg: string; secret: string } | { name: "verify" };
 
-export function StaffSignIn({ api, onSignedIn }: { api: StaffAuthApi; onSignedIn: () => void }) {
+/** Textes propres à l'écran qui demande la connexion : chacun dit ce qu'il ouvre et à qui il est réservé. */
+export interface SignInTexts {
+  readonly title: string;
+  readonly lede: string;
+  readonly verify: string;
+}
+
+export function StaffSignIn({ api, onSignedIn, texts }: { api: StaffAuthApi; onSignedIn: () => void; texts?: SignInTexts }) {
   const t = useT();
+  const words: SignInTexts = texts ?? { title: t("console.signin.title"), lede: t("console.signin.lede"), verify: t("console.signin.verify") };
   const [step, setStep] = useState<Step>({ name: "password" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,8 +62,8 @@ export function StaffSignIn({ api, onSignedIn }: { api: StaffAuthApi; onSignedIn
       <div className="flex flex-col gap-6">
         <Logo size="lg" />
         <div className="flex flex-col gap-2">
-          <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-text">{t("console.signin.title")}</h1>
-          <p className="text-[0.9375rem] leading-relaxed text-soft">{t("console.signin.lede")}</p>
+          <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-text">{words.title}</h1>
+          <p className="text-[0.9375rem] leading-relaxed text-soft">{words.lede}</p>
         </div>
       </div>
 
@@ -101,7 +109,7 @@ export function StaffSignIn({ api, onSignedIn }: { api: StaffAuthApi; onSignedIn
             )}
           </Field>
           <Button type="submit" variant="primary" size="lg" busy={busy} disabled={code.length !== 6} className="justify-center">
-            {t("console.signin.verify")}
+            {words.verify}
           </Button>
           <Button
             variant="quiet"

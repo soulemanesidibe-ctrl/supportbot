@@ -51,6 +51,13 @@
   --c-mark-dot: #3ddc97;
   --c-scrim: rgb(5 6 8 / 0.72);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  /* Graphiques (skill dataviz) : mise en avant d'une part (vert signal), le reste en deux gris. Paires validées par
+     scripts/validate_palette.js sur la surface #17181B : écart daltonisme 17,5 à 21, vision normale 17,5 à 23,8. */
+  --c-chart-accent: #3ddc97;
+  --c-chart-mid: #7a808a;
+  --c-chart-low: #4a4e56;
+  --c-chart-on-accent: #0e0f11;
+  --c-chart-track: #26282d;
 }
 
 /* ---------------------------------------------------------------- jetons, thème clair (défaut du widget) */
@@ -85,6 +92,12 @@
   --c-mark-dot: #3ddc97;
   --c-scrim: rgb(14 15 17 / 0.45);
   --c-shadow: 0 1px 2px rgb(14 15 17 / 0.06), 0 8px 24px rgb(14 15 17 / 0.08);
+  /* Graphiques en clair, validés sur #FFFFFF : écart daltonisme 17,1, vision normale 19,6 ; texte blanc sur l'accent 6,55:1. */
+  --c-chart-accent: #0d6b45;
+  --c-chart-mid: #8a9099;
+  --c-chart-low: #c9cdd3;
+  --c-chart-on-accent: #ffffff;
+  --c-chart-track: #eceef0;
 }
 
 /* Correspondance avec les classes Tailwind (bg-surface, text-soft, border-border...). */
@@ -114,6 +127,11 @@
   --color-danger-ink: var(--c-danger-ink);
   --color-focus: var(--c-focus);
   --color-mark-dot: var(--c-mark-dot);
+  --color-chart-accent: var(--c-chart-accent);
+  --color-chart-mid: var(--c-chart-mid);
+  --color-chart-low: var(--c-chart-low);
+  --color-chart-on-accent: var(--c-chart-on-accent);
+  --color-chart-track: var(--c-chart-track);
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --radius-card: 12px;

@@ -1,4 +1,4 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 18 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 19 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
 -- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
@@ -89,11 +89,13 @@ checks(ordre, controle, attendu, trouve, ok) as (
          (select count(*)::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'widget\_%'),
          (select count(*) = 6 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'widget\_%')
   union all
-  select 9.8, 'Fonctions des tableaux de bord appelables par l''anonyme (migration 18)', 'false',
+  select 9.8, 'Fonctions des tableaux de bord appelables par l''anonyme (migrations 18 et 19)', 'false',
          (has_function_privilege('anon', 'public.dashboard_org_summary(uuid, integer)', 'execute')
-          or has_function_privilege('anon', 'public.dashboard_partner_clients(uuid)', 'execute'))::text,
+          or has_function_privilege('anon', 'public.dashboard_partner_clients(uuid)', 'execute')
+          or has_function_privilege('anon', 'public.dashboard_org_access(uuid)', 'execute'))::text,
          not (has_function_privilege('anon', 'public.dashboard_org_summary(uuid, integer)', 'execute')
-              or has_function_privilege('anon', 'public.dashboard_partner_clients(uuid)', 'execute'))
+              or has_function_privilege('anon', 'public.dashboard_partner_clients(uuid)', 'execute')
+              or has_function_privilege('anon', 'public.dashboard_org_access(uuid)', 'execute'))
   union all
   select 10, 'Index vectoriel HNSW de la base de connaissance', '1',
          (select count(*)::text from pg_indexes where indexname = 'kb_chunks_embedding_hnsw'),

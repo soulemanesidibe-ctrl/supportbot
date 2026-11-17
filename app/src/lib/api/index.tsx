@@ -2,6 +2,7 @@
 // construction : Vite remplace la variable par une constante et l'import dynamique de demo.ts disparaît du paquet de
 // production (vérifié par scripts/check-no-demo-in-build.mjs).
 import type { ConsoleApi, StaffAuthApi } from "./console-types.ts";
+import type { DashboardApi } from "./dashboard-types.ts";
 import type { EmployeeAuthApi, WidgetApi } from "./types.ts";
 
 export const DEMO = import.meta.env.VITE_RELEVE_DEMO === "1";
@@ -26,4 +27,15 @@ export function consoleApi(): Promise<ConsoleApi & StaffAuthApi> {
       : import("./console-supabase.ts").then((m) => m.createSupabaseConsoleApi());
   }
   return consoleImpl;
+}
+
+let dashboardImpl: Promise<DashboardApi> | undefined;
+
+export function dashboardApi(): Promise<DashboardApi> {
+  if (!dashboardImpl) {
+    dashboardImpl = DEMO
+      ? import("./dashboard-demo.ts").then((m) => m.createDemoDashboardApi())
+      : import("./dashboard-supabase.ts").then((m) => m.createSupabaseDashboardApi());
+  }
+  return dashboardImpl;
 }
