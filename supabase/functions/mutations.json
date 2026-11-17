@@ -3112,5 +3112,75 @@
     "  return await client.rpc(call.fn, { p_slug: call.slug, p_email: (call as { email?: string }).email });"
    ]
   ]
+ },
+ {
+  "label": "console : la réponse du technicien n'est plus masquée",
+  "file": "_shared/console/handler.ts",
+  "expect": "console réponse : journal d'abord, message du technicien MASQUÉ",
+  "edits": [
+   [
+    "  const clean = redactText(raw);",
+    "  const clean = raw;"
+   ]
+  ]
+ },
+ {
+  "label": "console : on écrit avant le journal",
+  "file": "_shared/console/handler.ts",
+  "expect": "journal indisponible = rien n'est écrit",
+  "edits": [
+   [
+    "  await deps.audit(auth, { event: \"console.reply\", actorKind: \"user\", subjectType: \"conversation\", subjectId: id, details: { internal, masked: clean !== raw } });\n",
+    ""
+   ],
+   [
+    "  return { id: messageId, masked: clean !== raw };",
+    "  await deps.audit(auth, { event: \"console.reply\", actorKind: \"user\", subjectType: \"conversation\", subjectId: id, details: { internal, masked: clean !== raw } });\n  return { id: messageId, masked: clean !== raw };"
+   ]
+  ]
+ },
+ {
+  "label": "console : la note interne part au salarié",
+  "file": "_shared/console/handler.ts",
+  "expect": "console note interne",
+  "edits": [
+   [
+    "visibility: internal ? \"technician\" : \"public\"",
+    "visibility: \"public\""
+   ]
+  ]
+ },
+ {
+  "label": "console : un accès d'assistance peut répondre",
+  "file": "_shared/console/handler.ts",
+  "expect": "accès d'assistance (lecture seule) = aucun geste",
+  "edits": [
+   [
+    "export async function reply(auth: AuthContext, deps: ConsoleDeps, a: { conversationId: unknown; text: unknown; internal: unknown }) {\n  if (auth.readOnly) throw Errors.readOnly();",
+    "export async function reply(auth: AuthContext, deps: ConsoleDeps, a: { conversationId: unknown; text: unknown; internal: unknown }) {"
+   ]
+  ]
+ },
+ {
+  "label": "console : un administrateur d'ESN (sans accès au contenu) répond aux salariés",
+  "file": "_shared/console/handler.ts",
+  "expect": "porte console : seuls les rôles",
+  "edits": [
+   [
+    "export const HANDLERS = [\"partner_technician\", \"org_technician\", \"org_admin\"] as const;",
+    "export const HANDLERS = [\"partner_technician\", \"org_technician\", \"org_admin\", \"partner_admin\"] as const;"
+   ]
+  ]
+ },
+ {
+  "label": "console : une demande close peut être reclose (écriture sans condition d'état)",
+  "file": "_shared/console/handler.ts",
+  "expect": "store console : tout est borné",
+  "edits": [
+   [
+    "      const { data, error } = await serviceClient(auth, db).from(\"conversations\").update(row).eq(\"id\", id).eq(\"org_id\", org(auth))\n        .in(\"state\", [...fromStates]).select(\"id\");",
+    "      const { data, error } = await serviceClient(auth, db).from(\"conversations\").update(row).eq(\"id\", id).eq(\"org_id\", org(auth))\n        .select(\"id\");"
+   ]
+  ]
  }
 ]

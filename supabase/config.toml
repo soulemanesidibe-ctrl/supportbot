@@ -441,6 +441,10 @@ verify_jwt = false
 [functions.admin]
 verify_jwt = false
 
+# Gestes du technicien (répondre, prendre, clore) : requireOrgMember vérifie jeton, rôle et second facteur.
+[functions.console]
+verify_jwt = false
+
 # Connexion du salarié : « org » et « request_code » n'ont pas de jeton ; « link » vérifie le sien (requireUser).
 [functions.employee-auth]
 verify_jwt = false

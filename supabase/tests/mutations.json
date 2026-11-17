@@ -1356,5 +1356,60 @@
     "  public.widget_context(uuid, uuid), public.widget_requests(uuid, uuid, int), public.widget_conversation(uuid, uuid, uuid)\n  from anon;"
    ]
   ]
+ },
+ {
+  "label": "tableaux de bord : synthèse sans contrôle de droit",
+  "file": "20261106101800_tableaux_de_bord.sql",
+  "expect": "synthèse : refusée à un salarié",
+  "edits": [
+   [
+    "  if not (private.session_has_second_factor() and private.can_read_org_config(p_org)) then perform private.dashboard_denied(); end if;",
+    "  if not private.session_has_second_factor() then perform private.dashboard_denied(); end if;"
+   ]
+  ]
+ },
+ {
+  "label": "tableaux de bord : synthèse sans second facteur",
+  "file": "20261106101800_tableaux_de_bord.sql",
+  "expect": "SEC-33 synthèse : refusée sans second facteur",
+  "edits": [
+   [
+    "  if not (private.session_has_second_factor() and private.can_read_org_config(p_org)) then",
+    "  if not (private.can_read_org_config(p_org)) then"
+   ]
+  ]
+ },
+ {
+  "label": "tableaux de bord : un message automatique compte comme première réponse",
+  "file": "20261106101800_tableaux_de_bord.sql",
+  "expect": "synthèse : médianes avec leur effectif",
+  "edits": [
+   [
+    "and m.visibility = 'public' and m.role in ('assistant', 'technician')) as first_answer_at",
+    "and m.role in ('assistant', 'technician', 'system', 'user')) as first_answer_at"
+   ]
+  ]
+ },
+ {
+  "label": "tableaux de bord : l'ESN voit un client sans que la relation approuve son rôle",
+  "file": "20261106101800_tableaux_de_bord.sql",
+  "expect": "un client dont la relation n'approuve plus",
+  "edits": [
+   [
+    "    and v_role = any (r.approved_roles)\n",
+    "\n"
+   ]
+  ]
+ },
+ {
+  "label": "tableaux de bord : un technicien de l'ESN lit le tableau de tous les clients",
+  "file": "20261106101800_tableaux_de_bord.sql",
+  "expect": "ESN : refusé au technicien",
+  "edits": [
+   [
+    "     and m.role in ('partner_admin', 'partner_manager');",
+    "     and m.role in ('partner_admin', 'partner_manager', 'partner_technician');"
+   ]
+  ]
  }
 ]

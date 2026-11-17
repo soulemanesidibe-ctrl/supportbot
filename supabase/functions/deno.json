@@ -5,7 +5,7 @@
   },
   "lock": true,
   "tasks": {
-    "check": "deno check --frozen \"_shared/**/*.ts\" \"chat/*.ts\" \"cron/*.ts\" \"actions/*.ts\" \"admin/*.ts\" \"alerts-ingest/*.ts\" \"employee-auth/*.ts\"",
+    "check": "deno check --frozen \"_shared/**/*.ts\" \"chat/*.ts\" \"cron/*.ts\" \"actions/*.ts\" \"admin/*.ts\" \"alerts-ingest/*.ts\" \"employee-auth/*.ts\" \"console/*.ts\"",
     "test": "deno test --frozen --no-prompt --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET,RELEVE_ALLOWED_ORIGINS"
   },
   "lint": { "rules": { "tags": ["recommended"] } },

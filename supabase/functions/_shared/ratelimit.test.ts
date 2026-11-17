@@ -23,6 +23,7 @@ Deno.test("règles figées (valeurs en dur) : 12 messages par minute et par sala
   assert.deepEqual(BUCKETS.chat, [{ scope: "user", windowSeconds: 60, limit: 12 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
   assert.deepEqual(BUCKETS.actions, [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
   assert.deepEqual(BUCKETS.admin, [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }]);
+  assert.deepEqual(BUCKETS.console, [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 600 }]);
   assert.deepEqual(BUCKETS.widget, [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 1200 }]);
 });
 

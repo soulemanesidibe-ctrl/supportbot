@@ -15,6 +15,8 @@ export const BUCKETS = {
   chat: [{ scope: "user", windowSeconds: 60, limit: 12 }, { scope: "org", windowSeconds: 60, limit: 120 }],
   /** Lectures et gestes du widget salarié (contexte, liste, lecture, transfert, confirmation, note) : sans appel au modèle. */
   widget: [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 1200 }],
+  /** Gestes d'un technicien sur les demandes (réponses, prise en charge, clôture). */
+  console: [{ scope: "user", windowSeconds: 60, limit: 60 }, { scope: "org", windowSeconds: 60, limit: 600 }],
   /** Validations, refus, reprises d'un technicien. */
   actions: [{ scope: "user", windowSeconds: 60, limit: 30 }, { scope: "org", windowSeconds: 60, limit: 120 }],
   /** Opérations d'administration (et acceptation d'une invitation, sans organisation : seule la règle « personne » s'applique). */
