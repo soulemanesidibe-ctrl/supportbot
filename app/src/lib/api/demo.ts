@@ -10,6 +10,12 @@ const TEXTS = {
     "Je transmets votre demande à un technicien, qui reprendra la conversation. Vous n'aurez pas à répéter. Je suis un assistant IA : un humain prend le relais.",
   accountAction:
     "Pour une action sur un compte (mot de passe, authentification à deux facteurs, déblocage), un technicien doit d'abord vérifier votre identité par un autre moyen. Votre demande lui est transmise : il vous contactera.",
+  humanRequested:
+    "Votre demande est transmise à un technicien, avec ce qui a déjà été vérifié : vous n'aurez pas à répéter. Il vous répondra ici.",
+  direct:
+    "Votre message est transmis directement à un technicien, qui vous répondra ici. Relève, l'assistant IA du support, ne répond pas à cette demande.",
+  notWorked:
+    "C'est noté : la solution proposée n'a pas suffi. Votre demande passe à un technicien, avec ce qui a déjà été essayé. Il vous répondra ici.",
 };
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -32,7 +38,7 @@ function seed(): DemoConv[] {
     {
       id: "c-compta",
       title: "Accès au dossier Comptabilité",
-      status: "pending_approval",
+      status: "waiting_technician",
       awaitingConfirmation: false,
       accountAction: false,
       satisfaction: null,
@@ -161,7 +167,7 @@ export function createDemoWidgetApi(opts: { latencyMs?: number } = {}): WidgetAp
       await wait(latency / 3);
       return snapshot(find(cid));
     },
-    async send(cid: string | null, text: string): Promise<SendResult> {
+    async send(cid: string | null, text: string, opts?: { direct?: boolean }): Promise<SendResult> {
       await wait(latency);
       let c: DemoConv;
       if (cid === null) {
@@ -169,6 +175,13 @@ export function createDemoWidgetApi(opts: { latencyMs?: number } = {}): WidgetAp
         convs.unshift(c);
       } else c = find(cid);
       c.messages.push({ id: id(), role: "user", content: text, at: new Date().toISOString() });
+      if (c.status === "waiting_technician" && cid !== null) return { conversationId: c.id, outcome: "escalated", messages: [] }; // l'IA se tait
+      if (opts?.direct) {
+        const notice: ChatMessage = { id: id(), role: "notice", content: TEXTS.direct, at: new Date().toISOString() };
+        c.messages.push(notice);
+        c.status = "waiting_technician";
+        return { conversationId: c.id, outcome: "escalated", messages: [notice] };
+      }
       const r = reply(text);
       c.messages.push(...r.messages);
       c.awaitingConfirmation = r.awaiting;
@@ -179,16 +192,17 @@ export function createDemoWidgetApi(opts: { latencyMs?: number } = {}): WidgetAp
     async escalate(cid: string): Promise<void> {
       await wait(latency / 2);
       const c = find(cid);
+      if (c.status === "waiting_technician") return;
       c.status = "waiting_technician";
       c.awaitingConfirmation = false;
-      c.messages.push({ id: id(), role: "notice", content: TEXTS.escalated, at: new Date().toISOString() });
+      c.messages.push({ id: id(), role: "notice", content: TEXTS.humanRequested, at: new Date().toISOString() });
     },
     async confirm(cid: string, worked: boolean): Promise<void> {
       await wait(latency / 3);
       const c = find(cid);
       c.awaitingConfirmation = false;
       c.status = worked ? "resolved" : "waiting_technician";
-      if (!worked) c.messages.push({ id: id(), role: "notice", content: TEXTS.escalated, at: new Date().toISOString() });
+      if (!worked) c.messages.push({ id: id(), role: "notice", content: TEXTS.notWorked, at: new Date().toISOString() });
     },
     async rate(cid: string, score: 1 | 2 | 3 | 4 | 5): Promise<void> {
       await wait(latency / 4);
@@ -198,10 +212,13 @@ export function createDemoWidgetApi(opts: { latencyMs?: number } = {}): WidgetAp
       await wait(latency / 4);
       return slug === "cabinet-alpha" || slug === "client-alpha" ? { name: "Cabinet Alpha", brand: { name: "Nord Numérique" } } : null;
     },
+    async resume(): Promise<boolean> {
+      return false; // démonstration : chaque visite commence par l'écran de connexion
+    },
     async requestCode(): Promise<void> {
       await wait(latency / 2);
     },
-    async verifyCode(_email: string, code: string): Promise<boolean> {
+    async verifyCode(_slug: string, _email: string, code: string): Promise<boolean> {
       await wait(latency / 2);
       return /^\d{6}$/.test(code);
     },

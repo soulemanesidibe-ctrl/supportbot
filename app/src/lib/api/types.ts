@@ -4,7 +4,9 @@
 /** Catégories de demandes (identiques à private.categories() en base). */
 export type Category = "password" | "mfa" | "vpn" | "printer" | "outlook" | "teams" | "onedrive" | "slow_pc" | "onboarding" | "offboarding" | "other";
 
-export type RequestStatus = "open" | "waiting_technician" | "waiting_user" | "pending_approval" | "resolved" | "closed";
+/** État d'une demande vu par le salarié. Pas d'état « en validation » : une demande sur un compte se lit « chez un technicien »,
+ *  ordinaire ou suspecte (décision du 16 novembre, docs/spec-mvp.md § 1). */
+export type RequestStatus = "open" | "waiting_technician" | "waiting_user" | "resolved" | "closed";
 
 /** Résultat d'un message du salarié, tel que le renvoie la fonction `chat` (ChatOutcome). */
 export type ChatOutcome = "answered" | "shadow" | "escalated" | "account_action" | "suspect" | "frozen";
@@ -74,7 +76,8 @@ export interface WidgetApi {
   context(): Promise<WidgetContext>;
   listRequests(): Promise<readonly RequestSummary[]>;
   conversation(id: string): Promise<Conversation>;
-  send(conversationId: string | null, text: string): Promise<SendResult>;
+  /** `direct` : « Parler à un technicien » depuis l'accueil ; le message va à un humain sans passer par l'IA. */
+  send(conversationId: string | null, text: string, opts?: { direct?: boolean }): Promise<SendResult>;
   /** « Parler à un technicien » : la demande passe chez un humain, avec ce qui a déjà été vérifié. */
   escalate(conversationId: string): Promise<void>;
   /** Réponse au « Est-ce que ça a fonctionné ? ». */
@@ -85,9 +88,11 @@ export interface WidgetApi {
 export interface EmployeeAuthApi {
   /** Nom et marque de l'organisation désignée dans l'adresse du widget (/w/<organisation>), avant toute connexion : rien d'autre. */
   publicOrg(slug: string): Promise<{ readonly name: string; readonly brand: Brand } | null>;
+  /** Reprend la session existante (cookie de la passerelle) pour cette organisation, par exemple après un rechargement. */
+  resume(slug: string): Promise<boolean>;
   /** Envoie un code SI l'adresse figure dans la liste des salariés : la réponse est la même dans tous les cas. */
-  requestCode(email: string): Promise<void>;
-  verifyCode(email: string, code: string): Promise<boolean>;
+  requestCode(slug: string, email: string): Promise<void>;
+  verifyCode(slug: string, email: string, code: string): Promise<boolean>;
   signOut(): Promise<void>;
 }
 

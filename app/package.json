@@ -11,13 +11,14 @@
   "scripts": {
     "dev": "vite",
     "dev:demo": "vite --mode demo",
-    "build": "tsc -b && vite build",
-    "build:demo": "tsc -b && vite build --mode demo",
+    "build": "tsc -b && vite build && node scripts/write-headers.mjs",
+    "build:demo": "tsc -b && vite build --mode demo && node scripts/write-headers.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
-    "check:no-demo": "node scripts/check-no-demo-in-build.mjs"
+    "check:no-demo": "node scripts/check-no-demo-in-build.mjs",
+    "start": "node server/node.ts"
   },
   "dependencies": {
     "@azure/msal-browser": "5.29.0",

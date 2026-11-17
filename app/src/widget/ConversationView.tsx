@@ -76,12 +76,11 @@ export function ConversationView({
     setSending(true);
     setThanks(null);
     try {
-      const r = await api.send(id ?? null, text);
+      // « Parler à un technicien » : le premier message va directement à un humain, sans passer par l'IA.
+      const direct = directToTech && !id;
+      const r = await api.send(id ?? null, text, { direct });
       if (!id) onCreated(r.conversationId);
-      if (directToTech && !id) {
-        await api.escalate(r.conversationId);
-        setThanks("escalated");
-      }
+      if (direct) setThanks("escalated");
       await reload(r.conversationId);
       setPending(null);
     } catch {

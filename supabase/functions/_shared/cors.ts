@@ -1,4 +1,4 @@
-// Appels du navigateur vers les fonctions (R3-06, SEC-21) : seules les origines de la LISTE BLANCHE (adresses exactes des écrans de
+// Appels du navigateur vers les fonctions (R3-06, SEC-23) : seules les origines de la LISTE BLANCHE (adresses exactes des écrans de
 // Relève) reçoivent les en-têtes CORS. Jamais « * », jamais de cookie (les fonctions lisent un jeton Bearer, pas un cookie) :
 //   - pré-vol OPTIONS d'une origine autorisée : 204 avec méthode POST et en-têtes permis ; d'une autre origine : 403 sans en-tête ;
 //   - réponse ordinaire : l'en-tête Access-Control-Allow-Origin n'est ajouté que pour une origine autorisée.

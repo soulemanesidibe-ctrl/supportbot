@@ -15,7 +15,6 @@ export const STATUS_TONE: Record<RequestStatus, BadgeTone> = {
   open: "neutral",
   waiting_user: "signal",
   waiting_technician: "neutral",
-  pending_approval: "relief",
   resolved: "signal",
   closed: "outline",
 };

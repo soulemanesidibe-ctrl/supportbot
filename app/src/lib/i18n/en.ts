@@ -67,7 +67,6 @@ export const en: Partial<Record<MessageKey, string>> = {
   "status.open": "In progress",
   "status.waiting_technician": "With a technician",
   "status.waiting_user": "Waiting for your reply",
-  "status.pending_approval": "Being approved",
   "status.resolved": "Resolved",
   "status.closed": "Closed",
   "chat.newTitle": "New request",

@@ -1,7 +1,9 @@
 // Widget du salarié (page hébergée /w/<organisation>, thème clair par défaut). Écran prioritaire de la démo.
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { SignOut } from "@phosphor-icons/react";
 import { Button } from "../ui/Button.tsx";
+import { Tooltip } from "../ui/Overlay.tsx";
 import { Skeleton } from "../ui/Skeleton.tsx";
 import { widgetApi } from "../lib/api/index.tsx";
 import type { EmployeeAuthApi, RequestSummary, WidgetApi, WidgetContext } from "../lib/api/types.ts";
@@ -28,9 +30,29 @@ export default function WidgetApp() {
     widgetApi().then(setApi, () => setFailed(true));
   }, []);
 
+  // Organisation de l'adresse, puis reprise d'une session existante (cookie de la passerelle) : pas de nouveau code à chaque visite.
   useEffect(() => {
     if (!api) return;
-    api.publicOrg(org).then((o) => setOrgName(o?.name ?? null), () => setOrgName(null));
+    let alive = true;
+    void (async () => {
+      const o = await api.publicOrg(org).catch(() => null);
+      if (!alive) return;
+      if (o && (await api.resume(org).catch(() => false)) && alive) {
+        setSignedIn(true);
+        try {
+          const [c, r] = await Promise.all([api.context(), api.listRequests()]);
+          if (!alive) return;
+          setCtx(c);
+          setRequests(r);
+        } catch {
+          if (alive) setFailed(true);
+        }
+      }
+      if (alive) setOrgName(o?.name ?? null);
+    })();
+    return () => {
+      alive = false;
+    };
   }, [api, org]);
 
   const load = useCallback(async () => {
@@ -47,11 +69,29 @@ export default function WidgetApp() {
 
   if ((!api && !failed) || (api && orgName === undefined)) return <FullSkeleton />;
   if (orgName === null) return <UnknownOrg />;
-  if (api && orgName && !signedIn) return <SignIn api={api} orgName={orgName} onSignedIn={() => { setSignedIn(true); void load(); }} />;
+  if (api && orgName && !signedIn) return <SignIn api={api} slug={org} orgName={orgName} onSignedIn={() => { setSignedIn(true); void load(); }} />;
+
+  const signOut = async () => {
+    if (!api) return;
+    await api.signOut().catch(() => {});
+    setSignedIn(false);
+    setCtx(null);
+    setRequests(null);
+    setView({ name: "home" });
+  };
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      <WidgetHeader ctx={ctx} />
+      <WidgetHeader
+        ctx={ctx}
+        right={
+          <Tooltip label={t("common.signOut")}>
+            <Button variant="quiet" size="icon" onClick={() => void signOut()} aria-label={t("common.signOut")}>
+              <SignOut size={20} aria-hidden="true" />
+            </Button>
+          </Tooltip>
+        }
+      />
       {failed ? (
         <main className="mx-auto flex max-w-md flex-1 flex-col items-start justify-center gap-4 px-5">
           <p className="text-[0.9375rem] text-text" role="alert">

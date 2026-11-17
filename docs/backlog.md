@@ -67,6 +67,13 @@ On n'écrit pas leur code avant le premier client payant. Le schéma et les inte
 
 **Exception :** un élément du backlog peut être ajouté avant le premier client payant seulement si **un pilote en donne l'accès** et si **la barre de fiabilité est déjà franchie** sur le périmètre existant. **La sécurité ne fait jamais partie de ce qu'on réduit.**
 
+### Ajouts de J5 (sécurité, à reprendre plus tard)
+
+- **B31** Politique de sécurité du contenu : remplacer l'exception `style-src-elem 'unsafe-inline'` (élément `<style>` du dialogue accessible) par un nonce par requête (serveur Node ou intergiciel Cloudflare).
+- **B32** Limites de débit de Supabase Auth comptées par adresse IP : derrière la passerelle, toutes les connexions partagent les adresses de l'hébergeur. Régler les seuils au déploiement, surveiller pendant le pilote ; envisager une limite par adresse e-mail dans la passerelle.
+- **B33** Une personne du personnel d'un client (technicien de la DSI) qui est aussi salariée de ce client ne peut pas utiliser le widget avec la même adresse (un seul rôle par organisation) : décider s'il faut l'autoriser.
+- **B34** Textes fixes du serveur (messages automatiques du fil) en anglais quand l'interface est en anglais.
+
 ### Barres de fiabilité (propositions, à calibrer avec les pilotes)
 
 Source : `docs/11` § 2. Jamais de pourcentage sans son effectif ; avec 100 demandes l'incertitude est d'environ 8 points, viser 300 par catégorie avant de conclure.

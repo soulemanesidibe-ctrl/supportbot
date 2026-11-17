@@ -11,7 +11,7 @@ import { useT } from "../lib/i18n/index.tsx";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export function SignIn({ api, orgName, onSignedIn }: { api: EmployeeAuthApi; orgName: string; onSignedIn: () => void }) {
+export function SignIn({ api, slug, orgName, onSignedIn }: { api: EmployeeAuthApi; slug: string; orgName: string; onSignedIn: () => void }) {
   const t = useT();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -28,7 +28,7 @@ export function SignIn({ api, orgName, onSignedIn }: { api: EmployeeAuthApi; org
     setError(null);
     setBusy(true);
     try {
-      await api.requestCode(email.trim().toLowerCase());
+      await api.requestCode(slug, email.trim().toLowerCase());
       setStep("code");
     } catch {
       setError(t("common.error"));
@@ -42,7 +42,7 @@ export function SignIn({ api, orgName, onSignedIn }: { api: EmployeeAuthApi; org
     setError(null);
     setBusy(true);
     try {
-      if (await api.verifyCode(email.trim().toLowerCase(), code.trim())) onSignedIn();
+      if (await api.verifyCode(slug, email.trim().toLowerCase(), code.trim())) onSignedIn();
       else setError(t("widget.signin.badCode"));
     } catch {
       setError(t("common.error"));

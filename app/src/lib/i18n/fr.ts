@@ -74,7 +74,6 @@ export const fr = {
   "status.open": "En cours",
   "status.waiting_technician": "Chez un technicien",
   "status.waiting_user": "Votre réponse est attendue",
-  "status.pending_approval": "En validation",
   "status.resolved": "Résolue",
   "status.closed": "Fermée",
 
