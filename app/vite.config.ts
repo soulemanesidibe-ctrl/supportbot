@@ -11,6 +11,8 @@ export default defineConfig({
     sourcemap: false,
     // Les données fictives (mode démo) ne doivent jamais se retrouver dans le paquet de production : voir src/lib/api/index.ts.
     assetsInlineLimit: 0,
+    // Deux pages : l'application, et la page de retour de la fenêtre Microsoft (src/msal-redirect.ts).
+    rollupOptions: { input: { main: "index.html", msal: "msal-redirect.html" } },
   },
   server: { port: 5173, strictPort: true },
   test: {

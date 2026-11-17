@@ -4,6 +4,7 @@ import { Logo } from "../ui/Logo.tsx";
 
 const SURFACES = [
   { href: "/w/cabinet-alpha", title: "Widget salarié", body: "Ce que voit un salarié de Cabinet Alpha. Thème clair." },
+  { href: "/console", title: "Console technicien", body: "File unifiée, validations, incident, passation de garde. Thème sombre. Tout code à 6 chiffres convient." },
 ];
 
 export default function DevIndex() {

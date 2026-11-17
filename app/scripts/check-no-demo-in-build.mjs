@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const MARKERS = ["c-imprimante", "Écran qui scintille", "createDemoWidgetApi", "camille.martin", "Démonstration de Relève"];
+const MARKERS = ["c-imprimante", "Écran qui scintille", "createDemoWidgetApi", "camille.martin", "Démonstration de Relève", "createDemoConsoleApi", "Clinique des Tilleuls", "Transports Morel"];
 const files = [];
 const walk = (d) => {
   for (const f of readdirSync(d)) {
