@@ -147,7 +147,9 @@ function Shell({ api, onSignedOut }: { api: Api; onSignedOut: () => void }) {
     <div className="flex h-dvh flex-col bg-bg">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-3 sm:px-4">
         <Logo size="sm" />
-        <span className="hidden border-l border-border pl-3 text-sm text-soft sm:inline">{t("console.title")}</span>
+        {/* Titre de la page, toujours présent pour les lecteurs d'écran ; visible à partir de la largeur tablette. */}
+        <h1 className="sr-only">{t("console.signin.title")}</h1>
+        <span aria-hidden="true" className="hidden border-l border-border pl-3 text-sm text-soft sm:inline">{t("console.title")}</span>
         <button
           type="button"
           onClick={() => setPalette(true)}

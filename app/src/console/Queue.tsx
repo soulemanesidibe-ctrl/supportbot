@@ -74,9 +74,9 @@ export function Queue({
     <section aria-labelledby="file-titre" className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-3 border-b border-border px-4 pb-3 pt-5 sm:px-5">
         <div className="flex items-baseline justify-between gap-3">
-          <h1 id="file-titre" className="text-lg font-semibold tracking-[-0.02em] text-text">
+          <h2 id="file-titre" className="text-lg font-semibold tracking-[-0.02em] text-text">
             {t("console.queue.title")}
-          </h1>
+          </h2>
           {items && (
             <span className="num text-[0.8125rem] text-soft">{t("console.queue.count", { clients, n: items.length })}</span>
           )}

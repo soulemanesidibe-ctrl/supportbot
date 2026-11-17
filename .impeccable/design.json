@@ -1,0 +1,157 @@
+{
+ "schemaVersion": 2,
+ "generatedAt": "2026-11-17T23:30:54+00:00",
+ "title": "Design System: Relève",
+ "extensions": {
+  "colorMeta": {
+   "signal-dark": {
+    "role": "primary",
+    "displayName": "Vert signal"
+   },
+   "signal-light": {
+    "role": "primary",
+    "displayName": "Vert signal (clair)"
+   },
+   "relief": {
+    "role": "secondary",
+    "displayName": "Ambre de relève"
+   },
+   "danger-dark": {
+    "role": "tertiary",
+    "displayName": "Rouge d'alerte"
+   },
+   "carbon-bg": {
+    "role": "neutral",
+    "displayName": "Carbone"
+   },
+   "paper-bg": {
+    "role": "neutral",
+    "displayName": "Papier"
+   }
+  },
+  "shadows": [
+   {
+    "name": "lift-dark",
+    "value": "0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35)",
+    "purpose": "Dialogues, palette de commandes, infobulles (thème sombre)."
+   },
+   {
+    "name": "lift-light",
+    "value": "0 1px 2px rgb(14 15 17 / 0.06), 0 8px 24px rgb(14 15 17 / 0.08)",
+    "purpose": "Mêmes usages en thème clair."
+   }
+  ],
+  "motion": [
+   {
+    "name": "state",
+    "value": "150ms ease",
+    "purpose": "Changement de fond, de bordure ou de couleur au survol et au focus."
+   },
+   {
+    "name": "ease-out-expo",
+    "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "purpose": "Entrées de panneaux et de dialogues (transform, opacity)."
+   }
+  ],
+  "breakpoints": [
+   {
+    "name": "sm",
+    "value": "640px"
+   },
+   {
+    "name": "md",
+    "value": "768px"
+   },
+   {
+    "name": "lg",
+    "value": "1024px"
+   }
+  ]
+ },
+ "components": [
+  {
+   "name": "Bouton principal (sombre)",
+   "kind": "button",
+   "refersTo": "button-primary-dark",
+   "description": "Action principale de l'écran, une seule par vue.",
+   "html": "<button class=\"ds-btn-primary\">Valider et exécuter</button>",
+   "css": ".ds-btn-primary{background:#3ddc97;color:#0e0f11;min-height:44px;padding:0 16px;border:0;border-radius:10px;font:500 0.9375rem Geist,system-ui,sans-serif;transition:background 150ms}.ds-btn-primary:hover{background:#5ae4a8}.ds-btn-primary:focus-visible{outline:2px solid #3ddc97;outline-offset:2px}"
+  },
+  {
+   "name": "Bouton secondaire (sombre)",
+   "kind": "button",
+   "refersTo": "button-secondary-dark",
+   "description": "Action d'appoint.",
+   "html": "<button class=\"ds-btn-secondary\">Rapport mensuel</button>",
+   "css": ".ds-btn-secondary{background:#17181b;color:#edeef0;min-height:44px;padding:0 16px;border:1px solid #34373d;border-radius:10px;font:500 0.9375rem Geist,system-ui,sans-serif;transition:background 150ms}.ds-btn-secondary:hover{background:#1f2125}.ds-btn-secondary:focus-visible{outline:2px solid #3ddc97;outline-offset:2px}"
+  },
+  {
+   "name": "Bouton danger",
+   "kind": "button",
+   "refersTo": "button-danger-dark",
+   "description": "Révoquer, geler, refuser.",
+   "html": "<button class=\"ds-btn-danger\">Déclencher l'arrêt d'urgence</button>",
+   "css": ".ds-btn-danger{background:color-mix(in oklab,#f0605a 14%,transparent);color:#f48a85;min-height:44px;padding:0 16px;border:1px solid color-mix(in oklab,#f0605a 50%,transparent);border-radius:10px;font:500 0.9375rem Geist,system-ui,sans-serif;transition:background 150ms,color 150ms}.ds-btn-danger:hover{background:#f0605a;color:#0e0f11}.ds-btn-danger:focus-visible{outline:2px solid #3ddc97;outline-offset:2px}"
+  },
+  {
+   "name": "Badge Relève active",
+   "kind": "chip",
+   "refersTo": "badge-relief",
+   "description": "L'équipe est absente, Relève tient la garde.",
+   "html": "<span class=\"ds-badge-relief\">Relève active jusqu'à 08:00</span>",
+   "css": ".ds-badge-relief{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;background:#f2b33d;color:#0e0f11;font:500 0.8125rem Geist,system-ui,sans-serif;white-space:nowrap}"
+  },
+  {
+   "name": "Champ (clair)",
+   "kind": "input",
+   "refersTo": "input-light",
+   "description": "Champ du widget salarié, libellé visible au-dessus.",
+   "html": "<label class=\"ds-field\"><span>Votre adresse professionnelle</span><input class=\"ds-input\" placeholder=\"prenom.nom@entreprise.fr\"></label>",
+   "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font:500 0.875rem Geist,system-ui,sans-serif;color:#0e0f11}.ds-input{height:44px;padding:0 14px;border:1px solid #c3c8cf;border-radius:10px;background:#fff;color:#0e0f11;font:400 0.9375rem Geist,system-ui,sans-serif;transition:border-color 150ms,box-shadow 150ms}.ds-input:focus-visible{outline:none;border-color:#138a5a;box-shadow:0 0 0 2px color-mix(in oklab,#138a5a 35%,transparent)}"
+  },
+  {
+   "name": "Jauge de qualité",
+   "kind": "custom",
+   "description": "Notes ou part correcte d'une catégorie, avec repère du seuil.",
+   "html": "<div class=\"ds-meter\" role=\"meter\" aria-valuenow=\"88\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"88 % de réponses correctes, barre à 80 %\"><div class=\"ds-meter-fill\"></div><span class=\"ds-meter-tick\"></span></div>",
+   "css": ".ds-meter{position:relative;height:8px;width:240px;border-radius:9999px;background:color-mix(in oklab,#3ddc97 14%,transparent)}.ds-meter-fill{height:100%;width:88%;border-radius:9999px;background:#3ddc97}.ds-meter-tick{position:absolute;top:-4px;left:calc(80% - 1px);width:2px;height:16px;border-radius:9999px;background:#edeef0}"
+  }
+ ],
+ "narrative": {
+  "northStar": "Le tableau de garde",
+  "keyCharacteristics": [
+   "Deux matières, carbone et papier, avec un seul accent vert signal.",
+   "Couleur jamais seule : tout état est doublé d'une icône Phosphor et d'un libellé.",
+   "Chiffres en Geist Mono ou en chiffres tabulaires, toujours avec leur effectif.",
+   "Cibles de 44 px partout et anneau de focus de 2 px en vert signal.",
+   "Surfaces plates séparées par des bordures fines ; l'ombre est réservée aux couches flottantes."
+  ],
+  "rules": [
+   {
+    "name": "La règle de la voix unique",
+    "body": "Un seul accent par écran : le vert signal. L'ambre et le rouge sont des états, pas des décorations.",
+    "section": "colors"
+   },
+   {
+    "name": "La règle du double codage",
+    "body": "Aucune couleur ne porte seule une information : chaque statut a une icône et un libellé.",
+    "section": "colors"
+   },
+   {
+    "name": "La règle de l'emphase",
+    "body": "Dans un graphique, une seule part est en vert (celle qui compte : résolue par Relève et confirmée par le salarié) ; le reste est en deux gris.",
+    "section": "colors"
+   },
+   {
+    "name": "La règle des chiffres tabulaires",
+    "body": "Tout nombre affiché dans un tableau, une jauge ou un compteur utilise des chiffres tabulaires, pour que les colonnes s'alignent.",
+    "section": "typography"
+   },
+   {
+    "name": "La règle du plat au repos",
+    "body": "Une carte n'a jamais d'ombre ; elle se distingue par sa surface et sa bordure.",
+    "section": "elevation"
+   }
+  ]
+ }
+}

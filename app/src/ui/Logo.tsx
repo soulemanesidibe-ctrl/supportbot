@@ -26,7 +26,7 @@ export function Logo({ className, size = "md" }: { className?: string; size?: "s
   const text = size === "lg" ? "text-[1.75rem]" : size === "sm" ? "text-[1.0625rem]" : "text-xl";
   const mark = size === "lg" ? "size-10" : size === "sm" ? "size-6" : "size-7";
   return (
-    <span className={cn("inline-flex items-center gap-2", className)} aria-label="Relève">
+    <span role="img" className={cn("inline-flex items-center gap-2", className)} aria-label="Relève">
       <LogoMark className={mark} />
       <span aria-hidden="true" className={cn("font-semibold leading-none tracking-[-0.035em] text-text", text)}>
         relève<span className="text-mark-dot">.</span>

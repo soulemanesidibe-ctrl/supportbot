@@ -154,7 +154,9 @@ export function ConversationView({
         {loading ? (
           <ThreadSkeleton />
         ) : (
-          <ol aria-label={t("chat.history.label")} role="log" aria-live="polite" className="flex flex-col gap-5">
+          // Le rôle « log » annonce les nouveaux messages ; il est porté par un conteneur pour garder la sémantique de liste.
+          <div role="log" aria-label={t("chat.history.label")} aria-live="polite">
+          <ol className="flex flex-col gap-5">
             {messages.length === 0 && !pending && <IntroLine ctx={ctx} direct={directToTech} />}
             {messages.map((m) => (
               <MessageBubble key={m.id} m={m} />
@@ -167,6 +169,7 @@ export function ConversationView({
             {thanks === "worked" && <QuietLine icon="ok">{t("chat.worked.thanks")}</QuietLine>}
             {thanks === "escalated" && <QuietLine icon="ok">{t("chat.escalate.done")}</QuietLine>}
           </ol>
+          </div>
         )}
         <div ref={bottom} />
       </div>

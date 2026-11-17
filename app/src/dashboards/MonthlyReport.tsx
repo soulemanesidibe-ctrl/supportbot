@@ -52,7 +52,7 @@ function Report({ api }: { api: DashboardApi }) {
 
   return (
     <div data-theme="light" className="min-h-dvh bg-bg text-text">
-      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-6 py-4 print:hidden">
+      <header className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-6 py-4 print:hidden">
         <Button asChild variant="quiet" size="sm">
           <Link to="/esn">
             <ArrowLeft size={18} aria-hidden="true" />
@@ -64,7 +64,7 @@ function Report({ api }: { api: DashboardApi }) {
           <span className="sm:hidden">{t("dash.report.printShort")}</span>
           <span className="hidden sm:inline">{t("dash.report.print")}</span>
         </Button>
-      </div>
+      </header>
       <main className="mx-auto flex max-w-3xl flex-col gap-10 bg-surface px-6 py-10 sm:px-10 print:max-w-none print:bg-white print:p-0">
         {failed ? (
           <p role="alert">{t("dash.report.unavailable")}</p>

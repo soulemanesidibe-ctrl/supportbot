@@ -59,7 +59,7 @@ export function Composer({
       <div
         className={cn(
           "flex items-end gap-2 rounded-2xl border border-border-strong bg-surface p-1.5 pl-4 transition-[border-color,box-shadow] duration-150",
-          "focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/30",
+          "focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/50",
           tooLong && "border-danger",
         )}
       >
