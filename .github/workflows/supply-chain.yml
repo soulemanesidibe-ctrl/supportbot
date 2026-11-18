@@ -75,6 +75,15 @@ jobs:
             echo "::endgroup::"
           done < "$RUNNER_TEMP/locks.txt"
 
+      # min-release-age (.npmrc) ne s'applique qu'à npm 11.10 ou plus : ce contrôle vérifie la règle des 7 jours sur le fichier
+      # de verrouillage lui-même, quelle que soit la version de npm qui l'a produit.
+      - name: Âge des versions verrouillées (7 jours minimum)
+        if: ${{ steps.detect.outputs.has_lock == 'true' }}
+        run: |
+          while IFS= read -r lock; do
+            node scripts/ci/lockfile-age.mjs "$(dirname "$lock")"
+          done < "$RUNNER_TEMP/locks.txt"
+
       - name: Installer OSV-Scanner (empreinte vérifiée)
         if: ${{ steps.detect.outputs.has_lock == 'true' }}
         run: >-
