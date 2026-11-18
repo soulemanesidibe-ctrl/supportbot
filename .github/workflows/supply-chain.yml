@@ -69,7 +69,8 @@ jobs:
           while IFS= read -r lock; do
             dir="$(dirname "$lock")"
             echo "::group::npm audit ($dir)"
-            npm audit --audit-level=high --prefix "$dir"
+            # Haute ou critique = échec, sauf exception nominative, datée et hors production (security/npm-audit-exceptions.json).
+            node scripts/ci/npm-audit-gate.mjs "$dir"
             npm audit signatures --prefix "$dir"
             echo "::endgroup::"
           done < "$RUNNER_TEMP/locks.txt"

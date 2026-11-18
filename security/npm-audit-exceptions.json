@@ -1,0 +1,11 @@
+{
+  "_note": "Exceptions à npm audit : une par avis, nominative, datée, réservée à un paquet ABSENT de l'arbre de production. Une exception expirée, ou un paquet qui entre en production, refait échouer la CI. Voir scripts/ci/npm-audit-gate.mjs et docs/securite-code-et-ci.md.",
+  "exceptions": [
+    {
+      "id": "GHSA-fc5q-39xc-vjpf",
+      "package": "picomatch",
+      "expires": "2026-12-17",
+      "reason": "ReDoS par motifs extglob répétés dans picomatch <= 4.0.7, sans version corrigée publiée au 17 novembre 2026. Paquet utilisé seulement par les outils de build et de test (vite, vitest, typescript-eslint), sur des motifs écrits dans notre configuration, jamais sur une entrée utilisateur ; absent du paquet livré et du serveur. À retirer dès qu'une version corrigée a plus de 7 jours."
+    }
+  ]
+}

@@ -74,6 +74,7 @@ On n'écrit pas leur code avant le premier client payant. Le schéma et les inte
 - **B33** Une personne du personnel d'un client (technicien de la DSI) qui est aussi salariée de ce client ne peut pas utiliser le widget avec la même adresse (un seul rôle par organisation) : décider s'il faut l'autoriser.
 - **B34** Textes fixes du serveur (messages automatiques du fil) en anglais quand l'interface est en anglais.
 - **B35** Formulaires de création à l'écran : nouveau client et invitation de son administrateur (ESN), assignation d'un technicien (ESN), suppléance de validation (administrateur du client et valideurs), connexion GLPI (administrateur du client). Les opérations `client.create`, `invitation.create`, `assignment.create`, `delegation.create` et `connector.create_glpi` existent et sont testées dans la fonction `admin` ; il manque les écrans et la liste des personnes à choisir. À faire avant la démonstration à un premier client.
+- **B36** Retirer l'exception de failles connues GHSA-fc5q-39xc-vjpf (picomatch) dès qu'une version corrigée a plus de 7 jours, et au plus tard le 17 décembre 2026, date à laquelle le contrôle « Chaîne d'approvisionnement » échouera de nouveau de lui-même.
 
 ### Barres de fiabilité (propositions, à calibrer avec les pilotes)
 

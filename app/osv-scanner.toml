@@ -1,0 +1,6 @@
+# Exceptions d'OSV-Scanner pour app/package-lock.json : les mêmes que security/npm-audit-exceptions.json, datées.
+# Passée la date, l'avis refait échouer la CI. Décision du fondateur du 18 novembre 2026 (option A).
+[[IgnoredVulns]]
+id = "GHSA-fc5q-39xc-vjpf"
+ignoreUntil = 2026-12-17T00:00:00Z
+reason = "picomatch <= 4.0.7 (ReDoS par extglob) sans version corrigée au 18 novembre 2026 ; outils de build et de test seulement, absent du paquet livré et du serveur."
