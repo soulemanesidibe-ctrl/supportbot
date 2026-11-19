@@ -85,7 +85,7 @@ function contentToText(content: unknown): string | null {
 }
 
 export class MistralProvider implements LlmProvider {
-  readonly name = "mistral";
+  readonly name: string = "mistral";
   constructor(private readonly cfg: MistralConfig, private readonly fetchFn: typeof fetch = fetch) {}
 
   private async post(path: string, body: unknown, signal: AbortSignal): Promise<{ json: unknown; ms: number }> {
@@ -94,7 +94,8 @@ export class MistralProvider implements LlmProvider {
     try {
       res = await this.fetchFn(`${this.cfg.baseUrl}${path}`, {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${this.cfg.apiKey}` },
+        // Sans clé (accès anonyme d'un fournisseur compatible, voir ovh.ts), aucun en-tête d'autorisation n'est envoyé.
+        headers: this.cfg.apiKey ? { "content-type": "application/json", authorization: `Bearer ${this.cfg.apiKey}` } : { "content-type": "application/json" },
         body: JSON.stringify(body),
         redirect: "error", // la clé ne suit jamais une redirection
         signal,
