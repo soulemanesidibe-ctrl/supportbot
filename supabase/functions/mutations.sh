@@ -10,8 +10,10 @@ command -v deno >/dev/null || { echo "deno introuvable dans le PATH"; exit 2; }
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 
 echo "== témoin"
+# Le banc d'évaluation (_eval) lit les fiches dans la graine : elle est copiée à côté des copies des fonctions.
+cp -r "$ROOT/supabase/seed" "$WORK/seed"
 cp -r "$ROOT/supabase/functions" "$WORK/ctl"
-if ! (cd "$WORK/ctl" && deno test --no-prompt --no-check --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET,RELEVE_ALLOWED_ORIGINS >/dev/null 2>&1); then
+if ! (cd "$WORK/ctl" && deno test --no-prompt --no-check --allow-read=../seed,_eval/recordings --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET,RELEVE_ALLOWED_ORIGINS >/dev/null 2>&1); then
   echo "TÉMOIN EN ÉCHEC : le banc est cassé, les mutations ne prouveraient rien."; exit 2
 fi
 echo "témoin : tests OK"
@@ -39,7 +41,7 @@ for i, m in enumerate(muts, 1):
     if invalid:
         continue
     open(path, 'w', encoding='utf-8').write(src)
-    r = subprocess.run(['deno', 'test', '--no-prompt', '--no-check', '--allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET,RELEVE_ALLOWED_ORIGINS'],
+    r = subprocess.run(['deno', 'test', '--no-prompt', '--no-check', '--allow-read=../seed,_eval/recordings', '--allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,CRON_SECRET,RELEVE_ALLOW_DEMO_CONNECTOR,CONNECTOR_ALLOWED_HOST_SUFFIXES,MS_APP_CLIENT_ID,MS_APP_CLIENT_SECRET,RELEVE_ALLOWED_ORIGINS'],
                        cwd=d, capture_output=True, text=True)
     out = ansi.sub('', r.stdout + r.stderr)
     failed = re.findall(r'^(.*?) \.\.\. FAILED', out, re.M)

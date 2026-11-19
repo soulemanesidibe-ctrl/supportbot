@@ -304,9 +304,7 @@ supabase/
     _shared/alerts/           Normalisation, déduplication, regroupement, silence
     _shared/automations/      Moteur de règles et règles livrées
     chat/  alerts-ingest/  actions/  admin/  reports/  cron/
-eval/
-  synthetic/                  Jeu d'évaluation synthétique (en CI)
-  promptfoo/                  Configuration des tests offensifs et de qualité
+supabase/functions/_eval/     Banc d'évaluation (J6) : jeu synthétique de 121 cas, rejeu des sorties réelles en CI, évaluation réelle
 docker/glpi/                  docker-compose GLPI pour le développement
 security/                     Règles Semgrep et verrous d'outils (J0)
 docs/  scripts/  .github/
