@@ -147,6 +147,14 @@ Deno.test("requireRecentMfa : refuse aal1, un second facteur trop ancien ou venu
     return "accepté";
   };
   assert.equal(await verdict(mk("aal1", 10), 600), "mfa_required", "aal1 même avec un horodatage récent");
+  // Depuis SEC-33, le personnel en aal1 est refusé dès requireOrgMember : le cas ci-dessus n'atteint plus requireRecentMfa. Un salarié
+  // (seul rôle admis en aal1) l'atteint : requireRecentMfa doit le refuser LUI-MÊME (défense en profondeur, mutation 24).
+  const salarie = await requireOrgMember(req(), ORG, undefined, deps({
+    verifyToken: () => Promise.resolve({ userId: USER, aal: "aal1", amr: [{ method: "totp", timestamp: NOW - 10 }] }),
+    resolveAccess: () => Promise.resolve(access({ org_role: "end_user" })),
+  }));
+  assert.equal(salarie.aal, "aal1");
+  assert.throws(() => requireRecentMfa(salarie, 600, d), (e: unknown) => e instanceof AppError && e.code === "mfa_required");
   assert.equal(await verdict(mk("aal2", 100), 600), "accepté");
   assert.equal(await verdict(mk("aal2", 100), 50), "mfa_required", "limite plus stricte que l'âge");
   assert.equal(await verdict(mk("aal2", 700), 600), "mfa_required", "second facteur trop ancien");

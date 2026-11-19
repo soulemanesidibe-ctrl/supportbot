@@ -999,8 +999,8 @@
   "expect": "acceptInvitationRpc : seule une personne",
   "edits": [
    [
-    "auth.kind !== \"user\" || auth.userId === null || auth.orgId !== null",
-    "auth.kind !== \"user\" || auth.userId === null"
+    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null || auth.orgId !== null) throw Errors.forbidden();\n  const client = build({ \"x-releve-request-id\": auth.requestId, \"x-releve-actor\": auth.userId }, deps);\n  return await client.rpc(\"admin_accept_invitation\"",
+    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null) throw Errors.forbidden();\n  const client = build({ \"x-releve-request-id\": auth.requestId, \"x-releve-actor\": auth.userId }, deps);\n  return await client.rpc(\"admin_accept_invitation\""
    ]
   ]
  },
@@ -1131,7 +1131,7 @@
   "expect": "SEC-24 chat",
   "edits": [
    [
-    "      await opts.limit(auth); // avant tout travail (modèle, base) : un salarié ne peut pas saturer le fournisseur\n",
+    "      await (op === \"send\" ? opts.limits.chat : opts.limits.widget)(auth);\n",
     ""
    ]
   ]
@@ -3268,6 +3268,17 @@
    [
     "  if (missing > 0) reasons.push(`incomplet : ${missing} cas sur ${cases.length} non enregistrés (évaluation interrompue ou en cours)`);\n",
     ""
+   ]
+  ]
+ },
+ {
+  "label": "porte du rattachement salarié : un contexte d'organisation peut l'utiliser",
+  "file": "_shared/db.ts",
+  "expect": "porte étroite link",
+  "edits": [
+   [
+    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null || auth.orgId !== null) throw Errors.forbidden();\n  const client = build({ \"x-releve-request-id\": auth.requestId, \"x-releve-actor\": auth.userId }, deps);\n  return await client.rpc(\"widget_employee_link\"",
+    "  if (!isAuthContext(auth) || auth.kind !== \"user\" || auth.userId === null) throw Errors.forbidden();\n  const client = build({ \"x-releve-request-id\": auth.requestId, \"x-releve-actor\": auth.userId }, deps);\n  return await client.rpc(\"widget_employee_link\""
    ]
   ]
  }

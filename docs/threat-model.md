@@ -305,6 +305,7 @@ Chaque invariant des sections 5 et 6 est vérifié par au moins un test **nommé
 
 - **I7 n'était qu'à moitié tenu** : la suppléance était journalisée mais **personne n'en était prévenu**. Une délégation créée avec une session volée (S2) ou une réattribution abusive (S8) passait donc inaperçue. Corrigé par la migration 20 (`notifications_de_suppleance`) : la base prévient elle-même les administrateurs du client et le valideur remplacé à chaque création, révocation ou usage. L'affichage de ces notifications à l'écran reste à faire (backlog B37).
 - **I10, I11, I12, R2 et S4 n'avaient pas de test nommé** : la défense existait, mais rien ne prouvait qu'elle tenait. Quinze tests ont été ajoutés (sept pour I10, un pour I11, quatre pour I12, deux pour R2, un pour S4) et cinq mutations ; la notification de suppléance en ajoute quatre de chaque.
+- **Suites complètes de mutations rejouées le 19 novembre** : base 139 sur 139 ; fonctions 293 sur 296 au premier passage. Trois mutations écrites avant J5 ne prouvaient plus rien. La première était devenue invisible : le refus des sessions sans second facteur, ajouté en J5 (SEC-33), arrêtait le cas de test avant `requireRecentMfa` ; un cas « salarié » le vérifie de nouveau. Les deux autres visaient du code déplacé (motif en double, ligne réécrite). Toutes sont réparées, et une mutation a été ajoutée pour la porte de rattachement du salarié (J5) : 297 sur 297.
 - Côté modèle (SEC-13, SEC-14), la vérification passe par le banc d'évaluation : voir `docs/evaluation.md`.
 
 ## Sources
