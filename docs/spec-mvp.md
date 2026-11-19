@@ -1001,7 +1001,7 @@ Le découpage prévu en 15 migrations a été regroupé en **10 migrations** par
 | Q9 | **Version de l'API GLPI** : REST v1 ou API v2 de GLPI 11 | À décider en J4 sur l'image Docker retenue |
 | Q10 | Rapport mensuel : HTML imprimable en PDF (P0), PDF généré côté serveur (P1) | Oui |
 | Q11 | **Fournisseur d'e-mails** gratuit et situé dans l'UE pour les codes, invitations et rapports | Une offre gratuite d'un fournisseur européen, par exemple français (Brevo) : limites et conditions à vérifier avant de s'engager |
-| Q12 | **Hébergement des écrans et de la passerelle de session** : Cloudflare Pages (prévu au J1) ou un hébergeur français (Scaleway, Clever Cloud, OVHcloud). La passerelle voit les adresses, les codes et les jetons : un hébergeur de droit français évite tout transfert hors UE | Un hébergeur français, avec le serveur Node fourni (`app/server/node.ts`) ; Cloudflare reste possible sans changer le code. À décider avant J8 |
+| Q12 | **Hébergement des écrans et de la passerelle de session** : Cloudflare Pages (prévu au J1) ou un hébergeur français (Scaleway, Clever Cloud, OVHcloud). La passerelle voit les adresses, les codes et les jetons : un hébergeur de droit français évite tout transfert hors UE | **Décidé le 19 novembre 2026 : alwaysdata** (hébergeur français, infrastructure à Paris), avec le serveur Node fourni (`app/server/node.ts`, sans dépendance, Node 22.18 ou plus). Offre gratuite pour la démonstration et les essais pilotes (compte créé par le fondateur le 19 novembre) ; passage à une offre payante au premier client payant, car un compte gratuit peut être suspendu sans préavis. Cloudflare reste possible sans changer le code. SecNumCloud seulement si un client public l'exige |
 
 ## 18. Hors périmètre, rappel
 
