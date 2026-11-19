@@ -76,6 +76,11 @@ On n'écrit pas leur code avant le premier client payant. Le schéma et les inte
 - **B35** Formulaires de création à l'écran : nouveau client et invitation de son administrateur (ESN), assignation d'un technicien (ESN), suppléance de validation (administrateur du client et valideurs), connexion GLPI (administrateur du client). Les opérations `client.create`, `invitation.create`, `assignment.create`, `delegation.create` et `connector.create_glpi` existent et sont testées dans la fonction `admin` ; il manque les écrans et la liste des personnes à choisir. À faire avant la démonstration à un premier client.
 - **B36** Retirer l'exception de failles connues GHSA-fc5q-39xc-vjpf (picomatch) dès qu'une version corrigée a plus de 7 jours, et au plus tard le 17 décembre 2026, date à laquelle le contrôle « Chaîne d'approvisionnement » échouera de nouveau de lui-même.
 
+### Ajouts de J6 (à reprendre plus tard)
+
+- **B37** Afficher les notifications de suppléance (migration 20) dans la console du technicien et sur l'écran de l'administrateur du client, avec un envoi par e-mail quand le service d'envoi sera choisi. Elles sont déjà écrites en base et lisibles par leur seul destinataire.
+- **B38** Recalibrer le seuil de recherche (`KB_MIN_SCORE`) avec le modèle de vecteurs de production (`mistral-embed`) : le calibrage de J6 est fait avec `bge-m3`, seul modèle de vecteurs disponible sans clé chez OVHcloud.
+
 ### Barres de fiabilité (propositions, à calibrer avec les pilotes)
 
 Source : `docs/11` § 2. Jamais de pourcentage sans son effectif ; avec 100 demandes l'incertitude est d'environ 8 points, viser 300 par catégorie avant de conclure.

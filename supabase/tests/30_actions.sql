@@ -181,8 +181,25 @@ select test.expect('SEC-06 le suppléant valide par sa délégation',
 select test.expect('SEC-06 la délégation utilisée est tracée sur la demande',
   (select approved_via_delegation_id is not null from public.action_requests where id = (select id from test.r where k = 'b')));
 
+-- I7 et I9 (migration 20) : la suppléance est NOTIFIÉE, pas seulement journalisée ; jamais à l'auteur de l'opération.
+select test.expect('I7 création d''une délégation : l''administrateur du client est prévenu, pas l''auteur',
+  exists (select 1 from public.notifications where kind = 'delegation_created' and recipient_user_id = test.id('admin')
+            and payload ->> 'delegator_id' = test.id('t_oncall')::text and payload ->> 'delegate_id' = test.id('t_sub')::text)
+  and not exists (select 1 from public.notifications where kind = 'delegation_created' and recipient_user_id = test.id('t_oncall')));
+select test.expect('I9 réattribution par l''administrateur : le valideur remplacé en est prévenu',
+  exists (select 1 from public.notifications where kind = 'delegation_created' and recipient_user_id = test.id('t_other')
+            and (payload ->> 'reassignment')::boolean and payload ->> 'by' = test.id('admin')::text));
+select test.expect('I7 usage d''une délégation : le délégant et l''administrateur sont prévenus, sans la cible de l''action',
+  (select count(*) from public.notifications where kind = 'delegation_used' and subject_id = (select id from test.r where k = 'b')
+     and recipient_user_id in (test.id('admin'), test.id('t_oncall'))) = 2
+  and not exists (select 1 from public.notifications where kind like 'delegation%' and payload::text ~ '@'));
+
 -- Délégation révoquée entre la validation et l'exécution : l'exécution est refusée (S6, I5).
 update public.approval_delegations set revoked_at = now(), revoked_by = test.id('admin') where delegate_id = test.id('t_sub');
+select test.expect('I7 révocation d''une délégation : le délégant est prévenu ; il lit sa notification, un autre technicien non',
+  exists (select 1 from public.notifications where kind = 'delegation_revoked' and recipient_user_id = test.id('t_oncall'))
+  and test.q(test.id('t_oncall'), 'select count(*) from public.notifications where kind like ''delegation%''') >= 2
+  and test.q(test.id('t_notchain'), 'select count(*) from public.notifications where kind = ''delegation_used''') = 0);
 select test.expect('SEC-06 délégation révoquée avant l''exécution : exécution refusée',
   test.err_admin(format('update public.action_requests set status = ''executing'' where id = %L', (select id from test.r where k = 'b'))) is not null);
 select test.expect('une délégation révoquée reste révoquée',
@@ -219,6 +236,79 @@ select test.expect('M13 issue incertaine : état « unknown », jamais rejoué',
   test.err_admin(format('update public.action_requests set status = ''unknown'', result = ''{"detail":"arrêt en cours d''''exécution"}'' where id = %L', (select id from test.r where k = 'c'))) is null);
 select test.expect('M13 un état final ne change plus',
   test.err_admin(format('update public.action_requests set status = ''executing'' where id = %L', (select id from test.r where k = 'c'))) is not null);
+
+-- ------------------------------------------------------------------ I10 / S9 : l'ESN en « dernier recours »
+-- L'ESN ne valide en dernier recours que si le CLIENT l'a prévu dans sa chaîne (étape partner_fallback) ET si la relation et
+-- l'assignation du technicien sont actives. Chaque condition manquante est essayée seule (point de reprise annulé ensuite).
+insert into test.ids (k) values ('t_interne');
+insert into auth.users (id, email) select id, 't_interne@exemple.test' from test.ids where k = 't_interne';
+insert into public.memberships (user_id, org_id, role) values (test.id('t_interne'), test.id('cli'), 'org_technician');
+update public.approval_policies set chain = jsonb_build_array(jsonb_build_object('kind','on_call'))
+  where org_id = test.id('cli') and category = 'accounts';
+insert into test.r values ('f', test.new_req('conv', '00000000-0000-0000-0000-0000000000d1', 'user.reset_password'));
+select test.expect('I10 sans étape « dernier recours » dans la chaîne du client, un technicien de l''ESN assigné ne valide pas',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is not null);
+update public.approval_policies set chain = jsonb_build_array(jsonb_build_object('kind','on_call'), jsonb_build_object('kind','partner_fallback'))
+  where org_id = test.id('cli') and category = 'accounts';
+select test.expect('I10 l''étape « dernier recours » ne vaut que pour l''ESN : un technicien interne hors chaîne ne valide pas',
+  test.approve((select id from test.r where k = 'f'), 't_interne') is not null);
+savepoint i10;
+update public.partner_assignments set revoked_at = now(), revoked_by = test.id('admin')
+  where user_id = test.id('t_notchain') and relationship_id = '00000000-0000-0000-0000-00000000e001';
+select test.expect('I10 assignation révoquée : pas de dernier recours',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is not null);
+rollback to savepoint i10;
+update public.partner_assignments set starts_at = now() - interval '10 days', ends_at = now() - interval '1 minute'
+  where user_id = test.id('t_notchain') and relationship_id = '00000000-0000-0000-0000-00000000e001';
+select test.expect('I10 assignation échue : pas de dernier recours',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is not null);
+rollback to savepoint i10;
+update public.partner_relationships set status = 'suspended' where id = '00000000-0000-0000-0000-00000000e001';
+select test.expect('I10 relation suspendue : pas de dernier recours',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is not null);
+rollback to savepoint i10;
+update public.partner_relationships set approved_roles = array['partner_admin'] where id = '00000000-0000-0000-0000-00000000e001';
+select test.expect('I10 rôle de technicien retiré de la relation par le client : pas de dernier recours',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is not null);
+rollback to savepoint i10;
+release savepoint i10;
+select test.expect('I10 contrat prévu, relation et assignation actives : l''ESN valide en dernier recours',
+  test.approve((select id from test.r where k = 'f'), 't_notchain') is null);
+update public.action_requests set status = 'cancelled', reason = 'nettoyage' where id = (select id from test.r where k = 'f');
+update public.approval_policies set chain = jsonb_build_array(jsonb_build_object('kind','user','user_id', test.id('t_other')))
+  where org_id = test.id('cli') and category = 'accounts';
+
+-- ------------------------------------------------------------------ I11 : une délégation échue cesse d'elle-même
+-- Délégation t_other → t_sub dont l'échéance est passée, jamais révoquée : aucune tâche planifiée n'a tourné, elle ne vaut plus rien.
+insert into public.approval_delegations (org_id, delegator_id, delegate_id, categories, starts_at, ends_at, created_by, mfa_verified_at)
+  values (test.id('cli'), test.id('t_other'), test.id('t_sub'), array['accounts'], now() - interval '3 days', now() - interval '1 minute', test.id('t_other'), now());
+insert into test.r values ('g', test.new_req('conv', '00000000-0000-0000-0000-0000000000d1', 'user.reset_password'));
+select test.expect('I11 une délégation échue (jamais révoquée) ne permet plus de valider : évaluée à la lecture, sans tâche planifiée',
+  test.approve((select id from test.r where k = 'g'), 't_sub', 'callback', null,
+               (select id from public.approval_delegations where delegate_id = test.id('t_sub') and revoked_at is null)) is not null);
+
+-- ------------------------------------------------------------------ S4 / I4 : une délégation ne vaut que pour SES catégories
+-- t_other détient « tickets » et « accounts » ; il délègue « tickets » seulement à t_sub : t_sub ne valide pas une action sur un compte.
+insert into public.approval_policies (org_id, category, chain)
+  values (test.id('cli'), 'tickets', jsonb_build_array(jsonb_build_object('kind','user','user_id', test.id('t_other'))));
+insert into public.approval_delegations (org_id, delegator_id, delegate_id, categories, ends_at, created_by, mfa_verified_at)
+  values (test.id('cli'), test.id('t_other'), test.id('t_sub'), array['tickets'], now() + interval '2 days', test.id('t_other'), now());
+select test.expect('S4 une délégation « tickets » ne permet pas de valider une action sur un compte',
+  test.approve((select id from test.r where k = 'g'), 't_sub', 'callback', null,
+               (select id from public.approval_delegations where delegate_id = test.id('t_sub') and categories = array['tickets'])) is not null);
+update public.action_requests set status = 'cancelled', reason = 'nettoyage' where id = (select id from test.r where k = 'g');
+
+-- ------------------------------------------------------------------ I12 : personne ne modifie sa propre chaîne, ses assignations ni ses rôles
+-- Aucune écriture directe depuis le navigateur ; ces changements passent par la fonction admin (opérations fermées, rôle vérifié).
+select test.expect('I12 un valideur ne modifie pas sa chaîne de validation',
+  test.err(test.id('t_other'), format('update public.approval_policies set chain = ''[]'' where org_id = %L', test.id('cli'))) = '42501');
+select test.expect('I12 un technicien ne prolonge pas sa propre assignation',
+  test.err(test.id('t_notchain'), format('update public.partner_assignments set ends_at = now() + interval ''300 days'' where user_id = %L', test.id('t_notchain'))) = '42501');
+select test.expect('I12 un technicien ne change pas son propre rôle',
+  test.err(test.id('t_notchain'), format('update public.memberships set role = ''partner_admin'' where user_id = %L', test.id('t_notchain'))) = '42501');
+select test.expect('I12 un technicien ne se crée pas de délégation directement',
+  test.err(test.id('t_notchain'), format('insert into public.approval_delegations (org_id, delegator_id, delegate_id, categories, ends_at, created_by, mfa_verified_at) values (%L, %L, %L, array[''accounts''], now() + interval ''1 day'', %L, now())',
+    test.id('cli'), test.id('t_other'), test.id('t_notchain'), test.id('t_notchain'))) = '42501');
 
 -- SEC-31 : connecteur non qualifié
 update public.connectors set environment = null, qualified_at = null, qualified_by = null where id = '00000000-0000-0000-0000-0000000000c1';

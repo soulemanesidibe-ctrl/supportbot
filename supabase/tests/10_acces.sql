@@ -186,6 +186,17 @@ select test.expect('un rôle de client est refusé dans une ESN (cohérence rôl
 select test.expect('super_admin est refusé hors plateforme',
   test.err_admin(format('insert into public.memberships (user_id, org_id, role) values (%L, %L, ''super_admin'')', test.id('u_stranger'), test.id('ca'))) is not null);
 
+-- ------------------------------------------------------------------ R2 : jamais l'union des droits de deux organisations
+-- L'administrateur de B est aussi simple salarié chez A : chez A, il n'a que les droits d'un salarié.
+insert into public.memberships (user_id, org_id, role) values (test.id('u_cb_admin'), test.id('ca'), 'end_user');
+select test.expect('R2 membre de deux organisations : administrateur chez B, il lit la configuration de B',
+  test.b(test.id('u_cb_admin'), format('select private.can_read_org_config(%L)', test.id('cb'))));
+select test.expect('R2 …mais pas celle de A, où il n''est que salarié (aucune union des droits)',
+  not test.b(test.id('u_cb_admin'), format('select private.can_read_org_config(%L)', test.id('ca')))
+  and not test.b(test.id('u_cb_admin'), format('select private.is_member_of(%L, array[''org_admin''])', test.id('ca')))
+  and test.q(test.id('u_cb_admin'), format('select count(*) from public.memberships where org_id = %L and user_id <> %L', test.id('ca'), test.id('u_cb_admin'))) = 0);
+delete from public.memberships where user_id = test.id('u_cb_admin') and org_id = test.id('ca');
+
 -- ------------------------------------------------------------------ l'API n'écrit rien
 select test.expect('SEC-API un utilisateur authentifié ne peut rien insérer dans organizations',
   test.err(test.id('u_ca_admin'), format('insert into public.organizations (type, name, slug) values (''client'', ''Pirate'', ''pirate'')')) = '42501');

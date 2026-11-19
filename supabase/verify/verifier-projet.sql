@@ -1,4 +1,4 @@
--- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 19 migrations.
+-- VÉRIFICATION EN LECTURE SEULE d'un projet Supabase, après application des 20 migrations.
 -- Ne modifie rien. À coller en entier dans « SQL Editor » (une seule requête) puis Run.
 -- Lecture : la colonne « ok » doit valoir true sur toutes les lignes automatiques ; une ligne false se copie-colle telle quelle à Claude.
 -- Les lignes « à regarder » n'ont pas de verdict automatique (ok est vide) : comparez avec la colonne « attendu ».
@@ -97,6 +97,11 @@ checks(ordre, controle, attendu, trouve, ok) as (
               or has_function_privilege('anon', 'public.dashboard_partner_clients(uuid)', 'execute')
               or has_function_privilege('anon', 'public.dashboard_org_access(uuid)', 'execute'))
   union all
+  select 9.9, 'Notifications de suppléance : déclencheurs sur les délégations et les demandes d''action (migration 20)', '2',
+         (select count(*)::text from pg_trigger where not tgisinternal
+            and tgname in ('notify_approval_delegations', 'notify_action_requests_delegation')),
+         (select count(*) = 2 from pg_trigger where not tgisinternal
+            and tgname in ('notify_approval_delegations', 'notify_action_requests_delegation'))  union all
   select 10, 'Index vectoriel HNSW de la base de connaissance', '1',
          (select count(*)::text from pg_indexes where indexname = 'kb_chunks_embedding_hnsw'),
          (select count(*) = 1 from pg_indexes where indexname = 'kb_chunks_embedding_hnsw')

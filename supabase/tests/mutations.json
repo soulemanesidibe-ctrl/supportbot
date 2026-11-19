@@ -1444,5 +1444,112 @@
     "and g.ends_at > now()"
    ]
   ]
+ },
+ {
+  "label": "dernier recours : l'étape vaut pour tout technicien habilité, pas seulement l'ESN assignée",
+  "file": "20261106100700_actions.sql",
+  "expect": "I10 l'étape « dernier recours » ne vaut que pour l'ESN",
+  "edits": [
+   [
+    "        or (step ->> 'kind' = 'partner_fallback' and private._partner_can_access(p_user, p_org, 'partner_technician')))\n",
+    "        or (step ->> 'kind' = 'partner_fallback'))\n"
+   ]
+  ]
+ },
+ {
+  "label": "dernier recours implicite : l'ESN assignée valide sans que le client l'ait prévu",
+  "file": "20261106100700_actions.sql",
+  "expect": "SEC-10 un technicien hors chaîne ne peut pas valider",
+  "edits": [
+   [
+    "        or (step ->> 'kind' = 'partner_fallback' and private._partner_can_access(p_user, p_org, 'partner_technician')))\n",
+    "        or private._partner_can_access(p_user, p_org, 'partner_technician'))\n"
+   ]
+  ]
+ },
+ {
+  "label": "délégation sans échéance : une délégation échue vaut encore tant qu'elle n'est pas révoquée",
+  "file": "20261106100700_actions.sql",
+  "expect": "I11 une délégation échue",
+  "edits": [
+   [
+    "        and d.revoked_at is null and d.starts_at <= p_at and d.ends_at > p_at\n",
+    "        and d.revoked_at is null and d.starts_at <= p_at\n"
+   ],
+   [
+    "           and old.category = any (d.categories) and d.revoked_at is null and d.starts_at <= now() and d.ends_at > now()\n",
+    "           and old.category = any (d.categories) and d.revoked_at is null and d.starts_at <= now()\n"
+   ]
+  ]
+ },
+ {
+  "label": "chaînes, délégations et demandes modifiables depuis le navigateur",
+  "file": "20261106100700_actions.sql",
+  "expect": "I12 un valideur ne modifie pas sa chaîne",
+  "edits": [
+   [
+    "    execute format('grant select on public.%I to authenticated', t);\n",
+    "    execute format('grant select, insert, update on public.%I to authenticated', t);\n"
+   ]
+  ]
+ },
+ {
+  "label": "suppléance : création de délégation non notifiée (journal seulement)",
+  "file": "20261106102000_notifications_de_suppleance.sql",
+  "expect": "I7 création d'une délégation",
+  "edits": [
+   [
+    "create trigger notify_approval_delegations after insert or update of revoked_at on public.approval_delegations\n  for each row execute function private.notify_delegation_change();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "suppléance : l'auteur de l'opération se notifie lui-même (bruit qui masque l'alerte)",
+  "file": "20261106102000_notifications_de_suppleance.sql",
+  "expect": "I7 création d'une délégation",
+  "edits": [
+   [
+    "  where r.user_id is distinct from p_actor\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "suppléance : le valideur remplacé n'est pas prévenu d'une réattribution",
+  "file": "20261106102000_notifications_de_suppleance.sql",
+  "expect": "I9 réattribution par l'administrateur : le valideur remplacé",
+  "edits": [
+   [
+    "    select p_delegator\n",
+    "    select null::uuid where false\n"
+   ]
+  ]
+ },
+ {
+  "label": "suppléance : usage d'une délégation non notifié",
+  "file": "20261106102000_notifications_de_suppleance.sql",
+  "expect": "I7 usage d'une délégation",
+  "edits": [
+   [
+    "create trigger notify_action_requests_delegation after update of status on public.action_requests\n  for each row execute function private.notify_delegation_use();\n",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "délégation valable pour toutes les catégories (S4)",
+  "file": "20261106100700_actions.sql",
+  "expect": "S4 une délégation « tickets »",
+  "edits": [
+   [
+    "           and old.category = any (d.categories) and d.revoked_at is null and d.starts_at <= now() and d.ends_at > now()\n",
+    "           and d.revoked_at is null and d.starts_at <= now() and d.ends_at > now()\n"
+   ],
+   [
+    "      where d.org_id = p_org and d.delegate_id = p_user and p_category = any (d.categories)\n",
+    "      where d.org_id = p_org and d.delegate_id = p_user\n"
+   ]
+  ]
  }
 ]

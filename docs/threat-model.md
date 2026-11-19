@@ -267,6 +267,46 @@ Le guide *Sécuriser un système IA agentique* (ANSSI, V1.0, octobre 2026) résu
 
 Voir `docs/securite-code-et-ci.md`, section 9 (ce qui est vérifié sur GitHub, vérifié en local, et non vérifié). En résumé, J0 met en place **M06** (chaîne d'approvisionnement), le socle de **M04** (détection de secrets) et les **règles Semgrep** qui empêcheront dès l'écriture du code les erreurs à l'origine de **M01, M04, M23** et de l'exécution d'action sans validation. S'y ajoute, pour **M34**, le garde-fou `scripts/check-no-real-data.sh` (hook et CI). Tout le reste est **prévu** et sera construit aux jalons indiqués.
 
+
+## 11. Matrice « cas d'abus → invariant → test » (J6, 19 novembre 2026)
+
+Chaque invariant des sections 5 et 6 est vérifié par au moins un test **nommé**, et chaque défense importante par une **mutation** : on casse volontairement la défense dans une copie du code et on vérifie que c'est bien le test attendu qui échoue (`supabase/tests/mutations.sh`, `supabase/functions/mutations.sh`). Fichiers : `tests/` = tests SQL de la base (`supabase/tests/`), `functions/` = tests Deno des fonctions (`supabase/functions/`).
+
+### Suppléance (section 5)
+
+| Cas d'abus | Invariant | Où c'est testé (nom du test) |
+|---|---|---|
+| S1 auto-désignation, auto-validation | I2 | `tests/30_actions.sql` : « I2 l'auto-délégation est refusée », « I2 un valideur ne valide pas une action sur son propre compte » |
+| S2 session volée qui crée une délégation | I3, I7 | `tests/30_actions.sql` : « I3 une délégation sans second facteur récent est refusée », « I7 création d'une délégation : l'administrateur du client est prévenu » (**ajouté en J6**, migration 20) |
+| S3 délégation expirée ou révoquée encore active | I5, I11 | `tests/30_actions.sql` : « SEC-06 délégation révoquée avant l'exécution : exécution refusée », « I11 une délégation échue (jamais révoquée) ne permet plus de valider » (**ajouté en J6**) |
+| S4 délégation « mots de passe » utilisée pour autre chose | I4, I6 | `tests/30_actions.sql` : « I4 une délégation de plus de 30 jours est refusée », « S4 une délégation « tickets » ne permet pas de valider une action sur un compte » (**ajouté en J6**) |
+| S5 suppléant sans droits propres, compte partagé | I1, I6 | `tests/30_actions.sql` : « I6 le suppléant doit déjà être habilité dans l'organisation » ; `functions/` : « exécution : action approuvée = connecteur appelé UNE fois, avec l'identité du valideur », « M365 écriture : JAMAIS sans le jeton délégué d'un technicien » |
+| S6 révocation entre validation et exécution | I5 | `tests/30_actions.sql` : « I5 l'exécution est refusée si le valideur n'est plus éligible » ; `functions/` : « valideur devenu non éligible entre l'approbation et l'exécution (I5) » |
+| S7 personne ne valide dans le délai | I8 | `tests/30_actions.sql` : « SEC-10 chaîne vide : personne n'est éligible, rien ne s'exécute », « I8 une demande n'expire pas avant son échéance » |
+| S8 réattribution abusive par un administrateur | I7, I9 | `tests/30_actions.sql` : « I9 un technicien quelconque ne peut pas créer une délégation au nom d'un autre », « I9 réattribution par l'administrateur : le valideur remplacé en est prévenu » (**ajouté en J6**) |
+| S9 l'ESN valide en « dernier recours » sans que le client l'ait prévu | I10 | `tests/30_actions.sql` : sept tests « I10 … » (**ajoutés en J6**) : sans étape prévue, technicien interne, assignation révoquée ou échue, relation suspendue, rôle retiré, cas légitime |
+| S10 un technicien modifie sa propre place, ses assignations ou ses rôles | I12 | `tests/30_actions.sql` : quatre tests « I12 … » (**ajoutés en J6**) ; `tests/10_acces.sql` : « SEC-API …ne peut pas se donner un rôle » ; `tests/80_droits_du_service.sql` : « le navigateur n'a toujours AUCUN droit d'écriture » |
+
+### Contrôle d'accès par rôle (section 6)
+
+| Invariant | Où c'est testé |
+|---|---|
+| R1 organisation et rôle revérifiés côté serveur | `functions/` : « SEC-04 sans jeton : 401… », « SEC-04 aucun accès à l'organisation visée : 403… » ; `tests/70_contexte_de_requete.sql` |
+| R2 jamais l'union des droits de deux organisations | `tests/10_acces.sql` : « R2 membre de deux organisations… » (**ajouté en J6**) |
+| R3, R4 accès ESN = relation ET assignation actives, évalué à la lecture | `tests/10_acces.sql` : « SEC-02 une assignation expirée ne donne rien », « SEC-02 une relation échue ne donne plus d'accès (évaluée à la lecture) » ; `tests/70_contexte_de_requete.sql` : « accès : relation révoquée = l'ESN perd TOUT, administrateur compris (R3) » |
+| R5 super administrateur sans lecture hors accès d'assistance | `tests/10_acces.sql` : tests « SEC-03 … » |
+| R6 invitations | `tests/10_acces.sql` : tests « SEC-05 … » ; `functions/` : « jeton d'invitation : 256 bits… », « invitations : chacun n'invite que les rôles de SA organisation » |
+| R7 départ d'un technicien | `tests/30_actions.sql` : trois tests « R7 … » ; `tests/90_administration_et_debit.sql` |
+| R8 création d'un client par une ESN | `tests/90_administration_et_debit.sql` : tests « SEC-29 création … » |
+| R9 dernier administrateur | `tests/10_acces.sql` : « R9 on ne retire pas le dernier administrateur d'un client », « R9 …ni ne le suspend » |
+| R10 tableaux de bord sans contenu | `tests/95_tableaux_de_bord.sql` : « SEC-26 synthèse : AUCUN texte… », « SEC-26 ESN : aucun texte de conversation ni d'alerte » |
+
+### Ce que J6 a trouvé et corrigé
+
+- **I7 n'était qu'à moitié tenu** : la suppléance était journalisée mais **personne n'en était prévenu**. Une délégation créée avec une session volée (S2) ou une réattribution abusive (S8) passait donc inaperçue. Corrigé par la migration 20 (`notifications_de_suppleance`) : la base prévient elle-même les administrateurs du client et le valideur remplacé à chaque création, révocation ou usage. L'affichage de ces notifications à l'écran reste à faire (backlog B37).
+- **I10, I11, I12, R2 et S4 n'avaient pas de test nommé** : la défense existait, mais rien ne prouvait qu'elle tenait. Quinze tests ont été ajoutés (sept pour I10, un pour I11, quatre pour I12, deux pour R2, un pour S4) et cinq mutations ; la notification de suppléance en ajoute quatre de chaque.
+- Côté modèle (SEC-13, SEC-14), la vérification passe par le banc d'évaluation : voir `docs/evaluation.md`.
+
 ## Sources
 
 | Fiabilité | Source | Utilisée pour |
