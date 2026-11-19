@@ -1,9 +1,11 @@
 // Petit serveur Node pour un hébergement en France (Scaleway, Clever Cloud, OVHcloud...) : sert le dossier `dist`, applique les
 // en-têtes de sécurité et porte la passerelle de session. Aucune dépendance. Lancement : `node server/node.ts` (Node 22.18 ou plus).
-// Variables : PUBLIC_ORIGIN (adresse publique exacte, https), SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PORT, RELEVE_DIST.
+// Variables : PUBLIC_ORIGIN (adresse publique exacte, https ; ou premier argument), SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PORT,
+// IP ou HOST (adresse d'écoute imposée par l'hébergeur), RELEVE_DIST (par défaut : ../dist à côté de ce fichier).
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { securityHeaders } from "./headers.ts";
 import { createSessionHandler, type SessionEnv } from "./session.ts";
 
@@ -88,18 +90,22 @@ export function createNodeHandler(opts: { root: string; publicOrigin: string; en
   };
 }
 
-// Lancement direct (pas à l'import, pour les tests).
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const publicOrigin = process.env.PUBLIC_ORIGIN ?? "";
+// Lancement direct (pas à l'import, pour les tests). L'adresse publique se donne par PUBLIC_ORIGIN ou en premier argument
+// (`node server/node.ts https://releve.exemple.fr`), pour les hébergeurs où seule la commande se règle facilement.
+// Adresse d'écoute : IP ou HOST si l'hébergeur les fournit (alwaysdata l'exige), sinon toutes les interfaces.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const publicOrigin = process.env.PUBLIC_ORIGIN ?? process.argv[2] ?? "";
   if (!/^https:\/\/[a-z0-9.-]+(:\d+)?$/.test(publicOrigin)) {
-    console.error("PUBLIC_ORIGIN doit être l'adresse publique exacte, en https (par exemple https://releve.exemple.fr).");
+    console.error("L'adresse publique doit être exacte et en https (par exemple https://releve.exemple.fr) : PUBLIC_ORIGIN ou premier argument.");
     process.exit(2);
   }
   const handler = createNodeHandler({
-    root: process.env.RELEVE_DIST ?? "dist",
+    // Par défaut, le dossier `dist` voisin du dossier `server`, quel que soit le dossier de lancement.
+    root: process.env.RELEVE_DIST ?? fileURLToPath(new URL("../dist", import.meta.url)),
     publicOrigin,
     env: { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY },
   });
   const port = Number(process.env.PORT ?? "8080");
-  createServer((req, res) => void handler(req, res)).listen(port, () => console.log(`Relève : écoute sur le port ${port}`));
+  const host = process.env.IP || process.env.HOST || undefined;
+  createServer((req, res) => void handler(req, res)).listen(port, host, () => console.log(`Relève : écoute sur ${host ?? "toutes les interfaces"}, port ${port}`));
 }
