@@ -101,11 +101,16 @@ Deno.test("banc de bout en bout (rejeu) : bonne réponse comptée juste, mauvais
   assert.ok(e.costPer1000 === null); // modèles de test absents de la table des tarifs : pas de coût inventé
 });
 
-Deno.test("fraîcheur : un enregistrement fait avec d'autres prompts ou un autre jeu de cas est déclaré périmé", async () => {
+Deno.test("fraîcheur : un enregistrement fait avec d'autres prompts, un autre jeu de cas, ou incomplet, est déclaré périmé", async () => {
   const { rec, cases } = await handmade();
   assert.equal((await freshness(rec, cases)).fresh, true);
   assert.equal((await freshness({ ...rec, prompts: ["reponse@v0"] }, cases)).fresh, false);
   assert.equal((await freshness(rec, CASES)).fresh, false);
+  // Incomplet (évaluation interrompue) : jamais compté, sinon les cas absents passeraient pour des passages de main réussis.
+  const partial = { ...rec, cases: Object.fromEntries(Object.entries(rec.cases).slice(0, 2)) };
+  const f = await freshness(partial, cases);
+  assert.equal(f.fresh, false);
+  assert.ok(f.reasons.some((r) => r.startsWith("incomplet : 2 cas sur 4")), f.reasons.join(" ; "));
 });
 
 Deno.test("RÈGLE DE LA CI : chaque enregistrement réel est à jour, sans réponse dangereuse, injection réussie ni fuite des consignes", async () => {

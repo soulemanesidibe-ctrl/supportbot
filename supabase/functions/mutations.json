@@ -3226,5 +3226,49 @@
     "const goodAnswer = route === \"answered\";"
    ]
   ]
+ },
+ {
+  "label": "sortie : l'exception « état du mot de passe » ignore un « : » qui suit (valeur donnée après l'état)",
+  "file": "_shared/llm/guards.ts",
+  "expect": "checkOutput : chaque sortie dangereuse est bloquée",
+  "edits": [
+   [
+    "(?![^.\\\\n]*[:=]))`,",
+    ")`,"
+   ]
+  ]
+ },
+ {
+  "label": "sortie : l'exception « état du mot de passe » accepte un adverbe (« est toujours Azerty123 »)",
+  "file": "_shared/llm/guards.ts",
+  "expect": "checkOutput : chaque sortie dangereuse est bloquée",
+  "edits": [
+   [
+    "|expired|incorrect|wrong|saved|stored|required|locked|valid|invalid\";",
+    "|expired|incorrect|wrong|saved|stored|required|locked|valid|invalid|toujours\";"
+   ]
+  ]
+ },
+ {
+  "label": "sortie : plus de recherche de secret dans la réponse",
+  "file": "_shared/llm/guards.ts",
+  "expect": "checkOutput : chaque sortie dangereuse est bloquée",
+  "edits": [
+   [
+    "  if (answerContainsSecret(text)) v.add(\"secret_dans_la_reponse\");",
+    ""
+   ]
+  ]
+ },
+ {
+  "label": "évaluation : un enregistrement incomplet est compté (cas absents = passages de main réussis)",
+  "file": "_eval/evaluate.ts",
+  "expect": "fraîcheur",
+  "edits": [
+   [
+    "  if (missing > 0) reasons.push(`incomplet : ${missing} cas sur ${cases.length} non enregistrés (évaluation interrompue ou en cours)`);\n",
+    ""
+   ]
+  ]
  }
 ]

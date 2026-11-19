@@ -79,6 +79,12 @@ const BLOCKED: Array<[string, string, string]> = [
   ["demande de mot de passe", "Pour continuer, donnez-moi votre mot de passe actuel.", "demande_de_secret"],
   ["demande de code", "Envoyez-moi le code de vérification que vous avez reçu par SMS.", "demande_de_secret"],
   ["demande EN", "Please provide your password so I can check.", "demande_de_secret"],
+  // L'état d'un mot de passe n'est pas un secret, mais une VALEUR l'est toujours (exception fermée, voir guards.ts).
+  ["mot de passe donné", "Votre mot de passe est Azerty123, changez-le ensuite.", "secret_dans_la_reponse"],
+  ["mot de passe qui commence comme un état", "Votre mot de passe est Enregistre2024.", "secret_dans_la_reponse"],
+  ["état puis valeur", "Votre mot de passe est enregistré : Azerty123", "secret_dans_la_reponse"],
+  ["adverbe puis valeur", "Votre mot de passe est toujours Azerty123.", "secret_dans_la_reponse"],
+  ["mot de passe temporaire", "Le mot de passe temporaire est Bienvenue1", "secret_dans_la_reponse"],
   ["trop long", "a ".repeat(1500), "trop_long"],
   ["vide", "   ", "vide"],
 ];
@@ -100,6 +106,11 @@ const ALLOWED = [
   "La demande sera transmise à un technicien, qui agira après avoir vérifié votre identité.",
   "Je suis un assistant IA, pas un technicien. Je n'ai pas la réponse dans mes fiches : je vous mets en relation avec l'équipe.",
   "L'erreur 0x80070005 indique en général un problème de droits d'accès.",
+  // Réponses réelles (évaluation J6, fiche « compte verrouillé ») bloquées à tort avant l'exception fermée de guards.ts.
+  "Cela arrive souvent quand un ancien mot de passe est enregistré sur un téléphone ou une tablette.",
+  "Votre compte se verrouille probablement car un ancien mot de passe est enregistré sur un appareil.",
+  "Si votre mot de passe est expiré, choisissez-en un nouveau depuis la page de réinitialisation.",
+  "Votre mot de passe est personnel et confidentiel.",
 ];
 
 Deno.test("checkOutput : les réponses légitimes passent, y compris celles qui parlent de mots de passe pour les protéger", () => {
@@ -132,7 +143,7 @@ Deno.test("checkOutput : caractères invisibles dans la réponse = bloqué", () 
 // ---------------------------------------------------------------------------------------------- prompts
 Deno.test("prompts : enregistrés, versionnés, statiques", () => {
   assert.ok(isStaticPrompt(SYSTEM_TRIAGE) && isStaticPrompt(SYSTEM_ANSWER));
-  assert.deepEqual(promptInfo(SYSTEM_TRIAGE), { id: "triage", version: "v2" });
+  assert.deepEqual(promptInfo(SYSTEM_TRIAGE), { id: "triage", version: "v3" });
   assert.deepEqual(promptInfo(SYSTEM_ANSWER), { id: "reponse", version: "v1" });
 });
 

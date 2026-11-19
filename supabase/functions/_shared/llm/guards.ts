@@ -43,6 +43,25 @@ export interface OutputOptions {
   readonly maxChars?: number;
 }
 
+// « Un ancien mot de passe est enregistré sur le téléphone », « votre mot de passe est expiré » : une fiche décrit souvent l'ÉTAT d'un
+// mot de passe. Ces tournures ressemblent à « mon mot de passe est Azerty123 » et le détecteur de secrets les bloquait (constaté à
+// l'évaluation J6). Pour la SORTIE seulement, la tournure est neutralisée avant la recherche de secret si, et seulement si, elle est
+// suivie d'un participe ou d'un adjectif d'ÉTAT de cette liste fermée (mot entier), et si la phrase ne contient ensuite ni « : » ni
+// « = ». Pas d'adverbe ni d'article dans la liste : « est toujours Azerty1 » ou « est le suivant : X » restent bloqués. Le masquage
+// des messages entrants (redactText) ne change pas : il continue de masquer largement.
+const STATE_WORD =
+  "(?:enregistr|expir|bloqu|verrouill|oubli|chang|modifi|r[ée]initialis|m[ée]moris|sauvegard|stock|demand|refus|rejet|accept|utilis|associ|saisi|tap)[ée]e?s?" +
+  "|incorrecte?s?|erron[ée]e?s?|faux|fausses?|correcte?s?|valides?|invalides?|requise?s?|diff[ée]rente?s?|personnel(?:les?|s)?" +
+  "|confidentiel(?:les?|s)?|identiques?|n[ée]cessaires?|obligatoires?|expired|incorrect|wrong|saved|stored|required|locked|valid|invalid";
+const PASSWORD_STATE = new RegExp(
+  `\\b(mot de passe|password|mdp)((?:\\s+(?:actuel|temporaire|current|temporary))?)\\s+(est|is)\\s+(?=(?:${STATE_WORD})(?=[\\s.,;!?)»]|$)(?![^.\\n]*[:=]))`,
+  "gi",
+);
+/** Recherche de secret dans une RÉPONSE, sans confondre l'état d'un mot de passe avec sa valeur. */
+function answerContainsSecret(text: string): boolean {
+  return containsSecret(text.replace(PASSWORD_STATE, (_m, k: string, q: string, v: string) => `${k}${q} (${v}) `));
+}
+
 const HTML = /<\s*\/?\s*[a-z!][^>]*>/i;
 const MD_IMAGE = /!\[[^\]]*\]\([^)]*\)/;
 const URL_LIKE = /\b(?:https?:\/\/|ftp:\/\/|www\.)[^\s)>\]"']+|\b(?:mailto|javascript|data|file|vbscript):[^\s)>\]"']+/gi;
@@ -100,7 +119,7 @@ export function checkOutput(text: string, opts: OutputOptions = {}): OutputCheck
     if (host === null || !hostAllowed(host, allowed)) v.add("lien_externe");
   }
 
-  if (containsSecret(text)) v.add("secret_dans_la_reponse");
+  if (answerContainsSecret(text)) v.add("secret_dans_la_reponse");
   if (ACTION_CLAIM.test(text)) v.add("action_pretendue");
 
   for (const m of text.matchAll(SECRET_REQUEST)) {

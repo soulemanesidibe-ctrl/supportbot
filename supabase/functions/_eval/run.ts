@@ -8,6 +8,8 @@
 // seulement) :
 //   deno run --allow-net=oai.endpoints.kepler.ai.cloud.ovh.net --allow-read=../seed,_eval --allow-write=_eval/recordings \
 //     _eval/run.ts --provider ovh --label ovh-small
+// Avec une clé de projet OVHcloud rangée dans les secrets réseau de l'environnement (le relais l'ajoute lui-même aux requêtes vers
+// OVHcloud ; ce script ne la lit ni ne la voit jamais) : ajouter --ovh-key proxy. Débit : 400 requêtes par minute et par modèle.
 //
 // Options : --provider (mistral par défaut, ou ovh), --label (nom de l'enregistrement), --answer-model, --triage-model (défaut mistral-small-latest), --embed-model
 // (défaut mistral-embed), --only id1,id2 (quelques cas), --dataset <fichier.json HORS du dépôt> et --out <fichier HORS du dépôt>
@@ -72,8 +74,15 @@ if (provider !== "mistral" && provider !== "ovh") {
 }
 // Mistral : la clé est lue par la fonction de production (mistralConfigFromEnv), jamais par ce script : elle ne peut pas finir dans
 // un affichage. OVHcloud : accès anonyme, sans clé.
+// « --ovh-key proxy » : la clé est injectée par le relais réseau de l'environnement. On envoie un jeton FACTICE, remplacé en route ;
+// sans secret enregistré côté relais, OVHcloud répond 401 et l'évaluation s'arrête aussitôt (rien n'est inventé).
+const ovhKeyed = provider === "ovh" && arg("ovh-key") === "proxy";
+if (provider === "ovh" && arg("ovh-key") !== undefined && !ovhKeyed) {
+  console.error("--ovh-key : seule la valeur « proxy » est acceptée (la clé ne se passe jamais en argument).");
+  Deno.exit(2);
+}
 const config: MistralConfig = provider === "ovh"
-  ? ovhConfig({ triage: arg("triage-model"), answer: arg("answer-model"), embed: arg("embed-model") })
+  ? ovhConfig({ apiKey: ovhKeyed ? "jeton-factice-remplace-par-le-relais" : "", triage: arg("triage-model"), answer: arg("answer-model"), embed: arg("embed-model") })
   : {
     ...mistralConfigFromEnv(),
     modelTriage: arg("triage-model") ?? "mistral-small-latest",
@@ -83,7 +92,7 @@ const config: MistralConfig = provider === "ovh"
 const llm = provider === "ovh" ? new OvhProvider(config) : new MistralProvider(config);
 // Passerelle de production (reprises, disjoncteur), avec des échéances longues : les cas passent un par un. Chez OVHcloud en
 // anonyme, 2 requêtes par minute et par modèle : une passerelle par modèle, un appel toutes les 31 secondes.
-const slow = provider === "ovh";
+const slow = provider === "ovh" && !ovhKeyed;
 const opts = {
   minIntervalMs: slow ? 31_000 : 1_100,
   maxConcurrent: 1,

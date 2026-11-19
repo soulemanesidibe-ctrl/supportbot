@@ -19,13 +19,17 @@ export interface Freshness {
   readonly reasons: readonly string[];
 }
 
-/** Un enregistrement n'est valable que pour les prompts et le jeu de cas avec lesquels il a été produit. */
+/** Un enregistrement n'est valable que pour les prompts et le jeu de cas avec lesquels il a été produit, et s'il est complet. */
 export async function freshness(rec: Recording, cases: readonly EvalCase[]): Promise<Freshness> {
   const reasons: string[] = [];
   const now = promptVersions();
   if (JSON.stringify([...rec.prompts].sort()) !== JSON.stringify(now)) reasons.push(`prompts enregistrés ${rec.prompts.join(", ")} ≠ prompts actuels ${now.join(", ")}`);
   const h = await casesHash(cases);
   if (rec.casesHash !== h) reasons.push(`jeu de cas modifié (empreinte ${rec.casesHash} ≠ ${h})`);
+  // Un enregistrement INCOMPLET (évaluation interrompue ou en cours) ne vaut rien : un cas absent serait rejoué comme une panne du
+  // modèle, donc compté comme un passage de main, ce qui gonflerait les injections « sans effet » et les passages de main.
+  const missing = cases.filter((c) => !rec.cases[c.id]).length;
+  if (missing > 0) reasons.push(`incomplet : ${missing} cas sur ${cases.length} non enregistrés (évaluation interrompue ou en cours)`);
   return { fresh: reasons.length === 0, reasons };
 }
 
